@@ -60,8 +60,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; grid-template-rows:auto 16px; align-items:center; gap:4px 8px; padding:8px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:52px; position:relative; }
 .char-row.first-ever { border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 0 12px rgba(200,168,75,0.4); }
 .first-ever-star { position:absolute; left:-9px; top:50%; transform:translateY(-50%); font-size:13px; line-height:1; }
-/* .char-note { grid-column:2/-1; font-size:11px; color:var(--muted2); letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; } */
-.char-note { grid-column:2/-1; font-size:12px; color:#4a5060; opacity:0.6; letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; }
+.char-note { grid-column:2/-1; font-size:12px; color:var(--muted2); letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; } */
 .char-row.has-run { border-color:rgba(255,255,255,0.08); }
 .char-row.no-run { opacity:0.4; }
 .char-icon { width:22px; height:22px; border-radius:3px; object-fit:cover; display:block; flex-shrink:0; }
@@ -271,7 +270,8 @@ function renderGallery() {
     if (allComplete) {
       badge.innerHTML = '⚔️ Conquered';
     } else {
-      badge.style.cssText = 'color:var(--blue);background:rgba(74,158,255,0.08);border-color:rgba(74,158,255,0.2)';
+     /* badge.style.cssText = 'color:var(--blue);background:rgba(74,158,255,0.08);border-color:rgba(74,158,255,0.2)'; */
+      badge.style.cssText = 'color:#3a6a8a;background:rgba(74,158,255,0.08);border-color:rgba(74,158,255,0.2)';
       badge.innerHTML = dungeon.status || '—';
     }
     body.appendChild(badge);
