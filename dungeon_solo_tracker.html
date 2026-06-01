@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dungeon Solo Tracker — Destiny 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0c10; --bg2: #10141c; --bg3: #161b26;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0; --muted: #6b7280;
+    --accent: #c8a84b; --accent2: #e2c97e; --gold-bg: rgba(200,168,75,0.1);
+    --blue: #4a9eff; --blue-bg: rgba(74,158,255,0.1);
+    --green: #4ade80; --green-bg: rgba(74,222,128,0.08); --red: #f87171;
+    --purple: #c084fc;
+  }
+  body { background:var(--bg); color:var(--text); font-family:'Barlow',sans-serif; font-weight:300; min-height:100vh; }
+  .hero { background:var(--bg2); border-bottom:1px solid var(--border); padding:2.5rem 2rem 2rem; position:relative; overflow:hidden; }
+  .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 20% 50%,rgba(200,168,75,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(74,158,255,0.05) 0%,transparent 50%); pointer-events:none; }
+  .hero-inner { max-width:960px; margin:0 auto; position:relative; }
+  .logo-row { display:flex; align-items:center; gap:12px; margin-bottom:0.5rem; }
+  .logo-icon { width:36px; height:36px; background:var(--gold-bg); border:1px solid rgba(200,168,75,0.3); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .logo-text { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); }
+  h1 { font-family:'Barlow Condensed',sans-serif; font-size:clamp(2rem,5vw,3.5rem); font-weight:700; letter-spacing:0.02em; line-height:1; color:var(--text); text-transform:uppercase; margin-bottom:0.5rem; }
+  .hero-sub { font-size:14px; color:var(--muted); letter-spacing:0.03em; }
+  .main { max-width:960px; margin:0 auto; padding:2rem; }
+  .config-card { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem; }
+  .config-title { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem; }
+  .config-grid { display:grid; grid-template-columns:1fr 1fr auto; gap:12px; align-items:end; }
+  @media(max-width:600px){.config-grid{grid-template-columns:1fr;}}
+  .field label { display:block; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .field input, .field select { width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:5px; color:var(--text); font-family:'Barlow',sans-serif; font-size:13px; padding:9px 12px; outline:none; transition:border-color 0.2s; }
+  .field input:focus,.field select:focus{border-color:var(--accent);}
+  .field input::placeholder{color:var(--muted);}
+  .field select option{background:var(--bg3);}
+  .btn-fetch { background:var(--accent); color:#0a0c10; border:none; border-radius:5px; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:10px 24px; cursor:pointer; transition:background 0.2s,transform 0.1s; white-space:nowrap; height:38px; }
+  .btn-fetch:hover{background:var(--accent2);}
+  .btn-fetch:active{transform:scale(0.98);}
+  .btn-fetch:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .status-bar { background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:12px 16px; font-size:13px; color:var(--muted); margin-bottom:1.5rem; display:flex; align-items:center; gap:10px; min-height:44px; }
+  .status-bar.error{border-color:rgba(248,113,113,0.3);color:var(--red);background:rgba(248,113,113,0.05);}
+  .status-bar.success{border-color:rgba(74,222,128,0.2);color:var(--green);background:var(--green-bg);}
+  .spinner { width:14px; height:14px; flex-shrink:0; border:2px solid rgba(255,255,255,0.1); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:1.5rem; }
+  .metric { background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:1rem 1.25rem; }
+  .metric-label { font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .metric-value { font-family:'Barlow Condensed',sans-serif; font-size:28px; font-weight:700; color:var(--text); }
+  .metric-value.gold{color:var(--accent);}
+  .metric-value.blue{color:var(--blue);}
+  .metric-value.red{color:var(--red);}
+  .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:1rem; }
+  .toolbar select { background:var(--bg2); border:1px solid var(--border2); border-radius:5px; color:var(--text); font-family:'Barlow',sans-serif; font-size:13px; padding:7px 10px; outline:none; cursor:pointer; }
+  .toolbar select:focus{border-color:var(--accent);}
+  .toolbar select option{background:var(--bg3);}
+  .btn-export { background:transparent; border:1px solid var(--border2); border-radius:5px; color:var(--text); font-family:'Barlow',sans-serif; font-size:13px; padding:7px 14px; cursor:pointer; transition:border-color 0.2s,background 0.2s; margin-left:auto; }
+  .btn-export:hover{border-color:var(--accent);color:var(--accent);background:var(--gold-bg);}
+  .table-wrap { border:1px solid var(--border); border-radius:8px; overflow:hidden; overflow-x:auto; }
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead{background:var(--bg3);}
+  th { padding:10px 14px; text-align:left; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap; }
+  td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  tr.dnf-row td { opacity:0.65; }
+  .badge{display:inline-block;padding:3px 9px;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;}
+  .badge-sf{background:var(--gold-bg);color:var(--accent2);border:1px solid rgba(200,168,75,0.25);}
+  .badge-s{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(74,158,255,0.2);}
+  .badge-dnf{background:rgba(248,113,113,0.08);color:var(--red);border:1px solid rgba(248,113,113,0.2);}
+  .run-link{color:var(--muted);text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.05em;transition:color 0.2s;}
+  .run-link:hover{color:var(--accent);}
+  .empty{text-align:center;padding:3rem;color:var(--muted);font-size:14px;}
+
+  /* Death Summary */
+  .death-summary { margin-top:2rem; }
+  .death-summary-title { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem; }
+  .death-dungeon { background:var(--bg2); border:1px solid var(--border); border-radius:8px; margin-bottom:1rem; overflow:hidden; }
+  .death-dungeon-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--bg3); border-bottom:1px solid var(--border); cursor:pointer; user-select:none; }
+  .death-dungeon-header:hover { background:rgba(255,255,255,0.03); }
+  .death-dungeon-name { font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:600; letter-spacing:0.05em; color:var(--text); }
+  .death-dungeon-total { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; color:var(--red); }
+  .death-dungeon-total span { font-size:11px; color:var(--muted); font-weight:400; margin-left:4px; }
+  .death-dungeon-body { padding:12px 16px; display:none; }
+  .death-dungeon-body.open { display:block; }
+  .death-section { margin-bottom:12px; }
+  .death-section:last-child { margin-bottom:0; }
+  .death-section-label { font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; font-family:'Barlow Condensed',sans-serif; font-weight:600; }
+  .death-char-row { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border-radius:4px; background:var(--bg3); margin-bottom:4px; }
+  .death-char-name { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; }
+  .death-char-name.titan{color:#e05c3a;} .death-char-name.hunter{color:#5a9fd4;} .death-char-name.warlock{color:#a670d4;}
+  .death-char-stats { font-size:12px; color:var(--muted); display:flex; gap:16px; }
+  .death-char-stats .deaths { color:var(--red); font-weight:500; font-family:'Barlow Condensed',sans-serif; font-size:14px; }
+  .death-char-stats .runs { color:var(--muted); font-size:11px; }
+  .death-subtotal { display:flex; justify-content:space-between; padding:6px 10px; border-radius:4px; border:1px solid var(--border); margin-top:6px; }
+  .death-subtotal-label { font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.06em; }
+  .death-subtotal-value { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; color:var(--red); }
+
+  .footer{text-align:center;padding:2rem;font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:2rem;}
+  .debug-toggle{font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block;}
+  .debug-box{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:10px;margin-top:8px;font-size:11px;font-family:monospace;color:var(--muted);max-height:200px;overflow-y:auto;display:none;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="logo-row">
+      <div class="logo-icon">🏰</div>
+      <span class="logo-text">Destiny 2 · Dungeon Stats</span>
+    </div>
+    <h1>Solo Run Tracker</h1>
+    <p class="hero-sub">Find solo dungeon runs across all characters — completions, DNFs, and death analysis</p>
+  </div>
+</div>
+
+<div class="main">
+  <div class="config-card">
+    <div class="config-title">Configuration</div>
+    <div class="config-grid">
+      <div class="field">
+        <label>Bungie API Key</label>
+        <input type="text" id="apiKey" value="1820faa996594154a0bc7ed8406374a6" placeholder="Paste your API key">
+      </div>
+      <div class="field">
+        <label>Membership ID</label>
+        <input type="text" id="membershipId" value="4611686018475142480" placeholder="e.g. 4611686018475142480">
+      </div>
+      <button class="btn-fetch" id="fetchBtn" onclick="startFetch()">Scan Runs</button>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <div class="field" style="max-width:180px;margin:0;">
+        <label>Platform</label>
+        <select id="membershipType">
+          <option value="1" selected>Xbox (1)</option>
+          <option value="2">PSN (2)</option>
+          <option value="3">Steam (3)</option>
+          <option value="5">Stadia (5)</option>
+          <option value="6">Epic (6)</option>
+        </select>
+      </div>
+      <div class="field" style="max-width:260px;margin:0;">
+        <label>Scan Mode</label>
+        <select id="scanMode">
+          <option value="completions_only">Solo Completions only (mode 82)</option>
+          <option value="all_activities">All Activities — catches older runs (slower)</option>
+        </select>
+      </div>
+    </div>
+    <span class="debug-toggle" onclick="toggleDebug()">show debug log</span>
+    <div class="debug-box" id="debugBox"></div>
+  </div>
+
+  <div class="status-bar" id="statusBar">
+    Ready — click <strong style="color:var(--accent);margin:0 4px;">Scan Runs</strong> to begin.
+  </div>
+
+  <div id="metricsWrap" style="display:none">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Solo Flawless</div><div class="metric-value gold" id="mSF">0</div></div>
+      <div class="metric"><div class="metric-label">Solo Completions</div><div class="metric-value blue" id="mS">0</div></div>
+      <div class="metric"><div class="metric-label">DNF Runs</div><div class="metric-value red" id="mDNF">0</div></div>
+      <div class="metric"><div class="metric-label">Dungeons</div><div class="metric-value" id="mD">0</div></div>
+      <div class="metric"><div class="metric-label">Activities Scanned</div><div class="metric-value" id="mT">0</div></div>
+    </div>
+  </div>
+
+  <div id="resultsWrap" style="display:none">
+    <div class="toolbar">
+      <select id="filterView" onchange="renderTable()">
+        <option value="sf">Solo Flawless only</option>
+        <option value="completions">Solo Completions (no DNFs)</option>
+        <option value="all_solo">All Solo Runs (incl. DNFs)</option>
+        <option value="dnf">DNF Runs only</option>
+      </select>
+      <select id="filterDungeon" onchange="renderTable()">
+        <option value="all">All dungeons</option>
+      </select>
+      <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Dungeon</th>
+            <th>Difficulty</th>
+            <th>Character</th>
+            <th>Date</th>
+            <th>Duration</th>
+            <th>Deaths</th>
+            <th>Kills</th>
+            <th>Result</th>
+            <th>Run Type</th>
+            <th>Instance</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Death Summary -->
+    <div class="death-summary" id="deathSummary"></div>
+  </div>
+</div>
+
+<div class="footer">Uses the Bungie.net API · Not affiliated with Bungie</div>
+
+<script>
+const BASE = 'https://www.bungie.net/Platform';
+let allRuns = [];   // completed + DNF solo dungeon runs
+let filtered = [];
+let debugLines = [];
+
+function dbg(msg) {
+  debugLines.push(msg);
+  const box = document.getElementById('debugBox');
+  box.textContent = debugLines.slice(-100).join('\n');
+  box.scrollTop = box.scrollHeight;
+}
+
+function toggleDebug() {
+  const box = document.getElementById('debugBox');
+  const tog = document.querySelector('.debug-toggle');
+  if (box.style.display === 'none' || !box.style.display) {
+    box.style.display = 'block'; tog.textContent = 'hide debug log';
+  } else {
+    box.style.display = 'none'; tog.textContent = 'show debug log';
+  }
+}
+
+function setStatus(html, type='') {
+  const el = document.getElementById('statusBar');
+  el.className = 'status-bar' + (type ? ' '+type : '');
+  el.innerHTML = html;
+}
+
+function fmtDuration(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+}
+
+async function bungieGet(url, apiKey) {
+  const r = await fetch(BASE + url, { headers: {'X-API-Key': apiKey} });
+  const j = await r.json();
+  if (j.ErrorCode && j.ErrorCode !== 1) throw new Error(j.Message || 'API error ' + j.ErrorCode);
+  return j.Response;
+}
+
+const hashCache = {};
+async function resolveHash(hash, apiKey) {
+  if (hashCache[hash] !== undefined) return hashCache[hash];
+  try {
+    const data = await bungieGet(`/Destiny2/Manifest/DestinyActivityDefinition/${hash}/`, apiKey);
+    const rawName = data.displayProperties?.name || `Unknown (${hash})`;
+    const name = rawName.replace(/^The\s+/i, '').replace(/[:\-–—]?\s*(normal|standard|master)\s*$/i, '').trim();
+    const modes = data.activityModeTypes || [];
+    // Mode 82 = Dungeon, but newer dungeons (Vesper's Host, Sundered Doctrine, etc.)
+    // don't always include mode 82 in activityModeTypes — use name matching as fallback
+    const KNOWN_DUNGEON_NAMES = [
+      'shattered throne','the shattered throne','pit of heresy','prophecy','grasp of avarice',
+      'duality','spire of the watcher','ghosts of the deep',"warlord's ruin",
+      "vesper's host",'sundered doctrine','equilibrium'
+    ];
+    const isDungeon = modes.includes(82) || KNOWN_DUNGEON_NAMES.includes(name.toLowerCase());
+    const difficulty = /master/i.test(name) ? 'Master' : 'Normal';
+    const result = { name, isDungeon, difficulty };
+    dbg(`Hash ${hash}: "${name}" | dungeon:${isDungeon} | modes:[${modes.join(',')}]`);
+    hashCache[hash] = result;
+    return result;
+  } catch(e) {
+    dbg(`Hash ${hash} lookup failed: ${e.message}`);
+    hashCache[hash] = null;
+    return null;
+  }
+}
+
+async function startFetch() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const membershipId = document.getElementById('membershipId').value.trim();
+  const membershipType = document.getElementById('membershipType').value;
+  const scanMode = document.getElementById('scanMode').value;
+  if (!apiKey || !membershipId) { setStatus('Please enter your API key and membership ID.','error'); return; }
+
+  document.getElementById('fetchBtn').disabled = true;
+  document.getElementById('metricsWrap').style.display = 'none';
+  document.getElementById('resultsWrap').style.display = 'none';
+  allRuns = [];
+  debugLines = [];
+  document.getElementById('debugBox').textContent = '';
+
+  const mode = scanMode === 'completions_only' ? 82 : 0;
+  const pageLimit = scanMode === 'completions_only' ? 30 : 200;
+
+  setStatus('<div class="spinner"></div>&nbsp; Fetching characters...');
+  let chars;
+  const charClassMap = {};
+  const CLASS_NAMES = { 0: 'Titan', 1: 'Hunter', 2: 'Warlock' };
+  try {
+    const data = await bungieGet(`/Destiny2/${membershipType}/Profile/${membershipId}/?components=200`, apiKey);
+    chars = Object.keys(data.characters.data);
+    for (const [charId, charData] of Object.entries(data.characters.data)) {
+      charClassMap[charId] = CLASS_NAMES[charData.classType] || 'Unknown';
+    }
+  } catch(e) {
+    setStatus('Profile error: ' + e.message, 'error');
+    document.getElementById('fetchBtn').disabled = false;
+    return;
+  }
+
+  let totalScanned = 0;
+
+  for (let ci = 0; ci < chars.length; ci++) {
+    const charId = chars[ci];
+    let page = 0;
+    while (true) {
+      setStatus(`<div class="spinner"></div>&nbsp; Character ${ci+1}/${chars.length} — page ${page+1} &nbsp;·&nbsp; ${totalScanned.toLocaleString()} scanned &nbsp;·&nbsp; ${allRuns.length} solo run(s) found`);
+      let acts = [];
+      try {
+        const data = await bungieGet(
+          `/Destiny2/${membershipType}/Account/${membershipId}/Character/${charId}/Stats/Activities/?mode=${mode}&count=250&page=${page}`,
+          apiKey
+        );
+        acts = data.activities || [];
+      } catch(e) { dbg(`Page error: ${e.message}`); break; }
+
+      if (!acts.length) break;
+      totalScanned += acts.length;
+
+      for (const act of acts) {
+        const hash = act.activityDetails?.referenceId;
+        const fireteam = act.values?.playerCount?.basic?.value ?? 99;
+        if (fireteam !== 1) continue;   // solo only
+
+        const def = await resolveHash(hash, apiKey);
+        if (!def || !def.isDungeon) continue;
+
+        const completed = act.values?.completed?.basic?.value === 1;
+        const deaths    = act.values?.deaths?.basic?.value ?? 0;
+        const kills     = Math.round(act.values?.kills?.basic?.value ?? 0);
+        const duration  = act.values?.activityDurationSeconds?.basic?.value ?? 0;
+        const charClass = charClassMap[charId] || 'Unknown';
+
+        dbg(`${completed ? 'COMPLETE' : 'DNF'} "${def.name}" | ${charClass} | deaths:${deaths} | ${act.period}`);
+
+        allRuns.push({
+          dungeon:    def.name,
+          difficulty: def.difficulty,
+          charClass,
+          date:       act.period,
+          duration,
+          deaths,
+          kills,
+          completed,
+          instanceId: act.activityDetails?.instanceId,
+          runType:    'Unknown',
+          hash
+        });
+      }
+
+      if (acts.length < 250) break;
+      page++;
+      if (page > pageLimit) break;
+    }
+  }
+
+  allRuns.sort((a,b) => new Date(b.date) - new Date(a.date));
+  document.getElementById('mT').textContent = totalScanned.toLocaleString();
+
+  // Fetch PGCRs for completed runs only (DNFs won't have useful PGCR data)
+  const completedRuns = allRuns.filter(r => r.completed);
+  if (completedRuns.length) {
+    setStatus(`<div class="spinner"></div>&nbsp; Fetching run details (${completedRuns.length} PGCR${completedRuns.length !== 1 ? 's' : ''})...`);
+    await Promise.all(completedRuns.map(async r => {
+      try {
+        const pgcr = await bungieGet(`/Destiny2/Stats/PostGameCarnageReport/${r.instanceId}/`, apiKey);
+        const rawVal = pgcr.activityWasStartedFromBeginning;
+        if (rawVal === true) r.runType = 'Fresh';
+        else if (rawVal === false) r.runType = 'Checkpoint';
+        else r.runType = 'Unknown';
+      } catch(e) {
+        r.runType = 'Unknown';
+      }
+    }));
+  }
+
+  // Build dungeon filter dropdown
+  const dungeonKeys = [...new Set(allRuns.map(r => r.dungeon + '||' + r.difficulty))].sort();
+  const sel = document.getElementById('filterDungeon');
+  sel.innerHTML = '<option value="all">All dungeons</option>';
+  dungeonKeys.forEach(k => {
+    const [name, diff] = k.split('||');
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = diff === 'Master' ? `${name} (Master)` : name;
+    sel.appendChild(o);
+  });
+
+  document.getElementById('fetchBtn').disabled = false;
+
+  if (!allRuns.length) {
+    setStatus('Scan complete — no solo dungeon runs found.');
+    document.getElementById('metricsWrap').style.display = '';
+    return;
+  }
+
+  const sfCount   = allRuns.filter(r => r.completed && r.deaths === 0).length;
+  const sCount    = allRuns.filter(r => r.completed && r.deaths > 0).length;
+  const dnfCount  = allRuns.filter(r => !r.completed).length;
+  document.getElementById('mSF').textContent  = sfCount;
+  document.getElementById('mS').textContent   = sCount;
+  document.getElementById('mDNF').textContent = dnfCount;
+  document.getElementById('mD').textContent   = new Set(allRuns.map(r => r.dungeon)).size;
+
+  setStatus(`&#10003; Scan complete — ${sfCount} solo flawless · ${sCount} solo completions · ${dnfCount} DNFs`, 'success');
+  renderTable();
+  document.getElementById('metricsWrap').style.display = '';
+}
+
+function renderTable() {
+  const view = document.getElementById('filterView').value;
+  const dung = document.getElementById('filterDungeon').value;
+
+  filtered = allRuns.filter(r => {
+    if (dung !== 'all') {
+      const [name, diff] = dung.split('||');
+      if (r.dungeon !== name || r.difficulty !== diff) return false;
+    }
+    if (view === 'sf')          return r.completed && r.deaths === 0;
+    if (view === 'completions') return r.completed;
+    if (view === 'dnf')         return !r.completed;
+    return true; // all_solo
+  });
+
+  const tbody = document.getElementById('tableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty">No runs match the current filter.</td></tr>';
+  } else {
+    tbody.innerHTML = filtered.map(r => {
+      const resultBadge = !r.completed
+        ? '<span class="badge badge-dnf">DNF</span>'
+        : r.deaths === 0
+          ? '<span class="badge badge-sf">⭐ Flawless</span>'
+          : '<span class="badge badge-s">Solo</span>';
+      const diffBadge = r.difficulty === 'Master'
+        ? '<span style="font-size:11px;color:#c084fc;">Master</span>'
+        : '<span style="font-size:11px;color:var(--muted);">Normal</span>';
+      const classColors = { Titan:'#e05c3a', Hunter:'#5a9fd4', Warlock:'#a670d4' };
+      const classBadge = `<span style="font-size:11px;font-weight:500;color:${classColors[r.charClass]||'var(--muted)'}">${r.charClass}</span>`;
+      const runTypeBadge = r.completed
+        ? (r.runType === 'Checkpoint'
+            ? '<span style="font-size:11px;color:#fb923c;">Checkpoint</span>'
+            : r.runType === 'Fresh'
+            ? '<span style="font-size:11px;color:var(--muted);">Fresh</span>'
+            : '<span style="font-size:11px;color:var(--muted);">Unknown</span>')
+        : '<span style="font-size:11px;color:var(--muted);">—</span>';
+      const link = `<a class="run-link" href="https://dungeon.report/pgcr/${r.instanceId}" target="_blank">View ↗</a>`;
+      return `<tr class="${!r.completed ? 'dnf-row' : ''}">
+        <td><strong style="font-weight:500">${r.dungeon}</strong></td>
+        <td>${diffBadge}</td>
+        <td>${classBadge}</td>
+        <td style="white-space:nowrap;color:var(--muted)">${fmtDate(r.date)}</td>
+        <td style="white-space:nowrap;font-variant-numeric:tabular-nums">${fmtDuration(r.duration)}</td>
+        <td>${r.deaths}</td>
+        <td>${r.kills.toLocaleString()}</td>
+        <td>${resultBadge}</td>
+        <td>${runTypeBadge}</td>
+        <td>${link}</td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('resultsWrap').style.display = '';
+  renderDeathSummary();
+}
+
+function renderDeathSummary() {
+  const dung = document.getElementById('filterDungeon').value;
+
+  // Always use ALL runs for death summary (not the filtered view)
+  const summaryRuns = dung === 'all' ? allRuns : allRuns.filter(r => {
+    const [name, diff] = dung.split('||');
+    return r.dungeon === name && r.difficulty === diff;
+  });
+
+  // Group by dungeon
+  const dungeons = {};
+  summaryRuns.forEach(r => {
+    const key = r.dungeon + (r.difficulty === 'Master' ? ' (Master)' : '');
+    if (!dungeons[key]) dungeons[key] = [];
+    dungeons[key].push(r);
+  });
+
+  const container = document.getElementById('deathSummary');
+  if (!Object.keys(dungeons).length) { container.innerHTML = ''; return; }
+
+  const classOrder = ['Titan','Warlock','Hunter'];
+
+  let html = `<div class="death-summary-title">☠ Death Summary — All Solo Runs</div>`;
+
+  Object.entries(dungeons).sort(([a],[b]) => a.localeCompare(b)).forEach(([dungName, runs], idx) => {
+    const totalDeaths   = runs.reduce((s,r) => s + r.deaths, 0);
+    const compRuns      = runs.filter(r => r.completed);
+    const dnfRuns       = runs.filter(r => !r.completed);
+    const compDeaths    = compRuns.reduce((s,r) => s + r.deaths, 0);
+    const dnfDeaths     = dnfRuns.reduce((s,r) => s + r.deaths, 0);
+
+    html += `<div class="death-dungeon">
+      <div class="death-dungeon-header" onclick="toggleDeath('dd${idx}')">
+        <span class="death-dungeon-name">${dungName}</span>
+        <span class="death-dungeon-total">${totalDeaths}<span>total deaths · ${runs.length} runs</span></span>
+      </div>
+      <div class="death-dungeon-body" id="dd${idx}">`;
+
+    // Completed runs section
+    if (compRuns.length) {
+      html += `<div class="death-section">
+        <div class="death-section-label">Completed Runs — ${compDeaths} deaths across ${compRuns.length} run(s)</div>`;
+      classOrder.forEach(cls => {
+        const cRuns = compRuns.filter(r => r.charClass === cls);
+        if (!cRuns.length) return;
+        const cDeaths = cRuns.reduce((s,r) => s + r.deaths, 0);
+        html += `<div class="death-char-row">
+          <span class="death-char-name ${cls.toLowerCase()}">${cls}</span>
+          <div class="death-char-stats">
+            <span class="runs">${cRuns.length} run${cRuns.length !== 1 ? 's' : ''}</span>
+            <span class="deaths">${cDeaths} deaths</span>
+          </div>
+        </div>`;
+      });
+      html += `<div class="death-subtotal"><span class="death-subtotal-label">Completed subtotal</span><span class="death-subtotal-value">${compDeaths}</span></div>`;
+      html += `</div>`;
+    }
+
+    // DNF runs section
+    if (dnfRuns.length) {
+      html += `<div class="death-section">
+        <div class="death-section-label">DNF Runs — ${dnfDeaths} deaths across ${dnfRuns.length} run(s)</div>`;
+      classOrder.forEach(cls => {
+        const cRuns = dnfRuns.filter(r => r.charClass === cls);
+        if (!cRuns.length) return;
+        const cDeaths = cRuns.reduce((s,r) => s + r.deaths, 0);
+        html += `<div class="death-char-row">
+          <span class="death-char-name ${cls.toLowerCase()}">${cls}</span>
+          <div class="death-char-stats">
+            <span class="runs">${cRuns.length} run${cRuns.length !== 1 ? 's' : ''}</span>
+            <span class="deaths">${cDeaths} deaths</span>
+          </div>
+        </div>`;
+      });
+      html += `<div class="death-subtotal"><span class="death-subtotal-label">DNF subtotal</span><span class="death-subtotal-value">${dnfDeaths}</span></div>`;
+      html += `</div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleDeath(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+function exportCSV() {
+  const header = ['Dungeon','Difficulty','Character','Date','Duration','Deaths','Kills','Result','Run Type','Instance ID','Dungeon Report Link'];
+  const rows = filtered.map(r => [
+    r.dungeon, r.difficulty, r.charClass, fmtDate(r.date), fmtDuration(r.duration),
+    r.deaths, r.kills,
+    !r.completed ? 'DNF' : r.deaths === 0 ? 'Solo Flawless' : 'Solo',
+    r.completed ? (r.runType || 'Unknown') : '—',
+    r.instanceId, `https://dungeon.report/pgcr/${r.instanceId}`
+  ]);
+  const csv = [header,...rows].map(row => row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = `destiny2_solo_runs_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>
