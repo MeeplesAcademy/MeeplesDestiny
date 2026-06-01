@@ -346,11 +346,15 @@ function renderGallery() {
           noteEl.textContent = run.note;
           row.appendChild(noteEl);
         }
-      } else {
+     } else {
         const empty = document.createElement('div');
         empty.className = 'char-empty';
         empty.textContent = hasAnyRun ? 'Not yet completed' : '—';
         row.appendChild(empty);
+        const noteEl = document.createElement('div');
+        noteEl.className = 'char-note';
+        noteEl.textContent = '';
+        row.appendChild(noteEl);
       }
 
       charList.appendChild(row);
