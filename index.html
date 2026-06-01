@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Meeples — Destiny 2 Solo Flawless Dungeon Conquests. Personal achievement record tracking all 11 dungeons across Titan, Warlock, and Hunter characters.">
+<meta property="og:title" content="Meeples: Dungeon Conquests">
+<meta property="og:description" content="Destiny 2 Solo Flawless completion record — all 11 dungeons, all 3 characters.">
+<title>Meeples: Dungeon Conquests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #080a0f;
+  --bg2:       #0d1018;
+  --bg3:       #12161f;
+  --bg4:       #181d28;
+  --border:    rgba(255,255,255,0.06);
+  --border2:   rgba(255,255,255,0.12);
+  --border3:   rgba(200,168,75,0.25);
+  --text:      #e8eaf0;
+  --muted:     #5a6070;
+  --muted2:    #8a9090;
+  --gold:      #c8a84b;
+  --gold2:     #e2c97e;
+  --gold3:     #f5e6b8;
+  --gold-bg:   rgba(200,168,75,0.08);
+  --gold-glow: rgba(200,168,75,0.15);
+  --blue:      #4a9eff;
+  --green:     #4ade80;
+  --pink:      #f472b6;
+  --titan:     #e05c3a;
+  --hunter:    #5a9fd4;
+  --warlock:   #a670d4;
+  --complete:  rgba(200,168,75,0.12);
+  --incomplete: rgba(255,255,255,0.02);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Background texture ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(200,168,75,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(74,158,255,0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Page header ── */
+.page-header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 3.5rem 2rem 2.5rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(200,168,75,0.05) 0%, transparent 100%);
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.eyebrow {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+  opacity: 0.8;
+}
+
+.page-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--gold3) 0%, var(--gold) 60%, #8a6a20 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.page-sub {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--muted2);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 400;
+  margin-top: 0.25rem;
+}
+
+.guardian-name {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.75;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Import bar ── */
+.import-bar input[type="file"] { display: none; }
+
+.update-toggle {
+  display: block;
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--bg4);
+  cursor: pointer;
+  padding: 0.5rem;
+  text-decoration: none;
+  transition: color 0.3s;
+  user-select: none;
+}
+.update-toggle:hover { color: var(--muted); }
+
+.import-panel {
+  display: none;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 2rem;
+  text-align: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+.import-panel.open { display: flex; }
+
+.import-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+
+.btn-import {
+  background: var(--gold-bg);
+  border: 1px solid var(--border3);
+  border-radius: 4px;
+  color: var(--gold2);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 7px 18px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-import:hover { background: rgba(200,168,75,0.15); border-color: var(--gold); }
+
+.import-status {
+  font-size: 12px;
+  color: var(--muted2);
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.05em;
+}
+.import-status.ok { color: var(--green); }
+.import-status.err { color: #f87171; }
+
+/* ── Gallery grid ── */
+.gallery {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2px;
+  padding: 2px;
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 1.5rem 3rem;
+  gap: 1.5rem;
+}
+
+/* ── Dungeon card ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.card.is-complete {
+  border-color: rgba(200,168,75,0.2);
+  box-shadow: 0 0 30px rgba(200,168,75,0.05);
+}
+
+.card.is-complete:hover {
+  border-color: rgba(200,168,75,0.4);
+  box-shadow: 0 0 40px rgba(200,168,75,0.1);
+}
+
+.card:not(.is-complete):hover {
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* ── Banner area ── */
+.card-banner {
+  position: relative;
+  height: 140px;
+  background: var(--bg3);
+  overflow: hidden;
+}
+
+.banner-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  opacity: 0.85;
+  transition: opacity 0.3s, transform 0.4s;
+}
+.card:hover .banner-img { opacity: 1; }
+
+.banner-placeholder {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--bg3) 0px, var(--bg3) 10px,
+    var(--bg4) 10px, var(--bg4) 20px
+  );
+}
+
+.banner-placeholder-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  padding: 8px;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.banner-upload-hint {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold2);
+  border: 1px solid var(--border3);
+  padding: 6px 14px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.6);
+}
+
+/* ── Emblem strip ── */
+.emblem-strip {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 474 / 96;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.emblem-wrap {
+  width: 100%;
+  height: 100%;
+}
+
+.emblem-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left center;
+  display: block;
+  transition: opacity 0.2s;
+}
+
+
+.emblem-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--bg3) 0px, var(--bg3) 20px,
+    var(--bg4) 20px, var(--bg4) 40px
+  );
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.emblem-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: rgba(0,0,0,0.4);
+}
+
+.emblem-upload-hint {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold2);
+  border: 1px solid var(--border3);
+  padding: 4px 12px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.6);
+}
+
+/* ── Card body ── */
+.card-body {
+  padding: 2rem 1.25rem 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-number {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
+}
+
+.card.is-complete .card-title { color: var(--gold2); }
+
+.card-divider {
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin: 0.75rem 0;
+  opacity: 0.3;
+}
+.card.is-complete .card-divider { opacity: 0.6; }
+
+/* ── Character rows ── */
+.char-list { display: flex; flex-direction: column; gap: 6px; margin-top: auto; padding-top: 0.75rem; }
+
+.char-row {
+  display: grid;
+  grid-template-columns: 22px 70px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  min-height: 36px;
+}
+
+.char-row.has-run { border-color: rgba(255,255,255,0.08); }
+.char-row.no-run { opacity: 0.4; }
+
+.char-icon {
+  width: 22px; height: 22px;
+  border-radius: 3px;
+  object-fit: cover;
+  display: block;
+  flex-shrink: 0;
+}
+
+.char-icon-placeholder {
+  width: 22px; height: 22px;
+  border-radius: 3px;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.char-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.char-name.titan   { color: var(--titan); }
+.char-name.hunter  { color: var(--hunter); }
+.char-name.warlock { color: var(--warlock); }
+
+.char-date {
+  font-size: 12px;
+  color: var(--muted2);
+  white-space: nowrap;
+}
+
+.char-duration {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gold);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+.char-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-family: 'Barlow Condensed', sans-serif;
+  transition: color 0.15s;
+  line-height: 1;
+}
+.char-link:hover { color: var(--gold); }
+
+.char-empty {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  grid-column: 2 / -1;
+  letter-spacing: 0.03em;
+}
+
+/* ── Completion badge ── */
+.completion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: var(--gold-bg);
+  border: 1px solid rgba(200,168,75,0.2);
+  border-radius: 3px;
+  padding: 3px 8px;
+  margin-bottom: 0.5rem;
+  width: fit-content;
+}
+
+/* ── Footer ── */
+.page-footer {
+  position: relative; z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.1em;
+}
+
+/* ── Hidden file inputs ── */
+.file-input { display: none; }
+
+/* ── Tooltip ── */
+[title] { cursor: help; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="eyebrow">Destiny 2</div>
+  <div class="guardian-name">Meeples</div>
+  <h1 class="page-title">Dungeon Conquests</h1>
+  <p class="page-sub">Solo Flawless Dungeon Completions</p>
+</header>
+
+
+
+<main class="gallery" id="gallery"></main>
+
+<!-- Hidden file inputs for images (one banner + one emblem per dungeon, one icon per class) -->
+<input type="file" id="titanIconInput"   class="file-input" accept="image/*">
+<input type="file" id="hunterIconInput"  class="file-input" accept="image/*">
+<input type="file" id="warlockIconInput" class="file-input" accept="image/*">
+
+<footer class="page-footer">
+  Destiny 2 · Meeples · Solo Flawless Dungeon Completions
+</footer>
+
+<a class="update-toggle" onclick="document.getElementById('importPanel').classList.toggle('open')">⚙ Update Data</a>
+
+<div class="import-panel" id="importPanel">
+  <span class="import-label">Import updated CSV:</span>
+  <button class="btn-import" onclick="document.getElementById('csvInput').click()">⬆ Load CSV</button>
+  <input type="file" id="csvInput" class="file-input" accept=".csv" onchange="loadCSV(event)">
+  <span class="import-status" id="importStatus">Upload a new CSV to update run data — hardcoded data loads automatically</span>
+</div>
+
+<script>
+const DUNGEONS = [
+  { id:'shattered-throne',   name:"Shattered Throne",    num:'01' },
+  { id:'pit-of-heresy',      name:"Pit of Heresy",        num:'02' },
+  { id:'prophecy',           name:"Prophecy",             num:'03' },
+  { id:'grasp-of-avarice',   name:"Grasp of Avarice",     num:'04' },
+  { id:'duality',            name:"Duality",              num:'05' },
+  { id:'spire-of-watcher',   name:"Spire of the Watcher", num:'06' },
+  { id:'ghosts-of-the-deep', name:"Ghosts of the Deep",   num:'07' },
+  { id:'warlords-ruin',      name:"Warlord's Ruin",        num:'08' },
+  { id:'vespers-host',       name:"Vesper's Host",         num:'09' },
+  { id:'sundered-doctrine',  name:"Sundered Doctrine",    num:'10' },
+  { id:'equilibrium',        name:"Equilibrium",          num:'11' },
+];
+
+const CLASSES = ['Titan','Warlock','Hunter'];
+const CLASS_KEY = { Titan:'titan', Hunter:'hunter', Warlock:'warlock' };
+
+// Image store: bannerImages[dungeonId], emblemImages[dungeonId], classIcons[className]
+const bannerImages = {};
+const emblemImages = {};
+const classIcons   = {};
+
+// Run data keyed by dungeonName -> { Titan: {date, duration}, Hunter: {...}, Warlock: {...} }
+let runData = {};
+
+function normalizeDungeonName(name) {
+  return (name || '').trim().toLowerCase()
+    .replace(/['']/g, "'")
+    .replace(/\s+/g, ' ');
+}
+
+function matchDungeon(csvName) {
+  const n = normalizeDungeonName(csvName);
+  return DUNGEONS.find(d => normalizeDungeonName(d.name) === n);
+}
+
+function fmtDateShort(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+// ── CSV parser ──
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim().toLowerCase());
+  return lines.slice(1).map(line => {
+    // Handle quoted fields with commas
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQ = !inQ; }
+      else if (line[i] === ',' && !inQ) { cols.push(cur); cur = ''; }
+      else { cur += line[i]; }
+    }
+    cols.push(cur);
+    const row = {};
+    headers.forEach((h, i) => row[h] = (cols[i] || '').trim());
+    return row;
+  });
+}
+
+function loadCSV(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      // Filter to Solo Flawless only, deaths = 0
+      const sf = rows.filter(r => {
+        const type = (r['type'] || '').toLowerCase();
+        const deaths = parseInt(r['deaths'] || '99');
+        return type.includes('flawless') || deaths === 0;
+      });
+
+      // Reset to static base data, then layer CSV on top
+      runData = {};
+      loadStaticData();
+      let matched = 0;
+
+      sf.forEach(row => {
+        const dungeonRaw = row['dungeon name'] || row['dungeon'] || '';
+        const charClass  = (row['character'] || '').trim();
+        const date       = row['date'] || '';
+        const duration   = row['duration'] || '';
+        const reportLink = row['dungeon report link'] || '';
+
+        if (!CLASSES.includes(charClass)) return;
+        const dungeon = matchDungeon(dungeonRaw);
+        if (!dungeon) return;
+
+        if (!runData[dungeon.id]) runData[dungeon.id] = {};
+
+        // Keep only the earliest run per class per dungeon
+        const existing = runData[dungeon.id][charClass];
+        if (!existing || new Date(date) < new Date(existing.date)) {
+          runData[dungeon.id][charClass] = { date, duration, reportLink };
+          matched++;
+        }
+      });
+
+      // Debug: collect unmatched dungeon names and unexpected character values
+      const unmatched = [...new Set(sf
+        .map(r => r['dungeon name'] || r['dungeon'] || '')
+        .filter(n => n && !matchDungeon(n))
+      )];
+      const unexpectedChars = [...new Set(sf
+        .map(r => (r['character'] || '').trim())
+        .filter(c => c && !CLASSES.includes(c))
+      )];
+      const allChars = [...new Set(sf.map(r => (r['character'] || '').trim()))];
+      const allHeaders = Object.keys(sf[0] || {});
+
+      let statusMsg = `Loaded ${sf.length} solo flawless run(s) across ${Object.keys(runData).length} dungeon(s)`;
+      const debugParts = [];
+      if (unmatched.length) debugParts.push(`Unmatched dungeons: ${unmatched.map(n=>'"'+n+'"').join(', ')}`);
+      if (unexpectedChars.length) debugParts.push(`Unexpected characters: ${unexpectedChars.map(n=>'"'+n+'"').join(', ')}`);
+      if (!Object.keys(runData).length) {
+        debugParts.push(`CSV headers: ${allHeaders.map(h=>'"'+h+'"').join(', ')}`);
+        debugParts.push(`Character values found: ${allChars.map(c=>'"'+c+'"').join(', ')}`);
+      }
+      if (debugParts.length) {
+        statusMsg += ' · ' + debugParts.join(' · ');
+        document.getElementById('importStatus').className = 'import-status err';
+      } else {
+        document.getElementById('importStatus').className = 'import-status ok';
+      }
+      document.getElementById('importStatus').textContent = statusMsg;
+      renderGallery();
+    } catch(err) {
+      document.getElementById('importStatus').textContent = 'Error parsing CSV: ' + err.message;
+      document.getElementById('importStatus').className = 'import-status err';
+    }
+    evt.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ── Image upload handlers ──
+function setupImageUpload(inputId, onLoad) {
+  const input = document.getElementById(inputId);
+  input.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { onLoad(ev.target.result); renderGallery(); };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+}
+
+function triggerBannerUpload(dungeonId) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { bannerImages[dungeonId] = ev.target.result; renderGallery(); };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+function triggerEmblemUpload(dungeonId) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { emblemImages[dungeonId] = ev.target.result; renderGallery(); };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+function triggerClassIconUpload(className) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { classIcons[className] = ev.target.result; renderGallery(); };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+// ── Render ──
+function renderGallery() {
+  const gallery = document.getElementById('gallery');
+  gallery.innerHTML = '';
+
+  DUNGEONS.forEach(dungeon => {
+    const runs = runData[dungeon.id] || {};
+    const hasAnyRun = CLASSES.some(c => runs[c]);
+    const allComplete = CLASSES.every(c => runs[c]);
+
+    const card = document.createElement('div');
+    card.className = 'card' + (hasAnyRun ? ' is-complete' : '');
+
+    // ── Banner ──
+    const banner = document.createElement('div');
+    banner.className = 'card-banner';
+    // Banner is static — no click handler
+
+    if (bannerImages[dungeon.id]) {
+      const img = document.createElement('img');
+      img.className = 'banner-img';
+      img.src = bannerImages[dungeon.id];
+      img.alt = dungeon.name;
+      banner.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'banner-placeholder';
+      ph.innerHTML = `<div class="banner-placeholder-text">Click to upload<br>${dungeon.name}<br>banner image</div>`;
+      banner.appendChild(ph);
+    }
+
+
+
+    card.appendChild(banner);
+
+    // ── Emblem strip ──
+    const emblemStrip = document.createElement('div');
+    emblemStrip.className = 'emblem-strip';
+    // Emblem is static — no click handler
+
+    const emblemWrap = document.createElement('div');
+    emblemWrap.className = 'emblem-wrap';
+
+    if (emblemImages[dungeon.id]) {
+      const eImg = document.createElement('img');
+      eImg.className = 'emblem-img';
+      eImg.src = emblemImages[dungeon.id];
+      eImg.alt = 'Solo Flawless Emblem';
+      emblemWrap.appendChild(eImg);
+    } else {
+      const ePh = document.createElement('div');
+      ePh.className = 'emblem-placeholder';
+      ePh.textContent = '+ Click to upload solo flawless emblem';
+      emblemWrap.appendChild(ePh);
+    }
+    emblemStrip.appendChild(emblemWrap);
+
+
+
+    card.appendChild(emblemStrip);
+
+    // ── Card body ──
+    const body = document.createElement('div');
+    body.className = 'card-body';
+
+    // Number + title
+    const num = document.createElement('div');
+    num.className = 'card-number';
+    num.textContent = `Dungeon ${dungeon.num}`;
+    body.appendChild(num);
+
+    const title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = dungeon.name;
+    body.appendChild(title);
+
+    // Completion badge
+    if (allComplete) {
+      const badge = document.createElement('div');
+      badge.className = 'completion-badge';
+      badge.innerHTML = '⚔️ Conquered';
+      body.appendChild(badge);
+    } else if (hasAnyRun) {
+      const badge = document.createElement('div');
+      badge.className = 'completion-badge';
+      badge.style.cssText = 'color:var(--blue);background:rgba(74,158,255,0.08);border-color:rgba(74,158,255,0.2)';
+      const count = CLASSES.filter(c => runs[c]).length;
+      badge.innerHTML = `${count}/3 Characters Complete`;
+      body.appendChild(badge);
+    }
+
+    const divider = document.createElement('div');
+    divider.className = 'card-divider';
+    body.appendChild(divider);
+
+    // ── Character rows ──
+    const charList = document.createElement('div');
+    charList.className = 'char-list';
+
+    CLASSES.forEach(cls => {
+      const run = runs[cls];
+      const row = document.createElement('div');
+      row.className = 'char-row ' + (run ? 'has-run' : 'no-run');
+
+      // Class icon
+      if (classIcons[cls]) {
+        const iconImg = document.createElement('img');
+        iconImg.className = 'char-icon';
+        iconImg.src = classIcons[cls];
+        iconImg.alt = cls;
+
+        row.appendChild(iconImg);
+      } else {
+        const iconPh = document.createElement('div');
+        iconPh.className = 'char-icon-placeholder';
+        iconPh.title = `Click to upload ${cls} icon`;
+        iconPh.style.cursor = 'pointer';
+        iconPh.textContent = cls[0];
+        iconPh.onclick = e => { e.stopPropagation(); triggerClassIconUpload(cls); };
+        row.appendChild(iconPh);
+      }
+
+      // Class name
+      const nameEl = document.createElement('div');
+      nameEl.className = `char-name ${CLASS_KEY[cls]}`;
+      nameEl.textContent = cls;
+      row.appendChild(nameEl);
+
+      if (run) {
+        const dateEl = document.createElement('div');
+        dateEl.className = 'char-date';
+        dateEl.textContent = fmtDateShort(run.date);
+        row.appendChild(dateEl);
+
+        const durEl = document.createElement('div');
+        durEl.className = 'char-duration';
+        durEl.textContent = run.duration;
+        row.appendChild(durEl);
+
+        if (run.reportLink) {
+          const linkEl = document.createElement('a');
+          linkEl.className = 'char-link';
+          linkEl.href = run.reportLink;
+          linkEl.target = '_blank';
+          linkEl.title = 'View on Dungeon Report';
+          linkEl.textContent = '↗';
+          row.appendChild(linkEl);
+        }
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'char-empty';
+        empty.textContent = hasAnyRun ? 'Not yet completed' : '—';
+        row.appendChild(empty);
+      }
+
+      charList.appendChild(row);
+    });
+
+    body.appendChild(charList);
+    card.appendChild(body);
+    gallery.appendChild(card);
+  });
+}
+
+// ── Hardcoded image URLs (served from GitHub) ──
+const STATIC_BANNERS = {"shattered-throne": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/01-Shattered_Throne_DR.jpg", "pit-of-heresy": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/02-Pit_Of_Heresy_DR.jpg", "prophecy": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/03-Prophecy_DR.jpg", "grasp-of-avarice": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/04-Grasp_Of_Avarice_DR.jpg", "duality": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/05-Duality_DR.jpg", "spire-of-watcher": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/06-Spire_Of_The_Watcher_DR.jpg", "ghosts-of-the-deep": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/07-Ghosts_Of_The_Deep_DR.jpg", "warlords-ruin": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/08-Warlords_Ruin_DR.jpg", "vespers-host": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/09-Vespers_Host_DR.jpg", "sundered-doctrine": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/10-Sundered_Doctrine_DR.jpg", "equilibrium": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/11-Equilibrium_DR.jpg"};
+const STATIC_EMBLEMS = {"shattered-throne": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/01-Shattered_Throne_EMBLEM.jpg", "pit-of-heresy": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/02-Pit_Of_Heresy_EMBLEM.jpg", "prophecy": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/03-Prophecy_EMBLEM.jpg", "grasp-of-avarice": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/04-Grasp_Of_Avarice_EMBLEM.jpg", "duality": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/05-Duality_EMBLEM.jpg", "spire-of-watcher": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/06-Spire_Of_The_Watcher_EMBLEM.jpg", "ghosts-of-the-deep": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/07-Ghosts_Of_The_Deep_EMBLEM.jpg", "warlords-ruin": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/08-Warlords_Ruin_EMBLEM.jpg", "vespers-host": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/09-Vespers_Host_EMBLEM.jpg", "sundered-doctrine": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/10-Sundered_Doctrine_EMBLEM.jpg", "equilibrium": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/11-Equilibrium_EMBLEM.jpg"};
+const STATIC_CLASS_ICONS = {"Titan": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/class-titan-white.svg", "Warlock": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/class-warlock-white.svg", "Hunter": "https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/class-hunter-white.svg"};
+
+// ── Hardcoded run data ──
+const STATIC_RUN_DATA = {"shattered-throne": {"Titan": {"date": "17-Nov-21", "duration": "1:10:51", "reportLink": "https://dungeon.report/pgcr/9619723930"}, "Warlock": {"date": "25-Nov-21", "duration": "1:29:48", "reportLink": "https://dungeon.report/pgcr/9650670198"}, "Hunter": {"date": "24-Nov-21", "duration": "1:08:53", "reportLink": "https://dungeon.report/pgcr/9646626483"}}, "pit-of-heresy": {"Titan": {"date": "9-May-22", "duration": "1:46:58", "reportLink": "https://dungeon.report/pgcr/10724419183"}, "Warlock": {"date": "30-Sep-22", "duration": "1:36:33", "reportLink": "https://dungeon.report/pgcr/11711971570"}, "Hunter": {"date": "1-Oct-22", "duration": "1:16:30", "reportLink": "https://dungeon.report/pgcr/11719128942"}}, "prophecy": {"Titan": {"date": "8-May-23", "duration": "1:33:19", "reportLink": "https://dungeon.report/pgcr/13195408012"}, "Warlock": {"date": "1-Oct-23", "duration": "1:14:26", "reportLink": "https://dungeon.report/pgcr/13923010649"}, "Hunter": {"date": "6-Oct-23", "duration": "1:27:48", "reportLink": "https://dungeon.report/pgcr/13941677483"}}, "grasp-of-avarice": {"Titan": {"date": "21-Jan-22", "duration": "1:39:57", "reportLink": "https://dungeon.report/pgcr/9984226412"}, "Warlock": {"date": "17-Aug-23", "duration": "1:28:21", "reportLink": "https://dungeon.report/pgcr/13684673634"}, "Hunter": {"date": "21-Aug-23", "duration": "1:31:11", "reportLink": "https://dungeon.report/pgcr/13697117249"}}, "duality": {"Titan": {"date": "26-Feb-25", "duration": "1:30:36", "reportLink": "https://dungeon.report/pgcr/15945570093"}, "Warlock": {"date": "7-Mar-25", "duration": "1:43:47", "reportLink": "https://dungeon.report/pgcr/15968755385"}, "Hunter": {"date": "5-Nov-25", "duration": "1:17:24", "reportLink": "https://dungeon.report/pgcr/16614532680"}}, "warlords-ruin": {"Titan": {"date": "11-May-25", "duration": "1:59:10", "reportLink": "https://dungeon.report/pgcr/16137973449"}, "Warlock": {"date": "17-May-25", "duration": "1:33:37", "reportLink": "https://dungeon.report/pgcr/16153706225"}, "Hunter": {"date": "17-May-26", "duration": "1:21:12", "reportLink": "https://dungeon.report/pgcr/16844816565"}}};
+
+// Merge static data into live stores at startup
+function loadStaticData() {
+  Object.assign(bannerImages, STATIC_BANNERS);
+  Object.assign(emblemImages, STATIC_EMBLEMS);
+  Object.assign(classIcons, STATIC_CLASS_ICONS);
+  // Deep merge run data — static data is the base, CSV imports override
+  for (const [dungeonId, chars] of Object.entries(STATIC_RUN_DATA)) {
+    if (!runData[dungeonId]) runData[dungeonId] = {};
+    for (const [cls, run] of Object.entries(chars)) {
+      if (!runData[dungeonId][cls]) runData[dungeonId][cls] = run;
+    }
+  }
+}
+
+// Load static hardcoded data then render
+loadStaticData();
+renderGallery();
+</script>
+</body>
+</html>
