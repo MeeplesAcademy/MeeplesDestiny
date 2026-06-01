@@ -57,7 +57,10 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .completion-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); background:var(--gold-bg); border:1px solid rgba(200,168,75,0.2); border-radius:3px; padding:3px 8px; margin-bottom:0.5rem; width:fit-content; }
 
 .char-list { display:flex; flex-direction:column; gap:6px; margin-top:0; padding-top:0.75rem; }
-.char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; align-items:center; gap:8px; padding:7px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:36px; }
+.char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; align-items:start; gap:8px; padding:7px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:36px; position:relative; }
+.char-row.first-ever { border-color:var(--gold); box-shadow:0 0 8px rgba(200,168,75,0.2); }
+.first-ever-star { position:absolute; left:-8px; top:50%; transform:translateY(-50%); font-size:13px; line-height:1; }
+.char-note { grid-column:2/-1; font-size:10px; color:var(--muted2); letter-spacing:0.04em; font-style:italic; margin-top:2px; padding-left:4px; }
 .char-row.has-run { border-color:rgba(255,255,255,0.08); }
 .char-row.no-run { opacity:0.4; }
 .char-icon { width:22px; height:22px; border-radius:3px; object-fit:cover; display:block; flex-shrink:0; }
@@ -156,7 +159,7 @@ const STATIC_CLASS_ICONS = {
 
 const STATIC_RUN_DATA = {
   'shattered-throne': {
-    'Titan':   { date:'17-Nov-21', duration:'1:10:51', reportLink:'https://dungeon.report/pgcr/9619723930' },
+    'Titan':   { date:'17-Nov-21', duration:'1:10:51', reportLink:'https://dungeon.report/pgcr/9619723930', pageLink:'', note:'First Ever Solo Flawless', firstEver:true }, },
     'Warlock': { date:'25-Nov-21', duration:'1:29:48', reportLink:'https://dungeon.report/pgcr/9650670198' },
     'Hunter':  { date:'24-Nov-21', duration:'1:08:53', reportLink:'https://dungeon.report/pgcr/9646626483' },
   },
@@ -309,6 +312,14 @@ function renderGallery() {
       row.appendChild(nameEl);
 
       if (run) {
+        if (run.firstEver) {
+          row.classList.add('first-ever');
+          const star = document.createElement('span');
+          star.className = 'first-ever-star';
+          star.textContent = '⭐';
+          row.appendChild(star);
+        }
+
         const dateEl = document.createElement('div');
         dateEl.className = 'char-date';
         dateEl.textContent = fmtDateShort(run.date);
@@ -327,6 +338,13 @@ function renderGallery() {
           linkEl.title = 'View on Dungeon Report';
           linkEl.textContent = '↗';
           row.appendChild(linkEl);
+        }
+
+        if (run.note) {
+          const noteEl = document.createElement('div');
+          noteEl.className = 'char-note';
+          noteEl.textContent = run.note;
+          row.appendChild(noteEl);
         }
       } else {
         const empty = document.createElement('div');
