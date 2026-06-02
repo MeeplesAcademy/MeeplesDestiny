@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeples: Dungeon Conquests — Class Icon Summary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#080a0f; --bg2:#0d1018; --bg3:#12161f; --bg4:#181d28;
+  --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.12); --border3:rgba(200,168,75,0.25);
+  --text:#e8eaf0; --muted:#5a6070; --muted2:#8a9090;
+  --gold:#c8a84b; --gold2:#e2c97e; --gold3:#f5e6b8; --gold-bg:rgba(200,168,75,0.08);
+  --titan:#e05c3a; --hunter:#5a9fd4; --warlock:#a670d4;
+}
+body { background:var(--bg); color:var(--text); font-family:'Barlow',sans-serif; font-weight:300; min-height:100vh; }
+body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 15% 20%,rgba(200,168,75,0.04) 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,rgba(74,158,255,0.03) 0%,transparent 50%); pointer-events:none; z-index:0; }
+
+/* Page header */
+.page-header { position:relative; z-index:1; text-align:center; padding:3.5rem 2rem 2.5rem; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(200,168,75,0.05) 0%,transparent 100%); }
+.page-header::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:120px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+.eyebrow { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; opacity:0.8; }
+.guardian-name { font-family:'Cinzel',serif; font-size:clamp(1.1rem,2vw,1.35rem); font-weight:600; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); opacity:0.75; margin-bottom:0.5rem; }
+.page-title { font-family:'Cinzel',serif; font-size:clamp(2rem,5vw,4rem); font-weight:900; letter-spacing:0.06em; text-transform:uppercase; background:linear-gradient(180deg,var(--gold3) 0%,var(--gold) 60%,#8a6a20 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; margin-bottom:0.75rem; }
+.page-sub { font-size:clamp(1rem,2.5vw,1.4rem); color:var(--muted2); letter-spacing:0.12em; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; font-weight:400; margin-top:0.25rem; }
+
+/* Summary section shared */
+.summary-section { position:relative; z-index:1; padding:2rem 2rem; border-bottom:1px solid var(--border); }
+.summary-header { display:flex; align-items:baseline; gap:16px; margin-bottom:1.25rem; }
+.summary-title { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); opacity:0.8; }
+.summary-version { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:0.1em; color:var(--muted); font-style:italic; }
+.summary-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
+
+/* Summary row */
+.s-row { display:flex; align-items:center; gap:10px; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:9px 12px; transition:border-color 0.2s; }
+.s-row.conquered { border-color:rgba(200,168,75,0.25); }
+.s-row.conquered:hover { border-color:rgba(200,168,75,0.45); }
+.s-row:not(.conquered):hover { border-color:rgba(255,255,255,0.12); }
+
+/* Emblem thumbnail */
+.s-emblem { width:56px; height:24px; border-radius:3px; overflow:hidden; flex-shrink:0; background:var(--bg3); border:1px solid rgba(255,255,255,0.08); }
+.s-emblem img { width:100%; height:100%; object-fit:cover; object-position:left center; display:block; }
+
+/* Info */
+.s-info { flex:1; min-width:0; }
+.s-name { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.04em; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.s-row.conquered .s-name { color:var(--gold2); }
+.s-prog { display:flex; align-items:center; gap:7px; margin-top:4px; }
+.s-label { font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.05em; }
+.s-row.conquered .s-label { color:var(--gold); }
+
+/* ── CLASS ICON VERSION ── */
+.class-icons { display:flex; gap:4px; align-items:center; }
+.ci { width:20px; height:20px; border-radius:3px; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:border-color 0.2s; }
+.ci img { width:14px; height:14px; display:block; }
+/* conquered — gold border */
+.ci.done-gold  { border:2px solid var(--gold); }
+/* individual class done on incomplete dungeon — class color border */
+.ci.done-titan   { border:2px solid var(--titan); }
+.ci.done-warlock { border:2px solid var(--warlock); }
+.ci.done-hunter  { border:2px solid var(--hunter); }
+/* not yet done */
+.ci.not-done { border:1.5px dashed rgba(255,255,255,0.18); opacity:0.3; }
+
+.footer { position:relative; z-index:1; text-align:center; padding:2rem; border-top:1px solid var(--border); font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; margin-top:2rem; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="eyebrow">Destiny 2</div>
+  <div class="guardian-name">Meeples</div>
+  <h1 class="page-title">Dungeon Conquests</h1>
+  <p class="page-sub">Solo Flawless Dungeon Completions</p>
+</header>
+
+<!-- CLASS ICON VERSION -->
+<section class="summary-section">
+  <div class="summary-header">
+    <span class="summary-title">6 of 11 Dungeons Conquered</span>
+    <span class="summary-version">— Class color borders · gold dungeon frame on conquest</span>
+  </div>
+  <div class="summary-grid" id="iconGrid"></div>
+</section>
+
+<footer class="footer">Destiny 2 · Meeples · Summary layout test</footer>
+
+<script>
+const G = 'https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main';
+
+const DUNGEONS = [
+  { id:'shattered-throne',   name:'Shattered Throne',    titan:true,  warlock:true,  hunter:true  },
+  { id:'pit-of-heresy',      name:'Pit of Heresy',        titan:true,  warlock:true,  hunter:true  },
+  { id:'prophecy',           name:'Prophecy',             titan:true,  warlock:true,  hunter:true  },
+  { id:'grasp-of-avarice',   name:'Grasp of Avarice',     titan:true,  warlock:true,  hunter:true  },
+  { id:'duality',            name:'Duality',              titan:true,  warlock:true,  hunter:true  },
+  { id:'spire-of-watcher',   name:'Spire of the Watcher', titan:true,  warlock:false, hunter:false },
+  { id:'ghosts-of-the-deep', name:'Ghosts of the Deep',   titan:false, warlock:true,  hunter:false },
+  { id:'warlords-ruin',      name:"Warlord's Ruin",        titan:true,  warlock:true,  hunter:true  },
+  { id:'vespers-host',       name:"Vesper's Host",         titan:false, warlock:false, hunter:false },
+  { id:'sundered-doctrine',  name:'Sundered Doctrine',    titan:false, warlock:false, hunter:false },
+  { id:'equilibrium',        name:'Equilibrium',          titan:false, warlock:false, hunter:false },
+];
+
+function iconUrl(id) {
+  // swap last word with "icon" version
+  return `${G}/${id.split('-').map((w,i,a) => {
+    // build filename from id
+  }).join('')}`;
+}
+
+// Emblem icon filenames match emblem names with ICON instead of EMBLEM
+const ICON_NAMES = {
+  'shattered-throne':   '01-Shattered_Throne_ICON.jpg',
+  'pit-of-heresy':      '02-Pit_Of_Heresy_ICON.jpg',
+  'prophecy':           '03-Prophecy_ICON.jpg',
+  'grasp-of-avarice':   '04-Grasp_Of_Avarice_ICON.jpg',
+  'duality':            '05-Duality_ICON.jpg',
+  'spire-of-watcher':   '06-Spire_Of_The_Watcher_ICON.jpg',
+  'ghosts-of-the-deep': '07-Ghosts_Of_The_Deep_ICON.jpg',
+  'warlords-ruin':      '08-Warlords_Ruin_ICON.jpg',
+  'vespers-host':       '09-Vespers_Host_ICON.jpg',
+  'sundered-doctrine':  '10-Sundered_Doctrine_ICON.jpg',
+  'equilibrium':        '11-Equilibrium_ICON.jpg',
+};
+
+const CLASS_ICONS = {
+  Titan:   G + '/class-titan-white.svg',
+  Warlock: G + '/class-warlock-white.svg',
+  Hunter:  G + '/class-hunter-white.svg',
+};
+
+function conquered(d) { return d.titan && d.warlock && d.hunter; }
+
+
+function buildIconRow(d) {
+  const isConquered = conquered(d);
+  const row = document.createElement('div');
+  row.className = 's-row' + (isConquered ? ' conquered' : '');
+
+  // Emblem
+  const emb = document.createElement('div');
+  emb.className = 's-emblem';
+  const embImg = document.createElement('img');
+  embImg.src = G + '/' + ICON_NAMES[d.id];
+  embImg.alt = d.name;
+  emb.appendChild(embImg);
+  row.appendChild(emb);
+
+  // Info
+  const info = document.createElement('div');
+  info.className = 's-info';
+  const name = document.createElement('div');
+  name.className = 's-name';
+  name.textContent = d.name;
+  info.appendChild(name);
+
+  const prog = document.createElement('div');
+  prog.className = 's-prog';
+  const icons = document.createElement('div');
+  icons.className = 'class-icons';
+
+  const classDefs = [
+    { key:'titan',   cls:'Titan',   done:'done-titan',   doneAll:'done-gold' },
+    { key:'warlock', cls:'Warlock', done:'done-warlock',  doneAll:'done-gold' },
+    { key:'hunter',  cls:'Hunter',  done:'done-hunter',   doneAll:'done-gold' },
+  ];
+
+  classDefs.forEach(({ key, cls, done, doneAll }) => {
+    const ci = document.createElement('div');
+    if (d[key]) {
+      ci.className = 'ci ' + done; // always class color, never gold — even on conquered
+    } else {
+      ci.className = 'ci not-done';
+    }
+    ci.title = cls + (d[key] ? ' — Complete' : ' — Incomplete');
+    const img = document.createElement('img');
+    img.src = CLASS_ICONS[cls];
+    img.alt = cls;
+    ci.appendChild(img);
+    icons.appendChild(ci);
+  });
+
+  prog.appendChild(icons);
+
+  const completedCount = [d.titan, d.warlock, d.hunter].filter(Boolean).length;
+  const lbl = document.createElement('span');
+  lbl.className = 's-label';
+  lbl.textContent = isConquered ? `3/3 ⚔️` : `${completedCount}/3`;
+  prog.appendChild(lbl);
+  info.appendChild(prog);
+  row.appendChild(info);
+  return row;
+}
+
+const iconGrid = document.getElementById('iconGrid');
+DUNGEONS.forEach(d => {
+  iconGrid.appendChild(buildIconRow(d));
+});
+</script>
+</body>
+</html>
