@@ -57,7 +57,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 
 .char-list { display:flex; flex-direction:column; gap:6px; margin-top:0; padding-top:0.75rem; }
 /* Two content rows + two fixed note rows */
-.char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; grid-template-rows:auto 16px 21px; align-items:center; gap:2px 8px; padding:8px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:67px; position:relative; }
+.char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; grid-template-rows:auto 18px 22px; align-items:center; gap:3px 8px; padding:8px 10px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:76px; position:relative; }
 .char-row.first-ever { border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 0 12px rgba(200,168,75,0.4); }
 .first-ever-star { position:absolute; left:-9px; top:50%; transform:translateY(-50%); font-size:13px; line-height:1; }
 .char-row.has-run { border-color:rgba(255,255,255,0.08); }
@@ -74,13 +74,13 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .char-link:hover { color:var(--gold); }
 .char-empty { font-size:11px; color:var(--muted); font-style:italic; grid-column:2/-1; letter-spacing:0.03em; display:none; }
 /* Note line 1 — manual text */
-.char-note { grid-column:2/-1; font-size:11px; color:var(--muted2); letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; }
+.char-note { grid-column:1/-1; font-size:11px; color:var(--muted2); letter-spacing:0.04em; font-style:italic; padding-left:4px; height:18px; line-height:18px; overflow:hidden; }
 .char-note.first-ever-note { color:var(--gold); font-style:italic; font-weight:500; }
 /* Note line 2 — death stats from CSV */
-.char-deaths { grid-column:2/-1; font-size:13px; color:#4a5060; letter-spacing:0.01em; padding-left:4px; height:21px; line-height:21px; overflow:hidden; font-family:'Barlow',sans-serif; font-weight:300; display:flex; align-items:center; gap:5px; }
+.char-deaths { grid-column:1/-1; font-size:12px; color:#4a5060; letter-spacing:0.01em; padding-left:2px; height:22px; line-height:22px; overflow:hidden; font-family:'Barlow',sans-serif; font-weight:300; display:flex; align-items:center; gap:4px; white-space:nowrap; }
 .char-deaths.has-data { color:#e05050; opacity:0.85; }
 .char-row.no-run .char-deaths.has-data { opacity:1; color:#f87171; }
-.death-icon { width:21px; height:21px; object-fit:cover; border-radius:2px; flex-shrink:0; opacity:0.85; }
+.death-icon { width:20px; height:20px; object-fit:cover; border-radius:2px; flex-shrink:0; opacity:0.85; }
 
 .page-footer { position:relative; z-index:1; text-align:center; padding:2rem; border-top:1px solid var(--border); font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; }
 
@@ -264,6 +264,34 @@ const STATIC_DEATH_DATA = {
     'Hunter':  null,
   },
 };
+const INCOMPLETE_NOTES = {
+  'spire-of-watcher': {
+    'Titan':   { note:'I just need One. Clean. Run.' },
+    'Warlock': { note:'Stupid fans and Warlock jump.' },
+    'Hunter':  { note:"What? I've peeked in there." },
+  },
+  'ghosts-of-the-deep': {
+    'Titan':   { note:'Getting closer.' },
+    'Warlock': { note:'Explorer mode was easy.' },
+    'Hunter':  { note:"Guys, I never learned to swim." },
+  },
+  'vespers-host': {
+    'Titan':   { note:'Anomaly not yet resolved.' },
+    'Warlock': { note:'Radiation levels critical.' },
+    'Hunter':  { note:"Haven't ventured in yet." },
+  },
+  'sundered-doctrine': {
+    'Titan':   { note:'The lamps are lit.' },
+    'Warlock': { note:'The doctrine remains unbroken.' },
+    'Hunter':  { note:"I'll sunder this eventually." },
+  },
+  'equilibrium': {
+    'Titan':   { note:'Just need to beat Sere.' },
+    'Warlock': { note:"Can't wait to take my Arc Buddies in there." },
+    'Hunter':  { note:'Wait, he has TWO lightsabers??' },
+  },
+};
+
 function loadStaticData() {
   Object.assign(bannerImages, STATIC_BANNERS);
   Object.assign(emblemImages, STATIC_EMBLEMS);
@@ -423,8 +451,9 @@ function renderGallery() {
 
       // Note line 1 — manual text (always rendered for consistent height)
       const noteEl = document.createElement('div');
-      noteEl.className = 'char-note';
-      noteEl.textContent = (run && run.note) ? run.note : '';
+      noteEl.className = 'char-note' + ((run && run.firstEver) ? ' first-ever-note' : '');
+      const incompleteNote = (!run && INCOMPLETE_NOTES[dungeon.id]) ? (INCOMPLETE_NOTES[dungeon.id][cls]?.note || '') : '';
+      noteEl.textContent = (run && run.note) ? run.note : incompleteNote;
       row.appendChild(noteEl);
 
       // Note line 2 — death stats hardcoded (always rendered for consistent height)
@@ -434,7 +463,7 @@ function renderGallery() {
         const skullImg = document.createElement('img');
         skullImg.className = 'death-icon';
         skullImg.src = SKULL_ICON;
-        skullImg.alt = '☠';
+        skullImg.alt = '';
         deathEl.appendChild(skullImg);
         const deathText = document.createElement('span');
         if (clsDeath.conquered) {
