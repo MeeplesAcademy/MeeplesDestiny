@@ -74,25 +74,16 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .char-link:hover { color:var(--gold); }
 .char-empty { font-size:11px; color:var(--muted); font-style:italic; grid-column:2/-1; letter-spacing:0.03em; }
 /* Note line 1 — manual text */
-.char-note { grid-column:2/-1; font-size:11px; color:#4a5060; letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; }
+.char-note { grid-column:2/-1; font-size:11px; color:var(--muted2); letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; }
+.char-note.first-ever-note { color:var(--gold); font-style:normal; font-weight:500; }
 /* Note line 2 — death stats from CSV */
-.char-deaths { grid-column:2/-1; font-size:11px; color:#4a5060; letter-spacing:0.04em; padding-left:4px; height:16px; line-height:16px; overflow:hidden; }
-.char-deaths.has-data { color:var(--red); opacity:0.7; }
+.char-deaths { grid-column:2/-1; font-size:12px; color:#4a5060; letter-spacing:0.03em; padding-left:4px; height:16px; line-height:16px; overflow:hidden; font-family:'Barlow Condensed',sans-serif; display:flex; align-items:center; gap:4px; }
+.char-deaths.has-data { color:#e05050; opacity:0.85; }
+.char-row.no-run .char-deaths.has-data { opacity:1; color:#f87171; }
+.death-icon { width:16px; height:16px; object-fit:cover; border-radius:2px; flex-shrink:0; opacity:0.85; }
 
 .page-footer { position:relative; z-index:1; text-align:center; padding:2rem; border-top:1px solid var(--border); font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; }
 
-/* Hidden update panel */
-.update-toggle { display:block; text-align:center; font-family:'Barlow Condensed',sans-serif; font-size:10px; letter-spacing:0.08em; color:var(--bg4); cursor:pointer; padding:0.5rem; text-decoration:none; transition:color 0.3s; user-select:none; }
-.update-toggle:hover { color:var(--muted); }
-.update-panel { display:none; background:var(--bg2); border-top:1px solid var(--border); padding:1.25rem 2rem; text-align:center; gap:12px; flex-wrap:wrap; align-items:center; justify-content:center; }
-.update-panel.open { display:flex; }
-.update-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted2); }
-.btn-upload { background:var(--gold-bg); border:1px solid var(--border3); border-radius:4px; color:var(--gold2); font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; padding:7px 18px; cursor:pointer; transition:background 0.2s; }
-.btn-upload:hover { background:rgba(200,168,75,0.15); }
-.update-status { font-size:12px; color:var(--muted2); font-family:'Barlow Condensed',sans-serif; }
-.update-status.ok { color:var(--green); }
-.update-status.err { color:var(--red); }
-input[type="file"] { display:none; }
 </style>
 </head>
 <body>
@@ -108,13 +99,6 @@ input[type="file"] { display:none; }
 
 <footer class="page-footer">Destiny 2 · Meeples · Solo Flawless Dungeon Completions</footer>
 
-<a class="update-toggle" onclick="document.getElementById('updatePanel').classList.toggle('open')">⚙ Update Data</a>
-<div class="update-panel" id="updatePanel">
-  <span class="update-label">Import death stats CSV:</span>
-  <button class="btn-upload" onclick="document.getElementById('csvInput').click()">⬆ Load CSV</button>
-  <input type="file" id="csvInput" accept=".csv" onchange="loadDeathCSV(event)">
-  <span class="update-status" id="updateStatus">Upload your full solo runs CSV to populate death stats</span>
-</div>
 
 <script>
 const DUNGEONS = [
@@ -138,7 +122,7 @@ const bannerImages = {};
 const emblemImages = {};
 const classIcons   = {};
 let runData  = {};
-let deathData = {}; // dungeonId -> { Titan:{deaths,runs}, Warlock:{...}, Hunter:{...} }
+let deathData = {};
 
 function fmtDateShort(dateStr) {
   const d = new Date(dateStr);
@@ -152,6 +136,7 @@ function normalizeName(n) {
 
 // ── Static data ──
 const G = 'https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main';
+const SKULL_ICON = G + '/Darkest_Day.jpg';
 
 const STATIC_BANNERS = {
   'shattered-throne':   G+'/01-Shattered_Throne_DR.jpg',
@@ -220,6 +205,65 @@ const STATIC_RUN_DATA = {
   },
 };
 
+
+// ── Static death data (pre-flawless attempts only) ──
+const STATIC_DEATH_DATA = {
+  'shattered-throne': {
+    'Titan':   { deaths:98,  runs:50,  conquered:true },
+    'Warlock': { deaths:186, runs:30,  conquered:true },
+    'Hunter':  { deaths:41,  runs:17,  conquered:true },
+  },
+  'pit-of-heresy': {
+    'Titan':   { deaths:29,  runs:16,  conquered:true },
+    'Warlock': { deaths:148, runs:29,  conquered:true },
+    'Hunter':  { deaths:35,  runs:21,  conquered:true },
+  },
+  'prophecy': {
+    'Titan':   { deaths:71,  runs:26,  conquered:true },
+    'Warlock': { deaths:242, runs:76,  conquered:true },
+    'Hunter':  { deaths:16,  runs:10,  conquered:true },
+  },
+  'grasp-of-avarice': {
+    'Titan':   { deaths:110, runs:39,  conquered:true },
+    'Warlock': { deaths:92,  runs:41,  conquered:true },
+    'Hunter':  { deaths:29,  runs:9,   conquered:true },
+  },
+  'duality': {
+    'Titan':   { deaths:167, runs:31,  conquered:true },
+    'Warlock': { deaths:35,  runs:19,  conquered:true },
+    'Hunter':  { deaths:67,  runs:33,  conquered:true },
+  },
+  'spire-of-watcher': {
+    'Titan':   { deaths:64,  runs:14,  conquered:false },
+    'Warlock': { deaths:19,  runs:6,   conquered:false },
+    'Hunter':  { deaths:10,  runs:1,   conquered:false },
+  },
+  'ghosts-of-the-deep': {
+    'Titan':   { deaths:68,  runs:11,  conquered:false },
+    'Warlock': { deaths:111, runs:17,  conquered:false },
+    'Hunter':  { deaths:5,   runs:1,   conquered:false },
+  },
+  'warlords-ruin': {
+    'Titan':   { deaths:147, runs:44,  conquered:true },
+    'Warlock': { deaths:182, runs:37,  conquered:true },
+    'Hunter':  { deaths:208, runs:77,  conquered:true },
+  },
+  'vespers-host': {
+    'Titan':   { deaths:25,  runs:5,   conquered:false },
+    'Warlock': { deaths:15,  runs:4,   conquered:false },
+    'Hunter':  null,
+  },
+  'sundered-doctrine': {
+    'Titan':   { deaths:2,   runs:1,   conquered:false },
+    'Warlock': null,
+    'Hunter':  { deaths:0,   runs:1,   conquered:false },
+  },
+  'equilibrium': {
+    'Titan':   { deaths:106, runs:14,  conquered:false },
+    'Warlock': null,
+    'Hunter':  null,
+  },
+};
 function loadStaticData() {
   Object.assign(bannerImages, STATIC_BANNERS);
   Object.assign(emblemImages, STATIC_EMBLEMS);
@@ -230,71 +274,10 @@ function loadStaticData() {
       if (!runData[dungeonId][cls]) runData[dungeonId][cls] = run;
     }
   }
+  // Merge static death data
+  Object.assign(deathData, STATIC_DEATH_DATA);
 }
 
-// ── CSV parser for death stats ──
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim().toLowerCase());
-  return lines.slice(1).map(line => {
-    const cols = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      if (line[i] === '"') { inQ = !inQ; }
-      else if (line[i] === ',' && !inQ) { cols.push(cur); cur = ''; }
-      else { cur += line[i]; }
-    }
-    cols.push(cur);
-    const row = {};
-    headers.forEach((h, i) => row[h] = (cols[i] || '').trim());
-    return row;
-  });
-}
-
-function loadDeathCSV(evt) {
-  const file = evt.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const rows = parseCSV(e.target.result);
-      deathData = {};
-      let matched = 0;
-
-      rows.forEach(row => {
-        const dungeonRaw = row['dungeon name'] || row['dungeon'] || '';
-        const charClass  = (row['character'] || '').trim();
-        const deaths     = parseInt(row['deaths'] || '0') || 0;
-        if (!CLASSES.includes(charClass)) return;
-
-        // Match to dungeon id
-        const normRaw = normalizeName(dungeonRaw);
-        const dungeon = DUNGEONS.find(d => normalizeName(d.name) === normRaw);
-        if (!dungeon) return;
-
-        if (!deathData[dungeon.id]) {
-          deathData[dungeon.id] = {};
-          CLASSES.forEach(c => deathData[dungeon.id][c] = { deaths:0, runs:0 });
-        }
-        deathData[dungeon.id][charClass].deaths += deaths;
-        deathData[dungeon.id][charClass].runs   += 1;
-        matched++;
-      });
-
-      const dungCount = Object.keys(deathData).length;
-      document.getElementById('updateStatus').textContent =
-        `Loaded death stats from ${matched} runs across ${dungCount} dungeon(s)`;
-      document.getElementById('updateStatus').className = 'update-status ok';
-      renderGallery();
-    } catch(err) {
-      document.getElementById('updateStatus').textContent = 'Error: ' + err.message;
-      document.getElementById('updateStatus').className = 'update-status err';
-    }
-    evt.target.value = '';
-  };
-  reader.readAsText(file);
-}
 
 function renderGallery() {
   const gallery = document.getElementById('gallery');
@@ -444,11 +427,22 @@ function renderGallery() {
       noteEl.textContent = (run && run.note) ? run.note : '';
       row.appendChild(noteEl);
 
-      // Note line 2 — death stats from CSV (always rendered for consistent height)
+      // Note line 2 — death stats hardcoded (always rendered for consistent height)
       const deathEl = document.createElement('div');
       if (clsDeath && clsDeath.runs > 0) {
         deathEl.className = 'char-deaths has-data';
-        deathEl.textContent = `☠ ${clsDeath.deaths} deaths across ${clsDeath.runs} attempt${clsDeath.runs !== 1 ? 's' : ''}`;
+        const skullImg = document.createElement('img');
+        skullImg.className = 'death-icon';
+        skullImg.src = SKULL_ICON;
+        skullImg.alt = '☠';
+        deathEl.appendChild(skullImg);
+        const deathText = document.createElement('span');
+        if (clsDeath.conquered) {
+          deathText.textContent = `${clsDeath.deaths} deaths in ${clsDeath.runs} attempt${clsDeath.runs !== 1 ? 's' : ''} to Solo Flawless`;
+        } else {
+          deathText.textContent = `So far: ${clsDeath.deaths} deaths across ${clsDeath.runs} attempt${clsDeath.runs !== 1 ? 's' : ''}`;
+        }
+        deathEl.appendChild(deathText);
       } else {
         deathEl.className = 'char-deaths';
         deathEl.textContent = '';
