@@ -17,7 +17,7 @@
   --text:#e8eaf0; --muted:#5a6070; --muted2:#8a9090;
   --gold:#c8a84b; --gold2:#e2c97e; --gold3:#f5e6b8; --gold-bg:rgba(200,168,75,0.08);
   --titan:#e05c3a; --hunter:#5a9fd4; --warlock:#a670d4;
-  --green:#4ade80;
+  --green:#4ade80; --red:#f87171;
 }
 body { background:var(--bg); color:var(--text); font-family:'Barlow',sans-serif; font-weight:300; min-height:100vh; overflow-x:hidden; }
 body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 15% 20%,rgba(200,168,75,0.04) 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,rgba(74,158,255,0.03) 0%,transparent 50%); pointer-events:none; z-index:0; }
@@ -53,14 +53,13 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .card.is-complete .card-title { color:var(--gold2); }
 .card-divider { height:1px; background:linear-gradient(90deg,var(--gold),transparent); margin:0.75rem 0; opacity:0.3; }
 .card.is-complete .card-divider { opacity:0.6; }
-
 .completion-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); background:var(--gold-bg); border:1px solid rgba(200,168,75,0.2); border-radius:3px; padding:4px 10px; margin-bottom:0.5rem; width:fit-content; }
 
 .char-list { display:flex; flex-direction:column; gap:6px; margin-top:0; padding-top:0.75rem; }
-.char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; grid-template-rows:auto 16px; align-items:center; gap:4px 8px; padding:8px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:52px; position:relative; }
+/* Two content rows + two fixed note rows */
+.char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; grid-template-rows:auto 16px 16px; align-items:center; gap:2px 8px; padding:8px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:62px; position:relative; }
 .char-row.first-ever { border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 0 12px rgba(200,168,75,0.4); }
 .first-ever-star { position:absolute; left:-9px; top:50%; transform:translateY(-50%); font-size:13px; line-height:1; }
-.char-note { grid-column:2/-1; font-size:12px; color:var(--muted2); letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; } */
 .char-row.has-run { border-color:rgba(255,255,255,0.08); }
 .char-row.no-run { opacity:0.4; }
 .char-icon { width:22px; height:22px; border-radius:3px; object-fit:cover; display:block; flex-shrink:0; }
@@ -74,8 +73,26 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .char-link { color:var(--muted); text-decoration:none; font-size:13px; font-family:'Barlow Condensed',sans-serif; transition:color 0.15s; line-height:1; }
 .char-link:hover { color:var(--gold); }
 .char-empty { font-size:11px; color:var(--muted); font-style:italic; grid-column:2/-1; letter-spacing:0.03em; }
+/* Note line 1 — manual text */
+.char-note { grid-column:2/-1; font-size:11px; color:#4a5060; letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; }
+/* Note line 2 — death stats from CSV */
+.char-deaths { grid-column:2/-1; font-size:11px; color:#4a5060; letter-spacing:0.04em; padding-left:4px; height:16px; line-height:16px; overflow:hidden; }
+.char-deaths.has-data { color:var(--red); opacity:0.7; }
 
 .page-footer { position:relative; z-index:1; text-align:center; padding:2rem; border-top:1px solid var(--border); font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; }
+
+/* Hidden update panel */
+.update-toggle { display:block; text-align:center; font-family:'Barlow Condensed',sans-serif; font-size:10px; letter-spacing:0.08em; color:var(--bg4); cursor:pointer; padding:0.5rem; text-decoration:none; transition:color 0.3s; user-select:none; }
+.update-toggle:hover { color:var(--muted); }
+.update-panel { display:none; background:var(--bg2); border-top:1px solid var(--border); padding:1.25rem 2rem; text-align:center; gap:12px; flex-wrap:wrap; align-items:center; justify-content:center; }
+.update-panel.open { display:flex; }
+.update-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted2); }
+.btn-upload { background:var(--gold-bg); border:1px solid var(--border3); border-radius:4px; color:var(--gold2); font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; padding:7px 18px; cursor:pointer; transition:background 0.2s; }
+.btn-upload:hover { background:rgba(200,168,75,0.15); }
+.update-status { font-size:12px; color:var(--muted2); font-family:'Barlow Condensed',sans-serif; }
+.update-status.ok { color:var(--green); }
+.update-status.err { color:var(--red); }
+input[type="file"] { display:none; }
 </style>
 </head>
 <body>
@@ -91,6 +108,14 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 
 <footer class="page-footer">Destiny 2 · Meeples · Solo Flawless Dungeon Completions</footer>
 
+<a class="update-toggle" onclick="document.getElementById('updatePanel').classList.toggle('open')">⚙ Update Data</a>
+<div class="update-panel" id="updatePanel">
+  <span class="update-label">Import death stats CSV:</span>
+  <button class="btn-upload" onclick="document.getElementById('csvInput').click()">⬆ Load CSV</button>
+  <input type="file" id="csvInput" accept=".csv" onchange="loadDeathCSV(event)">
+  <span class="update-status" id="updateStatus">Upload your full solo runs CSV to populate death stats</span>
+</div>
+
 <script>
 const DUNGEONS = [
   { id:'shattered-throne',   name:"Shattered Throne",    num:'01' },
@@ -101,7 +126,7 @@ const DUNGEONS = [
   { id:'spire-of-watcher',   name:"Spire of the Watcher", num:'06', status:'Solo Titan done, need clean runs.' },
   { id:'ghosts-of-the-deep', name:"Ghosts of the Deep",   num:'07', status:'Many practice drownings.' },
   { id:'warlords-ruin',      name:"Warlord's Ruin",        num:'08' },
-  { id:'vespers-host',       name:"Vesper's Host",         num:'09', status:'Anomaly Detected. Much Radiation.' },
+  { id:'vespers-host',       name:"Vesper's Host",         num:'09', status:'Anomaly Detected. Radiation overwhelming.' },
   { id:'sundered-doctrine',  name:"Sundered Doctrine",    num:'10', status:'Can light the lamps LOL.' },
   { id:'equilibrium',        name:"Equilibrium",          num:'11', status:'Can get to final boss flawless, but....' },
 ];
@@ -112,12 +137,17 @@ const CLASS_KEY = { Titan:'titan', Hunter:'hunter', Warlock:'warlock' };
 const bannerImages = {};
 const emblemImages = {};
 const classIcons   = {};
-let runData = {};
+let runData  = {};
+let deathData = {}; // dungeonId -> { Titan:{deaths,runs}, Warlock:{...}, Hunter:{...} }
 
 function fmtDateShort(dateStr) {
   const d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
   return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function normalizeName(n) {
+  return (n||'').trim().toLowerCase().replace(/^the\s+/i,'').replace(/['']/g,"'");
 }
 
 // ── Static data ──
@@ -202,12 +232,77 @@ function loadStaticData() {
   }
 }
 
+// ── CSV parser for death stats ──
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim().toLowerCase());
+  return lines.slice(1).map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQ = !inQ; }
+      else if (line[i] === ',' && !inQ) { cols.push(cur); cur = ''; }
+      else { cur += line[i]; }
+    }
+    cols.push(cur);
+    const row = {};
+    headers.forEach((h, i) => row[h] = (cols[i] || '').trim());
+    return row;
+  });
+}
+
+function loadDeathCSV(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      deathData = {};
+      let matched = 0;
+
+      rows.forEach(row => {
+        const dungeonRaw = row['dungeon name'] || row['dungeon'] || '';
+        const charClass  = (row['character'] || '').trim();
+        const deaths     = parseInt(row['deaths'] || '0') || 0;
+        if (!CLASSES.includes(charClass)) return;
+
+        // Match to dungeon id
+        const normRaw = normalizeName(dungeonRaw);
+        const dungeon = DUNGEONS.find(d => normalizeName(d.name) === normRaw);
+        if (!dungeon) return;
+
+        if (!deathData[dungeon.id]) {
+          deathData[dungeon.id] = {};
+          CLASSES.forEach(c => deathData[dungeon.id][c] = { deaths:0, runs:0 });
+        }
+        deathData[dungeon.id][charClass].deaths += deaths;
+        deathData[dungeon.id][charClass].runs   += 1;
+        matched++;
+      });
+
+      const dungCount = Object.keys(deathData).length;
+      document.getElementById('updateStatus').textContent =
+        `Loaded death stats from ${matched} runs across ${dungCount} dungeon(s)`;
+      document.getElementById('updateStatus').className = 'update-status ok';
+      renderGallery();
+    } catch(err) {
+      document.getElementById('updateStatus').textContent = 'Error: ' + err.message;
+      document.getElementById('updateStatus').className = 'update-status err';
+    }
+    evt.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 function renderGallery() {
   const gallery = document.getElementById('gallery');
   gallery.innerHTML = '';
 
   DUNGEONS.forEach(dungeon => {
     const runs = runData[dungeon.id] || {};
+    const deaths = deathData[dungeon.id] || null;
     const hasAnyRun = CLASSES.some(c => runs[c]);
     const allComplete = CLASSES.every(c => runs[c]);
 
@@ -270,7 +365,6 @@ function renderGallery() {
     if (allComplete) {
       badge.innerHTML = '⚔️ Conquered';
     } else {
-     /* badge.style.cssText = 'color:var(--blue);background:rgba(74,158,255,0.08);border-color:rgba(74,158,255,0.2)'; */
       badge.style.cssText = 'color:#3a6a8a;background:rgba(74,158,255,0.08);border-color:rgba(74,158,255,0.2)';
       badge.innerHTML = dungeon.status || '—';
     }
@@ -286,6 +380,7 @@ function renderGallery() {
 
     CLASSES.forEach(cls => {
       const run = runs[cls];
+      const clsDeath = deaths ? deaths[cls] : null;
       const row = document.createElement('div');
       row.className = 'char-row ' + (run ? 'has-run' : 'no-run');
 
@@ -336,21 +431,29 @@ function renderGallery() {
           linkEl.textContent = '↗';
           row.appendChild(linkEl);
         }
-
-        const noteEl = document.createElement('div');
-        noteEl.className = 'char-note';
-        noteEl.textContent = run.note || '';
-        row.appendChild(noteEl);
       } else {
         const empty = document.createElement('div');
         empty.className = 'char-empty';
         empty.textContent = hasAnyRun ? 'Not yet completed' : '—';
         row.appendChild(empty);
-        const noteEl = document.createElement('div');
-        noteEl.className = 'char-note';
-        noteEl.textContent = '';
-        row.appendChild(noteEl);
       }
+
+      // Note line 1 — manual text (always rendered for consistent height)
+      const noteEl = document.createElement('div');
+      noteEl.className = 'char-note';
+      noteEl.textContent = (run && run.note) ? run.note : '';
+      row.appendChild(noteEl);
+
+      // Note line 2 — death stats from CSV (always rendered for consistent height)
+      const deathEl = document.createElement('div');
+      if (clsDeath && clsDeath.runs > 0) {
+        deathEl.className = 'char-deaths has-data';
+        deathEl.textContent = `☠ ${clsDeath.deaths} deaths across ${clsDeath.runs} attempt${clsDeath.runs !== 1 ? 's' : ''}`;
+      } else {
+        deathEl.className = 'char-deaths';
+        deathEl.textContent = '';
+      }
+      row.appendChild(deathEl);
 
       charList.appendChild(row);
     });
