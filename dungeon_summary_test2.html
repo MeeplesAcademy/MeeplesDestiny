@@ -188,7 +188,8 @@ function buildIconRow(d) {
   const completedCount = [d.titan, d.warlock, d.hunter].filter(Boolean).length;
   const lbl = document.createElement('span');
   lbl.className = 's-label';
-  lbl.textContent = isConquered ? `3/3 ⚔️` : `${completedCount}/3`;
+/*  lbl.textContent = isConquered ? `3/3 ⚔️` : `${completedCount}/3`; */
+  lbl.innerHTML = isConquered ? `3/3 <img src="${G}/crossed_swords.png" style="width:14px;height:14px;vertical-align:middle;margin-left:2px;">` : `${completedCount}/3`;
   prog.appendChild(lbl);
   info.appendChild(prog);
   row.appendChild(info);
