@@ -57,11 +57,11 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 
 .char-list { display:flex; flex-direction:column; gap:6px; margin-top:0; padding-top:0.75rem; }
 /* Two content rows + two fixed note rows */
-.char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; grid-template-rows:auto 16px 16px; align-items:center; gap:2px 8px; padding:8px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:62px; position:relative; }
+.char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; grid-template-rows:auto 16px 21px; align-items:center; gap:2px 8px; padding:8px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:67px; position:relative; }
 .char-row.first-ever { border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 0 12px rgba(200,168,75,0.4); }
 .first-ever-star { position:absolute; left:-9px; top:50%; transform:translateY(-50%); font-size:13px; line-height:1; }
 .char-row.has-run { border-color:rgba(255,255,255,0.08); }
-.char-row.no-run { opacity:0.4; }
+.char-row.no-run { opacity:1; }
 .char-icon { width:22px; height:22px; border-radius:3px; object-fit:cover; display:block; flex-shrink:0; }
 .char-icon-placeholder { width:22px; height:22px; border-radius:3px; background:var(--bg4); border:1px solid var(--border2); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--muted); }
 .char-name { font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; }
@@ -72,15 +72,15 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .char-duration { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:500; color:var(--gold); white-space:nowrap; letter-spacing:0.04em; }
 .char-link { color:var(--muted); text-decoration:none; font-size:13px; font-family:'Barlow Condensed',sans-serif; transition:color 0.15s; line-height:1; }
 .char-link:hover { color:var(--gold); }
-.char-empty { font-size:11px; color:var(--muted); font-style:italic; grid-column:2/-1; letter-spacing:0.03em; }
+.char-empty { font-size:11px; color:var(--muted); font-style:italic; grid-column:2/-1; letter-spacing:0.03em; display:none; }
 /* Note line 1 — manual text */
 .char-note { grid-column:2/-1; font-size:11px; color:var(--muted2); letter-spacing:0.04em; font-style:italic; padding-left:4px; height:16px; line-height:16px; overflow:hidden; }
-.char-note.first-ever-note { color:var(--gold); font-style:normal; font-weight:500; }
+.char-note.first-ever-note { color:var(--gold); font-style:italic; font-weight:500; }
 /* Note line 2 — death stats from CSV */
-.char-deaths { grid-column:2/-1; font-size:12px; color:#4a5060; letter-spacing:0.03em; padding-left:4px; height:16px; line-height:16px; overflow:hidden; font-family:'Barlow Condensed',sans-serif; display:flex; align-items:center; gap:4px; }
+.char-deaths { grid-column:2/-1; font-size:13px; color:#4a5060; letter-spacing:0.01em; padding-left:4px; height:21px; line-height:21px; overflow:hidden; font-family:'Barlow',sans-serif; font-weight:300; display:flex; align-items:center; gap:5px; }
 .char-deaths.has-data { color:#e05050; opacity:0.85; }
 .char-row.no-run .char-deaths.has-data { opacity:1; color:#f87171; }
-.death-icon { width:16px; height:16px; object-fit:cover; border-radius:2px; flex-shrink:0; opacity:0.85; }
+.death-icon { width:21px; height:21px; object-fit:cover; border-radius:2px; flex-shrink:0; opacity:0.85; }
 
 .page-footer { position:relative; z-index:1; text-align:center; padding:2rem; border-top:1px solid var(--border); font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; }
 
