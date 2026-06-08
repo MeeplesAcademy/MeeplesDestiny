@@ -32,7 +32,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 
 /* ── Story section ── */
 .story-section { position:relative; z-index:1; max-width:760px; margin:0 auto; padding:2.5rem 2rem 0; }
-.challenge-label { font-size:18px; font-weight:400; color:var(--text); margin-bottom:0.4rem; }
+.challenge-label { font-size:18px; font-weight:600; color:var(--text); margin-bottom:0.4rem; letter-spacing:0.02em; }
 .challenge-text { font-size:18px; font-weight:400; color:var(--text); line-height:1.5; margin-bottom:1.25rem; }
 .story-toggle { display:inline-flex; align-items:center; gap:8px; background:transparent; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:8px 18px; font-size:16px; font-family:'Barlow',sans-serif; font-weight:400; color:var(--text); cursor:pointer; transition:all 0.2s; }
 .story-toggle:hover { border-color:var(--gold); color:var(--gold); }
@@ -72,7 +72,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 
 /* ── Timeline section ── */
 .timeline-section { position:relative; z-index:1; padding:0 2rem; border-bottom:1px solid var(--border); }
-.collapsible-header { display:flex; align-items:center; justify-content:space-between; padding:1.5rem 0; cursor:pointer; max-width:1400px; margin:0 auto; }
+.collapsible-header { display:flex; align-items:center; padding:1.5rem 0; cursor:pointer; max-width:1400px; margin:0 auto; }
 .collapsible-header:hover .section-title { color:var(--gold2); }
 .tl-toggle-btn { background:var(--gold-bg); border:1px solid var(--border3); border-radius:4px; color:var(--gold2); font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; padding:5px 14px; cursor:pointer; pointer-events:none; }
 .collapsible-body { overflow:hidden; max-height:0; opacity:0; transition:max-height 0.4s ease, opacity 0.3s ease; }
@@ -125,7 +125,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .card.is-complete .card-title { color:var(--gold2); }
 .card-divider { height:1px; background:linear-gradient(90deg,var(--gold),transparent); margin:0.75rem 0; opacity:0.3; }
 .card.is-complete .card-divider { opacity:0.6; }
-.completion-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); background:var(--gold-bg); border:1px solid rgba(200,168,75,0.2); border-radius:3px; padding:4px 10px; margin-bottom:0.5rem; width:fit-content; }
+.completion-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); background:var(--gold-bg); border:1px solid rgba(200,168,75,0.2); border-radius:3px; padding:6px 14px; margin-bottom:0.5rem; width:fit-content; }
 .char-list { display:flex; flex-direction:column; gap:6px; padding-top:0.75rem; }
 .char-row { display:grid; grid-template-columns:22px 70px 1fr auto auto; grid-template-rows:auto 18px 22px; align-items:center; gap:2px 8px; padding:8px 10px; border-radius:5px; background:var(--bg3); border:1px solid var(--border); min-height:76px; position:relative; }
 .char-row.has-run { border-color:rgba(255,255,255,0.08); }
@@ -192,8 +192,10 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 <!-- TIMELINE SECTION -->
 <div class="timeline-section">
   <div class="collapsible-header" onclick="toggleTimeline()">
-    <span class="section-title">Completion Timeline</span>
-    <button class="tl-toggle-btn" id="tlToggleBtn">Show</button>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span class="section-title">Completion Timeline</span>
+      <button class="tl-toggle-btn" id="tlToggleBtn">Show</button>
+    </div>
   </div>
   <div class="collapsible-body" id="tlBody">
     <div class="collapsible-inner">
@@ -220,6 +222,12 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 </div>
 
 <!-- GALLERY -->
+<div style="position:relative;z-index:1;padding:1.5rem 2rem 0;max-width:1400px;margin:0 auto;">
+  <div class="section-header" style="margin-bottom:0;padding-bottom:1rem;border-bottom:1px solid var(--border);">
+    <span class="section-title" style="font-size:28px;">Dungeon Details</span>
+    <span class="section-sub" style="font-size:18px;">Solo flawless records · all characters</span>
+  </div>
+</div>
 <main class="gallery" id="gallery"></main>
 
 <footer class="page-footer">Destiny 2 · Meeples · Solo Flawless Dungeon Completions</footer>
@@ -577,6 +585,23 @@ function renderGallery() {
       badge.innerHTML = dungeon.status || '—';
     }
     body.appendChild(badge);
+
+    // Total deaths — positioned after badge, before divider
+    const totalLine = document.createElement('div');
+    if (deaths) {
+      const totalDeaths = CLASSES.reduce((sum, cls) => sum + (deaths[cls]?.deaths || 0), 0);
+      totalLine.className = 'card-total-deaths';
+      const di = document.createElement('img'); di.className = 'death-icon-lg'; di.src = SKULL_ICON; di.alt = ''; totalLine.appendChild(di);
+      const dt = document.createElement('span');
+      dt.textContent = allDone
+        ? `Total Deaths to Conquer: ${totalDeaths}`
+        : `Total Deaths So Far: ${totalDeaths}`;
+      totalLine.appendChild(dt);
+    } else {
+      totalLine.className = 'card-total-deaths no-data';
+    }
+    body.appendChild(totalLine);
+
     const divider = document.createElement('div'); divider.className = 'card-divider'; body.appendChild(divider);
     // Char rows
     const charList = document.createElement('div'); charList.className = 'char-list';
@@ -628,22 +653,7 @@ function renderGallery() {
       charList.appendChild(row);
     });
     body.appendChild(charList);
-    // Total deaths
-    const totalLine = document.createElement('div');
-    if (deaths) {
-      const totalDeaths = CLASSES.reduce((sum, cls) => sum + (deaths[cls]?.deaths || 0), 0);
-      totalLine.className = 'card-total-deaths';
-      const di = document.createElement('img'); di.className = 'death-icon-lg'; di.src = SKULL_ICON; di.alt = ''; totalLine.appendChild(di);
-      const dt = document.createElement('span');
-      dt.textContent = allDone
-        ? `Total Deaths to Conquer: ${totalDeaths}`
-        : `Total Deaths So Far: ${totalDeaths}`;
-      totalLine.appendChild(dt);
-    } else {
-      totalLine.className = 'card-total-deaths no-data';
-      totalLine.textContent = '';
-    }
-    body.appendChild(totalLine);
+
     card.appendChild(body);
     gallery.appendChild(card);
   });
