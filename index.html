@@ -74,8 +74,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .timeline-section { position:relative; z-index:1; padding:0 2rem; border-bottom:1px solid var(--border); }
 .collapsible-header { display:flex; align-items:center; justify-content:space-between; padding:1.5rem 0; cursor:pointer; max-width:1400px; margin:0 auto; }
 .collapsible-header:hover .section-title { color:var(--gold2); }
-.collapsible-chevron { font-size:14px; color:var(--muted); transition:transform 0.25s; display:inline-block; }
-.collapsible-chevron.open { transform:rotate(180deg); }
+.tl-toggle-btn { background:var(--gold-bg); border:1px solid var(--border3); border-radius:4px; color:var(--gold2); font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; padding:5px 14px; cursor:pointer; pointer-events:none; }
 .collapsible-body { overflow:hidden; max-height:0; opacity:0; transition:max-height 0.4s ease, opacity 0.3s ease; }
 .collapsible-body.open { max-height:2000px; opacity:1; }
 .collapsible-inner { padding-bottom:2rem; }
@@ -194,7 +193,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 <div class="timeline-section">
   <div class="collapsible-header" onclick="toggleTimeline()">
     <span class="section-title">Completion Timeline</span>
-    <span class="collapsible-chevron" id="tlChevron">▼</span>
+    <button class="tl-toggle-btn" id="tlToggleBtn">Show</button>
   </div>
   <div class="collapsible-body" id="tlBody">
     <div class="collapsible-inner">
@@ -235,10 +234,10 @@ const DUNGEONS = [
   { id:'prophecy',           name:'Prophecy',             num:'03' },
   { id:'grasp-of-avarice',   name:'Grasp of Avarice',     num:'04' },
   { id:'duality',            name:'Duality',              num:'05' },
-  { id:'spire-of-watcher',   name:'Spire of the Watcher', num:'06', status:'Warlock and Hunter still need their runs.' },
+  { id:'spire-of-watcher',   name:'Spire of the Watcher', num:'06', status:'Warlock & Hunter standing by.' },
   { id:'ghosts-of-the-deep', name:'Ghosts of the Deep',   num:'07', status:'Many practice drownings.' },
   { id:'warlords-ruin',      name:"Warlord's Ruin",        num:'08' },
-  { id:'vespers-host',       name:"Vesper's Host",         num:'09', status:'Anomaly Detected. Radiation overwhelming.' },
+  { id:'vespers-host',       name:"Vesper's Host",         num:'09', status:'Love the Servitor binary encounter.' },
   { id:'sundered-doctrine',  name:'Sundered Doctrine',    num:'10', status:'Can light the lamps LOL.' },
   { id:'equilibrium',        name:'Equilibrium',          num:'11', status:'Can get to final boss flawless, but....' },
 ];
@@ -321,8 +320,8 @@ const STATIC_RUN_DATA = {
 
 const INCOMPLETE_NOTES = {
   'spire-of-watcher': {
-    'Warlock': { note:'Stupid fans and Warlock jump.' },
-    'Hunter':  { note:"What? I've peeked in there." },
+    'Warlock': { note:'Warlock & Hunter standing by.' },
+    'Hunter':  { note:"It's just connect the dots, right?" },
   },
   'ghosts-of-the-deep': {
     'Titan':   { note:'Getting closer.' },
@@ -428,10 +427,10 @@ function toggleStory() {
 
 // ── Timeline toggle ──
 function toggleTimeline() {
-  const body    = document.getElementById('tlBody');
-  const chevron = document.getElementById('tlChevron');
-  const open    = body.classList.toggle('open');
-  chevron.classList.toggle('open', open);
+  const body = document.getElementById('tlBody');
+  const btn  = document.getElementById('tlToggleBtn');
+  const open = body.classList.toggle('open');
+  btn.textContent = open ? 'Hide' : 'Show';
 }
 
 function switchTL(view, btn) {
@@ -444,7 +443,7 @@ function switchTL(view, btn) {
 // ── Summary grid ──
 function buildSummary() {
   const conquered = DUNGEONS.filter(d => CLASSES.every(c => (runData[d.id]||{})[c])).length;
-  document.getElementById('summaryTitle').textContent = `${conquered} of 11 Dungeons Conquered`;
+  document.getElementById('summaryTitle').textContent = `Summary: ${conquered} of 11 Dungeons Conquered`;
   const grid = document.getElementById('summaryGrid');
   DUNGEONS.forEach(d => {
     const runs = runData[d.id] || {};
