@@ -1,1 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Armor Set Bonuses · Destiny 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #080a0f;
+  --bg2:      #0d1018;
+  --bg3:      #12161f;
+  --bg4:      #181d28;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
+  --text:     #dde1ec;
+  --text2:    #a8b0c0;
+  --muted:    #606878;
+  --gold:     #c8a84b;
+  --gold2:    #e2c97e;
+  --gold3:    #f5e6b8;
+  --gold-bg:  rgba(200,168,75,0.08);
+  /* Element colors — Stasis is deep icy blue, Arc is bright electric blue */
+  --arc:      #5bc8f5;
+  --solar:    #f0712c;
+  --void:     #8b5cf6;
+  --stasis:   #3d6db5;
+  --strand:   #4ade80;
+  --prismatic:#d946ef;
+  --kinetic:  #d8e3f0;
+  /* Source type colors */
+  --src-dungeon:     #8B6914;
+  --src-raid:        #7B3FA0;
+  --src-crucible:    #C0392B;
+  --src-srl:         #E91E8C;
+  --src-pve:         #1A4A7A;
+  --src-trials:      #C8A84B;
+  --src-portal:      #00897B;
+  --src-destination: #C9A800;
+  --src-gambit:      #2E7D4F;
+  --src-iron-banner: #8B5A2B;
+  --src-solstice:    #E65100;
+  --src-pantheon:    #7B82CB;
+  --src-pinnacle:    #5C5C8A;
+  --src-default:     #4a5060;
+  --highlight-border: rgba(200,168,75,0.85);
+  --highlight-bg:     rgba(200,168,75,0.06);
+  --dim-opacity: 1;
+}
+body { background:var(--bg); color:var(--text); font-family:'Barlow',sans-serif; font-weight:300; min-height:100vh; }
+body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 20% 20%,rgba(200,168,75,0.04) 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(74,158,255,0.03) 0%,transparent 55%); pointer-events:none; z-index:0; }
 
+/* ── Header ── */
+.page-header { position:relative; z-index:1; text-align:center; padding:3rem 2rem 2.5rem; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(200,168,75,0.05) 0%,transparent 100%); }
+.page-header::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:100px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+.eyebrow { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); opacity:0.8; margin-bottom:0.4rem; }
+.page-title { font-family:'Cinzel',serif; font-size:clamp(1.8rem,4vw,3.2rem); font-weight:900; letter-spacing:0.05em; text-transform:uppercase; background:linear-gradient(180deg,var(--gold3) 0%,var(--gold) 60%,#8a6a20 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.1; }
+.page-sub { font-size:16px; color:var(--text2); letter-spacing:0.08em; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; margin-top:0.4rem; }
+
+/* ── Controls ── */
+.controls { position:relative; z-index:1; padding:1.5rem 2rem; border-bottom:1px solid var(--border); background:var(--bg2); }
+.controls-inner { max-width:1400px; margin:0 auto; display:flex; flex-direction:column; gap:1.1rem; }
+.search-row { display:flex; gap:10px; align-items:center; }
+.search-wrap { position:relative; flex:1; min-width:200px; display:flex; }
+.search-box {
+  flex:1; min-width:200px;
+  background:var(--bg3);
+  border:2px solid rgba(200,168,75,0.45);
+  border-radius:6px;
+  padding:10px 40px 10px 16px;
+  font-size:16px;
+  font-family:'Barlow',sans-serif;
+  color:var(--text);
+  outline:none;
+  transition:border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  width:100%;
+}
+.search-box::placeholder { color:var(--muted); }
+.search-box:focus { border-color:var(--gold); box-shadow:0 0 0 2px rgba(200,168,75,0.15); }
+/* Highlighted state when the box contains text, so an active search is obvious at a glance */
+.search-box.has-text {
+  border-color:var(--gold);
+  background:rgba(200,168,75,0.08);
+  box-shadow:0 0 0 2px rgba(200,168,75,0.2);
+}
+.search-clear-btn {
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  width:26px; height:26px; border-radius:50%;
+  border:none; background:rgba(200,168,75,0.18);
+  color:var(--gold2); font-size:18px; line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:background 0.15s, color 0.15s;
+  padding:0;
+}
+.search-clear-btn:hover { background:var(--gold); color:#0a0c10; }
+
+/* ── Control Panel ── */
+.control-panel-label {
+  font-family:'Cinzel',serif; font-size:18px; font-weight:700;
+  letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--gold);
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(200,168,75,0.3);
+}
+
+/* ── View Row ── */
+.view-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.view-row-label { font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--text2); white-space:nowrap; }
+.view-toggle { display:flex; gap:6px; }
+.view-btn {
+  padding:9px 20px; border-radius:5px; border:1px solid var(--border2);
+  background:transparent; color:var(--text);
+  font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.1em;
+  cursor:pointer; transition:all 0.15s;
+  position:relative;
+}
+.view-btn.active { background:var(--gold); color:#0a0c10; border-color:var(--gold); }
+.view-btn:hover:not(.active) { border-color:var(--gold); color:var(--gold); }
+
+/* Fast tooltip system — any element with data-tooltip + .has-tooltip shows a hover tooltip.
+   Globally suppressed when <body> carries .tooltips-off, via the Control Panel toggle. */
+.has-tooltip { position:relative; cursor:help; }
+.has-tooltip::after {
+  content: attr(data-tooltip);
+  position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+  background:#1a1f2e; border:1px solid var(--border2); color:var(--text);
+  font-size:13px; font-weight:400; letter-spacing:0.02em; text-transform:none;
+  padding:7px 12px; border-radius:5px; white-space:nowrap; pointer-events:none;
+  opacity:0; transition:opacity 0.1s;
+  z-index:100;
+}
+.has-tooltip:hover::after { opacity:1; }
+body.tooltips-off .has-tooltip::after { display:none; }
+body.tooltips-off .has-tooltip { cursor:inherit; }
+.logic-toggle { position:relative; }
+
+/* ── Logic Toggle — both labels always visible ── */
+.logic-toggle {
+  display:flex; align-items:center; gap:10px;
+  font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600;
+  letter-spacing:0.08em;
+  padding:8px 14px;
+  border:1px solid var(--border2); border-radius:5px;
+  background:transparent; cursor:default;
+  user-select:none;
+}
+.logic-label-any { color:var(--text); transition:color 0.15s, opacity 0.15s; }
+.logic-label-all { color:var(--text); transition:color 0.15s, opacity 0.15s; }
+.logic-label-any.inactive { color:var(--muted); }
+.logic-label-all.inactive { color:var(--muted); }
+.logic-label-any.active-state { color:var(--gold); }
+.logic-label-all.active-state { color:var(--gold); }
+.logic-switch { position:relative; width:36px; height:18px; cursor:pointer; }
+.logic-switch input { opacity:0; width:0; height:0; }
+.logic-slider { position:absolute; inset:0; background:var(--bg4); border:1px solid var(--border2); border-radius:9px; cursor:pointer; transition:0.2s; }
+.logic-slider::before { content:''; position:absolute; width:12px; height:12px; left:2px; top:2px; background:var(--muted); border-radius:50%; transition:0.2s; }
+.logic-switch input:checked + .logic-slider { background:var(--gold-bg); border-color:var(--gold); }
+.logic-switch input:checked + .logic-slider::before { transform:translateX(18px); background:var(--gold); }
+
+/* Tooltips on/off master switch */
+.tooltip-master-toggle {
+  display:flex; align-items:center; gap:10px;
+  font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600;
+  letter-spacing:0.08em;
+  padding:8px 14px;
+  border:1px solid var(--border2); border-radius:5px;
+  background:transparent;
+  user-select:none;
+}
+.tooltip-toggle-label { color:var(--text); }
+
+/* ── Clear All Button ── */
+.clear-btn {
+  padding:9px 18px;
+  border-radius:5px;
+  border:1px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.04);
+  color:var(--text2);
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:0.08em;
+  cursor:pointer;
+  transition:all 0.15s;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.clear-btn:hover { border-color:var(--gold); color:var(--gold); background:rgba(200,168,75,0.08); }
+
+/* ── Source Filter Row ── */
+.filter-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.filter-row-label { font-size:13px; font-family:'Barlow Condensed',sans-serif; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--text); margin-right:4px; white-space:nowrap; }
+.source-pill { padding:5px 14px; border-radius:20px; border:1.5px solid var(--border2); background:transparent; color:var(--text); font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:500; letter-spacing:0.06em; cursor:pointer; transition:all 0.15s; user-select:none; }
+.source-pill:hover { opacity:0.85; }
+/* Active state — bright filled background, bolder text, thicker border. Mirrors Element pill brightness so "on" reads instantly. */
+.source-pill.sp-active { border-width:2px; font-weight:700; color:#fff; }
+
+/* Source pill type colors — border only, font stays white */
+.sp-DUNGEON     { border-color:var(--src-dungeon); }
+.sp-RAID        { border-color:var(--src-raid); }
+.sp-Crucible    { border-color:var(--src-crucible); }
+.sp-SRL         { border-color:var(--src-srl); }
+.sp-PVE         { border-color:var(--src-pve); }
+.sp-Trials      { border-color:var(--src-trials); }
+.sp-Portal      { border-color:var(--src-portal); }
+.sp-DESTINATION { border-color:var(--src-destination); }
+.sp-Gambit      { border-color:var(--src-gambit); }
+.sp-IronBanner  { border-color:var(--src-iron-banner); }
+.sp-Solstice    { border-color:var(--src-solstice); }
+.sp-Pantheon    { border-color:var(--src-pantheon); }
+.sp-Pinnacle    { border-color:var(--src-pinnacle); }
+.sp-Focusable   { border-color:var(--gold); }
+
+/* Active background fills — colored fill so the "on" state is unmistakable. Light backgrounds get dark text for contrast. */
+.sp-DUNGEON.sp-active     { background:var(--src-dungeon); border-color:var(--src-dungeon); }
+.sp-RAID.sp-active        { background:var(--src-raid); border-color:var(--src-raid); }
+.sp-Crucible.sp-active    { background:var(--src-crucible); border-color:var(--src-crucible); }
+.sp-SRL.sp-active         { background:var(--src-srl); border-color:var(--src-srl); }
+.sp-PVE.sp-active         { background:var(--src-pve); border-color:var(--src-pve); }
+.sp-Trials.sp-active      { background:var(--src-trials); border-color:var(--src-trials); color:#0a0c10; }
+.sp-Portal.sp-active      { background:var(--src-portal); border-color:var(--src-portal); }
+.sp-DESTINATION.sp-active { background:var(--src-destination); border-color:var(--src-destination); color:#0a0c10; }
+.sp-Gambit.sp-active      { background:var(--src-gambit); border-color:var(--src-gambit); }
+.sp-IronBanner.sp-active  { background:var(--src-iron-banner); border-color:var(--src-iron-banner); }
+.sp-Solstice.sp-active    { background:var(--src-solstice); border-color:var(--src-solstice); }
+.sp-Pantheon.sp-active    { background:var(--src-pantheon); border-color:var(--src-pantheon); }
+.sp-Pinnacle.sp-active    { background:var(--src-pinnacle); border-color:var(--src-pinnacle); }
+.sp-Focusable.sp-active   { background:var(--gold); border-color:var(--gold); color:#0a0c10; }
+
+/* Subtype pills (Crucible / Vanguard Ops sub-groups) — same visual language as element keyword chips */
+.subtype-pill { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:500; padding:4px 12px; border-radius:14px; border:1px solid; cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:3px; transition:all 0.15s; background:transparent; }
+.subtype-pill.off { opacity:0.35; text-decoration:line-through; }
+.subtype-pill.sub-active { font-weight:700; }
+
+/* ── Element Filter ── */
+.element-selector { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.elem-btn { padding:5px 14px; border-radius:20px; border:1.5px solid; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; background:transparent; transition:all 0.15s; user-select:none; }
+/* Arc = bright electric blue, Stasis = deep icy blue */
+.elem-btn-arc     { color:var(--arc);      border-color:rgba(91,200,245,0.5); }
+.elem-btn-solar   { color:var(--solar);    border-color:rgba(240,113,44,0.5); }
+.elem-btn-void    { color:var(--void);     border-color:rgba(139,92,246,0.5); }
+.elem-btn-stasis  { color:var(--stasis);   border-color:rgba(61,109,181,0.5); }
+.elem-btn-strand  { color:var(--strand);   border-color:rgba(74,222,128,0.5); }
+.elem-btn-prismatic { color:var(--prismatic); border-color:rgba(217,70,239,0.5); }
+.elem-btn-kinetic { color:var(--kinetic);  border-color:rgba(216,227,240,0.5); }
+.elem-btn.active  { filter:brightness(1.3); }
+.elem-btn-arc.active     { background:rgba(91,200,245,0.15); border-color:var(--arc); }
+.elem-btn-solar.active   { background:rgba(240,113,44,0.15); border-color:var(--solar); }
+.elem-btn-void.active    { background:rgba(139,92,246,0.15); border-color:var(--void); }
+.elem-btn-stasis.active  { background:rgba(61,109,181,0.15); border-color:var(--stasis); }
+.elem-btn-strand.active  { background:rgba(74,222,128,0.15); border-color:var(--strand); }
+.elem-btn-prismatic.active { background:rgba(217,70,239,0.15); border-color:var(--prismatic); }
+.elem-btn-kinetic.active { background:rgba(216,227,240,0.15); border-color:var(--kinetic); }
+
+/* Active element keyword groups */
+.active-element-groups { display:flex; flex-direction:column; gap:6px; }
+.active-group { display:flex; gap:5px; flex-wrap:wrap; align-items:center; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--bg3); }
+.group-dismiss { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:3px 10px; border-radius:10px; border:1.5px solid; cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:4px; }
+/* Keyword chips — default "off" state is fully readable (neutral text, colored border only),
+   since users now opt INTO specific keywords rather than opting out. "On" fills solid with color. */
+.keyword-chip {
+  font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:500;
+  padding:3px 10px; border-radius:10px; border:1.5px solid;
+  color:var(--text);
+  cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:3px;
+  transition:background 0.15s, color 0.15s, border-color 0.15s, font-weight 0.15s;
+}
+.keyword-chip.off { color:var(--text); background:transparent; }
+.keyword-chip:not(.off) { color:#fff; font-weight:700; }
+.keyword-chip .x { font-size:10px; }
+.keyword-instruction {
+  font-family:'Barlow Condensed',sans-serif; font-size:15px; font-style:italic; font-weight:600;
+  color:var(--gold2); letter-spacing:0.02em; padding:0 2px 2px;
+}
+
+/* Element pill colors */
+.pill-arc     { color:var(--arc);      border-color:var(--arc);      background:rgba(91,200,245,0.1); }
+.pill-solar   { color:var(--solar);    border-color:var(--solar);    background:rgba(240,113,44,0.1); }
+.pill-void    { color:var(--void);     border-color:var(--void);     background:rgba(139,92,246,0.1); }
+.pill-stasis  { color:var(--stasis);   border-color:var(--stasis);   background:rgba(61,109,181,0.1); }
+.pill-strand  { color:var(--strand);   border-color:var(--strand);   background:rgba(74,222,128,0.1); }
+.pill-prismatic { color:var(--prismatic); border-color:var(--prismatic); background:rgba(217,70,239,0.1); }
+.pill-kinetic { color:var(--kinetic);  border-color:var(--kinetic);  background:rgba(216,227,240,0.1); }
+
+/* Keyword chip "on" fill — solid background using each element's color, white text for contrast */
+.keyword-chip.pill-arc:not(.off)       { background:var(--arc); border-color:var(--arc); }
+.keyword-chip.pill-solar:not(.off)     { background:var(--solar); border-color:var(--solar); }
+.keyword-chip.pill-void:not(.off)      { background:var(--void); border-color:var(--void); }
+.keyword-chip.pill-stasis:not(.off)    { background:var(--stasis); border-color:var(--stasis); }
+.keyword-chip.pill-strand:not(.off)    { background:var(--strand); border-color:var(--strand); color:#0a0c10; }
+.keyword-chip.pill-prismatic:not(.off) { background:var(--prismatic); border-color:var(--prismatic); }
+.keyword-chip.pill-kinetic:not(.off)   { background:var(--kinetic); border-color:var(--kinetic); color:#0a0c10; }
+/* Off-state border stays the element's color so it's still identifiable which group a chip belongs to */
+.keyword-chip.pill-arc.off       { border-color:var(--arc); }
+.keyword-chip.pill-solar.off     { border-color:var(--solar); }
+.keyword-chip.pill-void.off      { border-color:var(--void); }
+.keyword-chip.pill-stasis.off    { border-color:var(--stasis); }
+.keyword-chip.pill-strand.off    { border-color:var(--strand); }
+.keyword-chip.pill-prismatic.off { border-color:var(--prismatic); }
+.keyword-chip.pill-kinetic.off   { border-color:var(--kinetic); }
+
+/* Dead keywords — real Destiny 2 terms with zero matching sets in this dataset right now.
+   Dashed border + muted text distinguishes them from "off but available" without strikethrough,
+   since these terms aren't deprecated, just unused so far. */
+.keyword-chip.dead-keyword {
+  border-style:dashed !important;
+  border-color:rgba(255,255,255,0.22) !important;
+  background:transparent !important;
+  color:var(--muted) !important;
+  font-weight:500 !important;
+  cursor:default;
+}
+.dead-asterisk { margin-left:2px; opacity:0.85; }
+.no-matches-pill {
+  font-family:'Barlow Condensed',sans-serif; font-size:12px; font-style:italic; font-weight:500;
+  padding:3px 10px; border-radius:10px; border:1.5px dashed rgba(255,255,255,0.22);
+  color:var(--muted); cursor:help; display:inline-flex; align-items:center;
+}
+
+/* ── Tag Column Grid ── */
+.filter-options-box {
+  border:1px solid rgba(200,168,75,0.3);
+  border-radius:8px;
+  padding:16px 18px;
+  background:rgba(200,168,75,0.03);
+  display:flex; flex-direction:column; gap:14px;
+}
+.filter-options-header {
+  padding-bottom:10px;
+  border-bottom:1px solid rgba(200,168,75,0.25);
+}
+.filter-options-title {
+  font-family:'Cinzel',serif; font-size:16px; font-weight:700;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--gold);
+}
+/* Sub-box grouping the Collapse/Expand control with the keyword tag columns it controls */
+.keyword-tags-box {
+  border:1px solid rgba(200,168,75,0.22);
+  border-radius:8px;
+  padding:14px 16px 16px;
+  background:rgba(255,255,255,0.015);
+  display:flex; flex-direction:column; gap:10px;
+}
+.tag-toggle-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.keyword-selected-indicator {
+  font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600;
+  letter-spacing:0.04em; color:var(--gold2);
+  background:rgba(200,168,75,0.1); border:1px solid rgba(200,168,75,0.35);
+  border-radius:5px; padding:5px 12px;
+}
+.tag-section-toggle {
+  display:inline-flex; align-items:center; gap:9px;
+  cursor:pointer; user-select:none;
+  padding:7px 16px;
+  border:1.5px solid var(--gold);
+  border-radius:5px;
+  background:rgba(200,168,75,0.1);
+  transition:all 0.15s;
+  align-self:flex-start;
+}
+.tag-section-toggle:hover { background:rgba(200,168,75,0.18); }
+.tag-section-toggle-label {
+  font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700;
+  letter-spacing:0.13em; text-transform:uppercase; color:var(--gold2);
+}
+.tag-section-chevron { font-size:13px; color:var(--gold2); transition:transform 0.25s; }
+.tag-section-chevron.open { transform:rotate(180deg); }
+.tag-col-grid { display:grid; grid-template-columns:1fr 1fr 2fr; gap:16px; padding-top:4px; }
+.tag-col-grid.collapsed { display:none; }
+.tag-col { display:flex; flex-direction:column; gap:0; }
+.tag-col-head {
+  font-size:15px; font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  letter-spacing:0.18em; text-transform:uppercase; color:var(--gold);
+  border-bottom:1px solid rgba(200,168,75,0.4); padding-bottom:6px; margin-bottom:10px;
+}
+.tag-col-sub { margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.07); }
+.tag-pill-col {
+  padding:5px 12px; border-radius:20px; border:1px solid var(--border2);
+  background:transparent; color:var(--text);
+  font-family:'Barlow Condensed',sans-serif; font-size:14px; letter-spacing:0.04em;
+  cursor:pointer; transition:all 0.15s; user-select:none;
+  display:block; width:100%; text-align:left; margin-bottom:6px;
+}
+.tag-pill-col:hover { border-color:var(--text2); }
+.tag-pill-col.active { background:rgba(255,255,255,0.08); border-color:var(--text2); }
+.tag-pill-col.dead-keyword {
+  border-style:dashed; border-color:rgba(255,255,255,0.22);
+  color:var(--muted); cursor:default;
+}
+.tag-triggers-grid { column-count:2; column-gap:12px; }
+.tag-triggers-grid .tag-pill-col { break-inside:avoid; }
+/* legacy – kept for element groups */
+.tag-category-label { font-size:14px; font-family:'Barlow Condensed',sans-serif; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--text); white-space:nowrap; min-width:90px; }
+
+/* ── Results / Jump List ── */
+.results-bar { position:relative; z-index:1; padding:0.75rem 2rem 0; display:flex; align-items:center; justify-content:space-between; max-width:1400px; margin:0 auto; }
+.results-count { font-size:18px; font-family:'Barlow Condensed',sans-serif; color:var(--text); letter-spacing:0.08em; font-weight:500; }
+
+/* Jump list */
+.jump-list-wrap {
+  position:relative; z-index:1;
+  max-width:1400px; margin:0 auto;
+  padding:0.5rem 2rem 0.75rem;
+  display:none;
+}
+.jump-list-wrap.visible { display:block; }
+.jump-list-label {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:18px; font-weight:700; letter-spacing:0.15em;
+  text-transform:uppercase; color:var(--gold);
+  margin-bottom:10px;
+}
+.jump-list {
+  display:flex; flex-wrap:wrap; gap:8px;
+}
+.jump-link {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:16px; font-weight:600;
+  color:var(--text);
+  text-decoration:none;
+  padding:7px 16px;
+  border-radius:5px;
+  border:1px solid var(--border2);
+  background:var(--bg2);
+  transition:all 0.15s;
+  letter-spacing:0.04em;
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+}
+.jump-link:hover { border-color:var(--gold); color:var(--gold2); background:var(--gold-bg); }
+.jump-link-sub {
+  font-size:14px; font-weight:400; letter-spacing:0.05em;
+  color:var(--text2); font-style:italic;
+}
+
+/* ── Grid ── */
+.grid-wrap { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:1rem 1.5rem 3rem; }
+.set-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:1rem; }
+
+/* ── Set Card ── */
+.set-card { background:var(--bg2); border:3px solid var(--border); border-radius:10px; overflow:hidden; transition:border-color 0.2s, opacity 0.2s, box-shadow 0.2s; }
+.set-card.highlighted { border-color:var(--highlight-border); box-shadow:0 0 24px rgba(200,168,75,0.18), 0 0 6px rgba(200,168,75,0.3); background:var(--highlight-bg); }
+.set-card.hidden { display:none; }
+
+/* Card header */
+.card-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg3); border-bottom:1px solid var(--border); cursor:pointer; user-select:none; gap:8px; }
+.card-header:hover .card-title { color:var(--gold2); }
+.card-title-group { flex:1; min-width:0; }
+.card-title { font-family:'Cinzel',serif; font-size:20px; font-weight:700; color:var(--text); letter-spacing:0.03em; transition:color 0.15s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.set-card.highlighted .card-title { color:var(--gold2); }
+.card-meta { font-size:15px; color:var(--text2); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.05em; margin-top:3px; }
+.card-vendor-meta { font-size:14px; color:var(--gold2); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.04em; margin-top:2px; font-weight:600; }
+.card-focusable-meta { color:var(--gold); }
+.card-season-meta { font-size:14px; color:var(--text2); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.04em; margin-top:2px; font-style:italic; }
+.card-badges { display:flex; gap:5px; align-items:center; flex-shrink:0; }
+
+/* Source badge — bigger with icon placeholder */
+.source-badge {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+  padding:4px 10px 4px 8px;
+  border-radius:4px;
+  border:1.5px solid;
+  white-space:nowrap;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.source-badge-icon {
+  width:16px; height:16px;
+  border-radius:2px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.source-badge-icon img { width:100%; height:100%; object-fit:contain; display:block; }
+
+/* Source badge colors */
+.sb-DUNGEON     { color:var(--src-dungeon);     border-color:rgba(139,105,20,0.5);  background:rgba(139,105,20,0.1); }
+.sb-RAID        { color:var(--src-raid);         border-color:rgba(123,63,160,0.5);  background:rgba(123,63,160,0.1); }
+.sb-Crucible    { color:var(--src-crucible);     border-color:rgba(192,57,43,0.5);   background:rgba(192,57,43,0.1); }
+.sb-SRL         { color:var(--src-srl);          border-color:rgba(233,30,140,0.5);  background:rgba(233,30,140,0.1); }
+.sb-PVE         { color:var(--src-pve);          border-color:rgba(26,74,122,0.7);   background:rgba(26,74,122,0.15); }
+.sb-Trials      { color:var(--src-trials);       border-color:rgba(200,168,75,0.5);  background:rgba(200,168,75,0.1); }
+.sb-Portal      { color:var(--src-portal);       border-color:rgba(0,137,123,0.5);   background:rgba(0,137,123,0.1); }
+.sb-DESTINATION { color:var(--src-destination);  border-color:rgba(201,168,0,0.5);   background:rgba(201,168,0,0.1); }
+.sb-Gambit      { color:var(--src-gambit);       border-color:rgba(46,125,79,0.5);   background:rgba(46,125,79,0.1); }
+.sb-IronBanner  { color:var(--src-iron-banner);  border-color:rgba(139,90,43,0.5);   background:rgba(139,90,43,0.1); }
+.sb-Solstice    { color:var(--src-solstice);     border-color:rgba(230,81,0,0.5);    background:rgba(230,81,0,0.1); }
+.sb-Pantheon    { color:var(--src-pantheon);     border-color:rgba(123,130,203,0.5); background:rgba(123,130,203,0.1); }
+.sb-Pinnacle    { color:var(--src-pinnacle);     border-color:rgba(92,92,138,0.5);   background:rgba(92,92,138,0.1); }
+
+.collapse-chevron { font-size:12px; color:var(--muted); transition:transform 0.2s; flex-shrink:0; }
+.set-card.collapsed .collapse-chevron { transform:rotate(-90deg); }
+
+/* Card body */
+.card-body { padding:14px 14px; display:flex; flex-direction:column; gap:10px; }
+.set-card.collapsed .card-body { display:none; }
+
+/* Perk block — icon spans the full block height, text column wraps beside it */
+.perk-block { display:flex; flex-direction:row; gap:12px; align-items:flex-start; }
+.perk-icon {
+  width:54px; height:54px; flex-shrink:0;
+  border-radius:6px;
+  background:var(--bg4);
+  border:1px solid var(--border2);
+  object-fit:contain;
+  margin-top:2px;
+}
+/* If the bungie.net image fails to load (dead link, hotlink block, etc.), collapse it
+   entirely rather than showing a broken-image icon, so the layout stays clean. */
+.perk-icon.icon-error { display:none; }
+.perk-textcol { flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
+.perk-label { font-size:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
+.perk-name { font-size:17px; font-weight:500; color:var(--text); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.04em; }
+.perk-name.highlighted-perk { color:var(--gold2); }
+.perk-desc { font-size:15px; color:var(--text2); line-height:1.65; }
+/* In-text keyword highlighting — colored spans for element keywords, bold gold for non-element tags */
+.hl-arc       { color:var(--arc);       font-weight:600; }
+.hl-solar     { color:var(--solar);     font-weight:600; }
+.hl-void      { color:var(--void);      font-weight:600; }
+.hl-stasis    { color:var(--stasis);    font-weight:600; }
+.hl-strand    { color:var(--strand);    font-weight:600; }
+.hl-prismatic { color:var(--prismatic); font-weight:600; }
+.hl-kinetic   { color:var(--kinetic);   font-weight:600; }
+.hl-generic   { color:var(--gold2);     font-weight:700; }
+.perk-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+.ptag { font-size:11px; font-family:'Barlow Condensed',sans-serif; padding:2px 8px; border-radius:10px; border:1px solid var(--border); color:var(--muted); background:var(--bg4); }
+.ptag.active-tag { border-color:var(--gold); color:var(--gold); background:var(--gold-bg); }
+
+/* Perk synergy divider — arrow points from 4-piece up to the 2-piece it depends on */
+.perk-synergy-divider {
+  display:flex; align-items:center; justify-content:center;
+  gap:10px; padding:6px 0;
+  position:relative;
+}
+.perk-synergy-divider::before,
+.perk-synergy-divider::after {
+  content:'';
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(226,201,126,0.55));
+}
+.perk-synergy-divider::after {
+  background:linear-gradient(90deg, rgba(226,201,126,0.55), transparent);
+}
+.perk-synergy-inner {
+  display:flex; align-items:center; gap:7px;
+  color:var(--gold2);
+}
+.perk-synergy-arrow {
+  font-size:24px; line-height:1; letter-spacing:-2px;
+  color:var(--gold3);
+  text-shadow:0 0 8px rgba(245,230,184,0.5);
+}
+.perk-synergy-label {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--gold2); white-space:nowrap;
+}
+
+/* Plain divider */
+.perk-divider { height:1px; background:var(--border); }
+
+/* ── Page footer ── */
+.page-footer { position:relative; z-index:1; text-align:center; padding:1.5rem 2rem; border-top:1px solid var(--border); font-size:14px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; }
+
+/* No results */
+.no-results { text-align:center; padding:4rem 2rem; color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-size:18px; letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="eyebrow">Destiny 2</div>
+  <h1 class="page-title">Armor Set Bonuses</h1>
+  <p class="page-sub">Monument of Triumph · Armor 3.0 · 56 Sets</p>
+</header>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="controls-inner">
+
+    <!-- Control Panel -->
+    <div class="control-panel-label">Control Panel</div>
+
+    <!-- View mode row: Choose Your View · Highlight/Show · Match Any|toggle|Match All · Clear All Filters -->
+    <div class="view-row">
+      <span class="view-row-label">Choose Your View</span>
+      <div class="view-toggle">
+        <button class="view-btn active has-tooltip"
+          onclick="setView('filter',this)"
+          data-tooltip="Shows ONLY sets matching your search and filter selections. All others are hidden.">
+          Show Only Results
+        </button>
+        <button class="view-btn has-tooltip"
+          onclick="setView('highlight',this)"
+          data-tooltip="Highlights matching sets with a gold border. Non-matching sets remain visible.">
+          Highlight Results
+        </button>
+      </div>
+
+      <!-- Logic toggle: Match Any [switch] Match All -->
+      <div class="logic-toggle has-tooltip" data-tooltip="Match Any: show sets with at least one selected tag. Match All: sets must have every selected tag.">
+        <span class="logic-label-any active-state" id="logicLabelAny">Match Any</span>
+        <label class="logic-switch">
+          <input type="checkbox" id="logicToggle" onchange="applyFilters()">
+          <span class="logic-slider"></span>
+        </label>
+        <span class="logic-label-all inactive" id="logicLabelAll">Match All</span>
+      </div>
+
+      <!-- Tooltips on/off — surfaces that hover tooltips exist throughout the page, and lets users disable them -->
+      <div class="tooltip-master-toggle">
+        <span class="tooltip-toggle-label">Tooltips</span>
+        <label class="logic-switch">
+          <input type="checkbox" id="tooltipMasterToggle" checked onchange="toggleTooltips()">
+          <span class="logic-slider"></span>
+        </label>
+      </div>
+
+      <button class="clear-btn" onclick="clearAll()">Clear All Filters</button>
+    </div>
+
+    <!-- Filter Options Box -->
+    <div class="filter-options-box">
+      <div class="filter-options-header">
+        <span class="filter-options-title">Filter Options</span>
+      </div>
+
+      <!-- Search field inside filter box -->
+      <div class="search-row">
+        <div class="search-wrap">
+          <input type="text" class="search-box" id="searchBox" placeholder="Search set name, perk name, or description…" oninput="handleSearchInput()">
+          <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()" aria-label="Clear search" title="Clear search" style="display:none">×</button>
+        </div>
+      </div>
+
+      <!-- Source Type pills -->
+      <div class="filter-row">
+        <span class="filter-row-label">Source Type</span>
+        <div id="sourceFilters" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
+
+      <!-- Subtype rows (Crucible / Vanguard Ops sub-filters) — populated dynamically when parent pill is active -->
+      <div id="subtypeRowContainer" style="display:flex;flex-direction:column;gap:6px;"></div>
+
+      <!-- Element buttons -->
+      <div class="filter-row">
+        <span class="filter-row-label">Element</span>
+        <div class="element-selector" id="elementBtns"></div>
+      </div>
+
+      <!-- Active element keyword groups -->
+      <div id="activeElementGroups" class="active-element-groups" style="display:none"></div>
+
+      <!-- Keyword Tags sub-box — groups the Collapse/Expand control with the tag columns it controls -->
+      <div class="keyword-tags-box">
+        <div class="tag-toggle-row">
+          <div class="tag-section-toggle" onclick="toggleTagSection()" id="tagToggleBtn">
+            <span class="tag-section-toggle-label" id="tagToggleLabel">Collapse Keyword Tags</span>
+            <span class="tag-section-chevron open" id="tagChevron">▼</span>
+          </div>
+          <span class="keyword-selected-indicator" id="keywordSelectedIndicator" style="display:none"></span>
+        </div>
+
+        <!-- Tag column grid — collapsible -->
+        <div class="tag-col-grid" id="tagColGrid"></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Results bar -->
+<div style="position:relative;z-index:1;">
+  <div class="results-bar">
+    <span class="results-count" id="resultsCount"></span>
+  </div>
+</div>
+
+<!-- Jump list -->
+<div class="jump-list-wrap" id="jumpListWrap">
+  <div class="jump-list-label">Matching Sets — Click to Jump</div>
+  <div class="jump-list" id="jumpList"></div>
+</div>
+
+<!-- GRID — single alphabetical grid, no season headers -->
+<div class="grid-wrap">
+  <div class="set-grid" id="mainGrid"></div>
+  <div class="no-results" id="noResults" style="display:none">No sets match the current filters.</div>
+</div>
+
+<script>
+// ── Data ──
+const ICON_MAP = {
+  "AION Adapter":["https://www.bungie.net/common/destiny2_content/icons/93c69df9a8c648602b10844524e8a0e6.png","https://www.bungie.net/common/destiny2_content/icons/96a637543fc3a60cf55d6b333ad87661.png"],
+  "AION Renewal":["https://www.bungie.net/common/destiny2_content/icons/005db44d00a46515888db51ffd60f1bd.png","https://www.bungie.net/common/destiny2_content/icons/609405930d800a057c5e6eef3edac14e.png"],
+  "Apostate's Blade":["https://www.bungie.net/common/destiny2_content/icons/37ff5b490115feacf7606fa7c7d62105.png","https://www.bungie.net/common/destiny2_content/icons/a4ce3890548fa343ab97556f6ef1bac7.png"],
+  "Atheon's Memory":["https://www.bungie.net/common/destiny2_content/icons/0a0c002d2eb7c7687fe93c02143d9c23.png","https://www.bungie.net/common/destiny2_content/icons/19fd2268026b9e381de699a3dc941741.png"],
+  "Bushido":["https://www.bungie.net/common/destiny2_content/icons/40abb2a18a499cc24222f052fca2a694.png","https://www.bungie.net/common/destiny2_content/icons/533277959c64b90c06bdea0a6dbaa723.png"],
+  "Circuit":["https://www.bungie.net/common/destiny2_content/icons/2bd8232d3bda3c410729c244956b2934.png","https://www.bungie.net/common/destiny2_content/icons/014d2db087e06c17703e3f48f1135e5d.png"],
+  "CODA":["https://www.bungie.net/common/destiny2_content/icons/a0241a2cdaf39e14af7605dd460756d0.png","https://www.bungie.net/common/destiny2_content/icons/e9dc45fc2e1f56748d5ddb414ebdf99d.png"],
+  "Collective Psyche":["https://www.bungie.net/common/destiny2_content/icons/e8dc7995d41ec6eb0e68e6b811643a3b.png","https://www.bungie.net/common/destiny2_content/icons/a96cbdea0b06d28d2780e100ac0ae51f.png"],
+  "Crota's Memory":["https://www.bungie.net/common/destiny2_content/icons/161a3720af72721392e459e6a66f087d.png","https://www.bungie.net/common/destiny2_content/icons/63000cbeef61981c3efe32992739789b.png"],
+  "Cruel Electrum":["https://www.bungie.net/common/destiny2_content/icons/c1f98cc31a51f865ca062a684442964a.png","https://www.bungie.net/common/destiny2_content/icons/72b47646330904d1a46cf54a779be28a.png"],
+  "Crystocrene":["https://www.bungie.net/common/destiny2_content/icons/bd176b87f172c0affdec5a8e10e5ae8c.png","https://www.bungie.net/common/destiny2_content/icons/046a5d59d06ab9cfb7488faacdc4b6eb.png"],
+  "Cyberserpent Null":["https://www.bungie.net/common/destiny2_content/icons/3b8036591bab64740db750efb05aab31.png","https://www.bungie.net/common/destiny2_content/icons/c23f5d490b3084d0f051395dc16bdb42.png"],
+  "Dark Age":["https://www.bungie.net/common/destiny2_content/icons/5be6f5f0e14a37f1efe37644f37faa15.png","https://www.bungie.net/common/destiny2_content/icons/0273d18ef76b07eadc49e9ca2d131e73.png"],
+  "Deep Explorer":["https://www.bungie.net/common/destiny2_content/icons/3384d936001688833ae09fa92cb280f5.png","https://www.bungie.net/common/destiny2_content/icons/2160d0b4551f285830bdf344f47a8a9d.png"],
+  "Disaster Corps":["https://www.bungie.net/common/destiny2_content/icons/ff4d0d19141fee88ce61994a3aea8bbc.png","https://www.bungie.net/common/destiny2_content/icons/5dee6c3209d00db6558954aec7fa7219.png"],
+  "Dreambane":["https://www.bungie.net/common/destiny2_content/icons/589460862ff8d80364db3a9b6205e071.png","https://www.bungie.net/common/destiny2_content/icons/8d927506b9d4310414df97a1da85210e.png"],
+  "Eutechnology":["https://www.bungie.net/common/destiny2_content/icons/a304f92290458d486ab19fcd1ef6f6ff.png","https://www.bungie.net/common/destiny2_content/icons/7a80a0a2d1abacd0ce64e71bafff34f3.png"],
+  "Exodus Down":["https://www.bungie.net/common/destiny2_content/icons/8b11633d8026079a0841ca92c211a713.png","https://www.bungie.net/common/destiny2_content/icons/98a8854b4477cb8a722024a7015dcf89.png"],
+  "Ferropotent":["https://www.bungie.net/common/destiny2_content/icons/a3ce83264ba9520c563cf6d621c66565.png","https://www.bungie.net/common/destiny2_content/icons/354d07625ba9f6806c4062e2711c5f0f.png"],
+  "First Ascent":["https://www.bungie.net/common/destiny2_content/icons/0d086c527eb8a84290ceea3d2069bf69.png","https://www.bungie.net/common/destiny2_content/icons/65a58789810d5617352736c279d51edb.png"],
+  "Flain":["https://www.bungie.net/common/destiny2_content/icons/c1e6c0367ad681dada7bb3f4f2affd04.png","https://www.bungie.net/common/destiny2_content/icons/4b3cbd3ca5f5ffa0b6d484f139d1c006.png"],
+  "Great Hunt":["https://www.bungie.net/common/destiny2_content/icons/28dc5b70823b878a972034c6eb05e666.png","https://www.bungie.net/common/destiny2_content/icons/738273f563c6cc73bfde01357418adde.png"],
+  "Iron Battalion":["https://www.bungie.net/common/destiny2_content/icons/c3cc01210cee6c18152563202b5ac57d.png","https://www.bungie.net/common/destiny2_content/icons/d8a71c6aa15a6a1d14ab7fc8e13e203c.png"],
+  "Iron Panoply":["https://www.bungie.net/common/destiny2_content/icons/141304b7b66d2b8fad5b72c4ad29c40f.png","https://www.bungie.net/common/destiny2_content/icons/729f24f6efeca3f59162885c8eddbaf3.png"],
+  "Kentarch 3":["https://www.bungie.net/common/destiny2_content/icons/aae858b35a0768b44be303cf9ae15d52.png","https://www.bungie.net/common/destiny2_content/icons/67080f11f3487aa8e442609becfdae93.png"],
+  "Last Discipline":["https://www.bungie.net/common/destiny2_content/icons/6d90a805ee5c1a2a3eafe5b64b29f1ec.png","https://www.bungie.net/common/destiny2_content/icons/c918b80d815f1a54755a0b9b8fcbf7ed.png"],
+  "Legacy's Oath":["https://www.bungie.net/common/destiny2_content/icons/dc92ca1a287bff0693fe128baff9df35.png","https://www.bungie.net/common/destiny2_content/icons/a33ab7d65a4aa836142ee869b0423c66.png"],
+  "Luminopotent":["https://www.bungie.net/common/destiny2_content/icons/6999410ff04b4144a07c39fbca5ea831.png","https://www.bungie.net/common/destiny2_content/icons/bdd6424d0b5dbee52505d969653c69e0.png"],
+  "Lustrous":["https://www.bungie.net/common/destiny2_content/icons/3c9918529fb85eb95b151c2461b63b9c.png","https://www.bungie.net/common/destiny2_content/icons/fb229a054586415903e6539ea363f63a.png"],
+  "New Demotic":["https://www.bungie.net/common/destiny2_content/icons/d4ce701db7e340f651fc7683fa615599.png","https://www.bungie.net/common/destiny2_content/icons/8702ce0687c6933b63075a7456620954.png"],
+  "Nezarec's Nightmare":["https://www.bungie.net/common/destiny2_content/icons/353f44c5dc35f53b9cbdc5e7275e79f5.png","https://www.bungie.net/common/destiny2_content/icons/7c6a982de9632a3a04dbe1c9a51fc150.png"],
+  "Oryx's Memory":["https://www.bungie.net/common/destiny2_content/icons/c4d21817ea6e205ff95639019a38e7e2.png","https://www.bungie.net/common/destiny2_content/icons/e1e76d3824a761cf038e1f9d9be7c84f.png"],
+  "Pantheos Resplendent":["https://www.bungie.net/common/destiny2_content/icons/51c4b62173e6e870551d99d256d25d86.png","https://www.bungie.net/common/destiny2_content/icons/f0a2eb584d440e878d7fe9e9c7884e3b.png"],
+  "Per Audacia":["https://www.bungie.net/common/destiny2_content/icons/495764dd5f65e2232fb197614a6242bc.png","https://www.bungie.net/common/destiny2_content/icons/6c68d32bd7dd8a61b059c44ac1218272.png"],
+  "Promised":["https://www.bungie.net/common/destiny2_content/icons/f49ca4f83e2c2f9bc8b8fb331ccf58d7.png","https://www.bungie.net/common/destiny2_content/icons/e4510ff158987fee7ac3953391f6435e.png"],
+  "Resonant Fury":["https://www.bungie.net/common/destiny2_content/icons/f7405da4c3f5e18e0a29f4ceca3aa8b0.png","https://www.bungie.net/common/destiny2_content/icons/4678088483fa5ea38f509a02e24faf21.png"],
+  "Reverie Dawn":["https://www.bungie.net/common/destiny2_content/icons/f61c57bf97db2da78a537c7933e45b94.png","https://www.bungie.net/common/destiny2_content/icons/6882c7bf6dbcd564e9ef00a41818c9fd.png"],
+  "Sage Protector":["https://www.bungie.net/common/destiny2_content/icons/899fc042368ce701ca12f69df23dcc38.png","https://www.bungie.net/common/destiny2_content/icons/a19540f5e54c76044c91fbac06f697ed.png"],
+  "Seventh Seraph":["https://www.bungie.net/common/destiny2_content/icons/18b5bd384a62c9f960e1f46907987f48.png","https://www.bungie.net/common/destiny2_content/icons/991a1596482cd22ca393a748c2aa412c.png"],
+  "Shrewd Survivor":["https://www.bungie.net/common/destiny2_content/icons/7f09f6e0067a733d41e745781bc402a9.png","https://www.bungie.net/common/destiny2_content/icons/04b973a7cfccbd68319667558dcbe82c.png"],
+  "Smoke Jumper":["https://www.bungie.net/common/destiny2_content/icons/e752466e7923c7137927722f38f18550.png","https://www.bungie.net/common/destiny2_content/icons/a76d27306334a934577ef92a037f2ce0.png"],
+  "Spacewalk":["https://www.bungie.net/common/destiny2_content/icons/c69c2f408beb711a0529712a53abe120.png","https://www.bungie.net/common/destiny2_content/icons/fe4bf02ec75185ba071c0a30b53f8037.png"],
+  "Swordmaster":["https://www.bungie.net/common/destiny2_content/icons/a29d645f714faf4f59a2a2f5e0cf6f70.png","https://www.bungie.net/common/destiny2_content/icons/837bdc2b437d0ed6da5d665b59af7ebc.png"],
+  "Taken King":["https://www.bungie.net/common/destiny2_content/icons/3e8ebec7f43a113e821dc29827165316.png","https://www.bungie.net/common/destiny2_content/icons/a0480d71e1dea57fbea74496dd31e13a.png"],
+  "Techeun's Regalia":["https://www.bungie.net/common/destiny2_content/icons/a57b51a297cda79eacb02322ada388ea.png","https://www.bungie.net/common/destiny2_content/icons/4449e9beedbec136551849b5a8802b35.png"],
+  "Techsec":["https://www.bungie.net/common/destiny2_content/icons/bd2c44c6cb6a7f2a168a90be278aa8c4.png","https://www.bungie.net/common/destiny2_content/icons/56a10b99ed0b4b28d33696ec828b29b5.png"],
+  "Thriving Survivor":["https://www.bungie.net/common/destiny2_content/icons/9763eb72bc446b9d9f1b2c2b5efca82d.png","https://www.bungie.net/common/destiny2_content/icons/319e1b357fb1e2b7108f489f792c31ed.png"],
+  "Thunderhead":["https://www.bungie.net/common/destiny2_content/icons/41f83623b1974e71b4e008b6baeb6269.png","https://www.bungie.net/common/destiny2_content/icons/39749db8864643f96bb20296732d4e8d.png"],
+  "TM Custom":["https://www.bungie.net/common/destiny2_content/icons/07bba1454e20ee9358ed61c4f20b7c34.png","https://www.bungie.net/common/destiny2_content/icons/14b1ff03aa7eab854f220fdd32adf0ec.png"],
+  "Triumphal Anthem":["https://www.bungie.net/common/destiny2_content/icons/cac950e06b8de21fafa8aca1ba217a4c.png","https://www.bungie.net/common/destiny2_content/icons/69c0437e7a2926aeb72b0395f4b88beb.png"],
+  "Twofold Crown":["https://www.bungie.net/common/destiny2_content/icons/b80634df8d4c10ccd0b3d77f6c03094d.png","https://www.bungie.net/common/destiny2_content/icons/d45b0c7e60cb34ef703d20c85e3737a5.png"],
+  "Veritas":["https://www.bungie.net/common/destiny2_content/icons/94133689fdafe43c92af39875e4b35cf.png","https://www.bungie.net/common/destiny2_content/icons/9ca2d24cfb79d72ec09ddd3c78a19e75.png"],
+  "Wayward Psyche":["https://www.bungie.net/common/destiny2_content/icons/daf157f0334a83d1870ef0f325b1c25a.png","https://www.bungie.net/common/destiny2_content/icons/bfaac852d350fb7cabb9a7a06deef4a6.png"],
+  "Wild Anthem":["https://www.bungie.net/common/destiny2_content/icons/403810a27b0b33248f7a876904e1977b.png","https://www.bungie.net/common/destiny2_content/icons/d3959132415be3779f6e2a46dbb531f6.png"],
+  "Wildwood":["https://www.bungie.net/common/destiny2_content/icons/4e2aece7b23761d572a716fa737c5d2d.png","https://www.bungie.net/common/destiny2_content/icons/5311ea5b6731e151e9778deac078710c.png"],
+  "Yearning Echo":["https://www.bungie.net/common/destiny2_content/icons/e5e74b200fa0ca8c0a9edc63e62a4559.png","https://www.bungie.net/common/destiny2_content/icons/9589b92d6863ebf09f776aad4dfbc2e3.png"]
+};
+
+const SETS = [
+  {name:"AION Adapter",source:"Kepler",sourceType:"DESTINATION",vendor:"Altar of Relativity",p2name:"Force Absorption",p2desc:"Final blows with a Rocket Launcher, Grenade Launcher, or micro-missile temporarily decrease incoming area-of-effect damage.",p2tags:"grenade-launcher, micro-missile, rocket-launcher, trigger-final-blow",p4name:"Reactive Shock",p4desc:"When Force Absorption is active, taking melee damage causes you to emit a disorienting burst once.",p4tags:"disorient, trigger-melee",p4requires2p:"specific",season:"Edge of Fate / Reclamation"},
+  {name:"AION Renewal",source:"Kepler",sourceType:"DESTINATION",vendor:"Altar of Relativity",p2name:"Force Converter",p2desc:"After a final blow with a Rocket Launcher, Grenade Launcher, or micro-missile, sprint for a short time to gain Speed Booster.",p2tags:"arc, grenade-launcher, micro-missile, mobility, rocket-launcher, speed-booster, trigger-final-blow, trigger-sprinting",p4name:"Reactive Booster",p4desc:"Once per activation of Force Converter, sprinting while at critical health, being suspended, or being slowed by a Stasis effect will immediately grant Speed Booster for a short duration.",p4tags:"arc, healing, mobility, slow, slowed, speed-booster, stasis, strand, suspend, suspended, trigger-critical-health, trigger-sprinting",p4requires2p:"specific",season:"Edge of Fate / Reclamation"},
+  {name:"Apostate's Blade",source:'“Pit of Heresy” Dungeon',sourceType:"DUNGEON",p2name:"Regenerative Threshold",p2desc:"Performing a finisher stores power. The next time your shields are broken, consume stored power to immediately heal and start health regeneration.",p2tags:"healing, trigger-finisher",p4name:"Melee Conduction",p4desc:"While you have Radiant, Restoration, or Cure, your melee hits release a burst that will scorch the target.",p4tags:"cure, radiant, restoration, scorch, solar, trigger-melee",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Atheon's Memory",source:'“Vault of Glass” Raid',sourceType:"RAID",p2name:"Radiolaria Breach",p2desc:"After picking up an Orb of Power, the next time your shields are broken, gain a bonus to Health stat for a short duration and release a burst of radiolaria around you.",p2tags:"healing, orb-pickup, stat-bonus, trigger-orb-pickup",p4name:"Collective Power",p4desc:"While you have a subclass buff, dealing sustained damage creates an Orb of Power.",p4tags:"orb-generation, subclass-synergy, trigger-sustained-damage",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Bushido",source:"Portal Activities",sourceType:"Portal",vendors:"Zavala|Hawthorne:Vanguard|Xur",p2name:"Iaido",p2desc:"Final blows with freshly drawn or reloaded weapons heal you.",p2tags:"healing, reload, trigger-final-blow",p4name:"Unfaltering Focus",p4desc:"Bow, Shotgun, or Sword final blows temporarily reduce incoming damage. Damaging targets with those weapons extends the effect.",p4tags:"bow, damage-resistance, shotgun, sword, trigger-final-blow",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Circuit",source:"Sparrow Racing League (SRL)",sourceType:"Crucible",subtype:"srl",p2name:"Revving Up",p2desc:"Fast movement builds up a charge that gradually increases your health regeneration speed. Once you are Fully Revved, sprinting grants Speed Booster.",p2tags:"arc, healing, mobility, speed-booster, trigger-sprinting",p4name:"Dielectric Drift",p4desc:"Sliding while Speed Booster is active jolts combatants in front of you.",p4tags:"arc, jolt, jolts, mobility, speed-booster, trigger-sliding",p4requires2p:"general",season:"Monument of Triumph"},
+  {name:"CODA",source:'“Prophecy” Dungeon',sourceType:"DUNGEON",p2name:"Between Poles",p2desc:"Final blows with Light weapons grants stacks of Light Polarity, which grants Grenade stat. Final blows with Darkness or Kinetic weapons grants stacks of Dark Polarity, which grants stacks of Melee stat.",p2tags:"kinetic, stat-bonus, trigger-final-blow",p4name:"So Very Thin",p4desc:"Final blows with Light weapons grants additional grenade energy. Final blows with Dark or Kinetic weapons grants additional melee energy. Rapid final blows that alternate between Light and Darkness grant a short period of damage resistance.",p4tags:"ability-energy, damage-resistance, kinetic, trigger-final-blow",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Collective Psyche",source:'“The Desert Perpetual” Raid',sourceType:"RAID",p2name:"Accretion",p2desc:"Picking up an ammo brick gives you a stacking bonus to weapon swap and stow speeds until you die.",p2tags:"ammo, trigger-ammo-pickup",p4name:"Doppler Effect",p4desc:"Suspend, unravel, and sever effects applied to targets, and radiant and restoration effects applied to you have increased duration.",p4tags:"radiant, restoration, sever, solar, strand, suspend, unravel",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Crota's Memory",source:'“Crota\'s End” Raid',sourceType:"RAID",p2name:"Cursed Fist",p2desc:"Melee final blows trigger a Cursed Thrall explosion.",p2tags:"trigger-final-blow, trigger-melee",p4name:"Power of the Son",p4desc:"Being in combat for a duration grants progressively more flinch resistance and damage resistance versus combatants.",p4tags:"damage-resistance, flinch-resistance",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Cruel Electrum",source:"Trials of Osiris",sourceType:"Crucible",vendors:"Saint-14",subtype:"trials",p2name:"Primary Survivor",p2desc:"When an ally is defeated, Primary ammo weapons gain increased handling, reload speed, target acquisition, and reduced flinch. Bonus increases when multiple allies are dead at the same time or when you are running solo.",p2tags:"flinch-resistance, handling, primary-ammo, reload, team-play",p4name:"Primary Phantom",p4desc:"Final blows with Primary ammo weapons remove you from radar for a short time. Drawing a weapon that does not use Primary ammo will immediately end this effect.",p4tags:"primary-ammo, trigger-final-blow",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Crystocrene",source:"Europa",sourceType:"DESTINATION",p2name:"Resupply",p2desc:"After being out of combat for a moderate duration, your next final blow grants additional ammo progress and creates an Orb of Power.",p2tags:"ammo, orb-generation, trigger-final-blow, trigger-out-of-combat",p4name:"From the Storm",p4desc:"After being out of combat for a moderate duration, slowly gain Frost Armor until you reenter combat.",p4tags:"frost-armor, stasis, trigger-out-of-combat",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Cyberserpent Null",source:"Gambit",sourceType:"Gambit",vendors:"Drifter",p2name:"Adrenal Rush",p2desc:"Sprinting for a short time grants a period of improved reload speed and handling. Final blows extend this period.",p2tags:"handling, reload, trigger-final-blow, trigger-sprinting",p4name:"Bountiful Munitions",p4desc:"While Adrenal Rush is active, final blows grant Special Ammo progress. Final Blows against powerful combatants, Guardians, and Taken grants additional progress.",p4tags:"ammo, anti-boss, special-ammo, trigger-final-blow",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Dark Age",source:'“Warlord\'s Ruin” Dungeon',sourceType:"DUNGEON",p2name:"Taking Initiative",p2desc:"Hitting combatants with melee attacks or Sword strikes grants a stack of Initiative, giving bonus handling and reload. Stacks decay slowly over time.",p2tags:"handling, reload, sword, trigger-melee",p4name:"Healing Initiative",p4desc:"While you have Initiative, using your class ability creates a stationary healing aura. The aura gains increased healing based on the number of Initiative stacks.",p4tags:"healing, trigger-class-ability",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Deep Explorer",source:'“Duality” Dungeon',sourceType:"DUNGEON",p2name:"Built Bitter",p2desc:"Taking damage increases the reload speed of your equipped weapon until it is stowed. Taking more damage increases the effect.",p2tags:"damage-buff, reload, trigger-taking-damage",p4name:"Bittersweet",p4desc:"When you stow a weapon, restore health based on the number of Built Bitter stacks lost.",p4tags:"healing, trigger-weapon-stow",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Disaster Corps",source:"Portal Activities",sourceType:"Portal",vendors:"Shaxx|Hawthorne:Crucible",p2name:"Pleas Heard",p2desc:"Reloading an Auto Rifle, Scout Rifle, or Sidearm after a final blow slowly restores health until you reenter combat.",p2tags:"auto-rifle, healing, reload, scout-rifle, sidearm, trigger-final-blow, trigger-reload",p4name:"Magnificent Duty",p4desc:"When you reach critical health or heal an ally at critical health, Auto Rifles, Scout Rifles, and Sidearms gain a period of increased range, stability, and reload speed.",p4tags:"auto-rifle, healing, reload, scout-rifle, sidearm, team-play, trigger-critical-health",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Dreambane",source:"Moon",sourceType:"DESTINATION",p2name:"Nightmarish Power",p2desc:"Final blows to a challenging combatant or higher-ranked target grant Unstable Essence. When you have Unstable Essence, you receive grenade and melee stat bonuses.",p2tags:"stat-bonus, trigger-final-blow",p4name:"Nightmarish Resilience",p4desc:"When you have Unstable Essence, rapid weapon damage or final blows heal you and begin health regeneration.",p4tags:"damage-buff, healing, trigger-final-blow",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Eutechnology",source:"Vanguard: Pinnacle & Arena Ops",sourceType:"PVE",vendors:"Zavala",subtype:"pinnacle,arena",p2name:"Gift of the Ley Lines",p2desc:"Rapidly defeating combatants with Void energy spawns a Void breach.",p2tags:"void, void-breach",p4name:"Techeun's Foresight",p4desc:"After collecting a Void breach, your next final blow with a Void weapon triggers a detonation. The detonation is more powerful if it is triggered quickly after collecting a Void breach.",p4tags:"trigger-final-blow, void, void-breach",p4requires2p:"general",season:"Monument of Triumph"},
+  {name:"Exodus Down",source:"Nessus",sourceType:"DESTINATION",vendor:"Failsafe",p2name:"Emergency Electromagnet",p2desc:"When your shields become broken, collect all nearby Orbs of Power and ammo bricks.",p2tags:"ammo, orb-pickup, trigger-ammo-pickup, trigger-orb-pickup, trigger-shields-broken",p4name:"Repurposed Charge",p4desc:"Whenever you gain, lose, or spend an Armor Charge, heal and gain damage reduction for a short time. This effect scales with the amount of Armor Charge gained, lost, or spent.",p4tags:"armor-charge, damage-resistance, healing",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Ferropotent",source:"Ferropotent Suit",sourceType:"PVE",vendors:"Zavala",p2name:"Rapid Repair",p2desc:"When your shields begin to regenerate, you gain flinch resistance and damage resistance for a short time.",p2tags:"damage-resistance, flinch-resistance",p4name:"Built from Scratch",p4desc:"While your reserves are low, combatant final blows with weapons provide additional ammo progress based on their ammo type. Primary ammo weapons boost Special ammo progress, and Special ammo weapons boost Heavy ammo progress.",p4tags:"ammo, heavy-ammo, primary-ammo, special-ammo, trigger-final-blow",p4requires2p:false,season:"Renegades / Lawless"},
+  {name:"First Ascent",source:"Pale Heart",sourceType:"DESTINATION",p2name:"Stack 'Em Up",p2desc:"Defeating targets with unique elemental damage grants a stacking bonus to Transcendence energy gains while Transcendence is inactive.",p2tags:"prismatic, transcendence",p4name:"Burn 'Em Down",p4desc:"While Transcendence is active, using your grenade ability consumes all stacks of Stack 'Em Up to grant an escalating amount of grenade energy.",p4tags:"ability-energy, prismatic, transcendence, trigger-grenade",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Flain",source:'“Sundered Doctrine” Dungeon',sourceType:"DUNGEON",p2name:"Sinew Stitching",p2desc:"Taking damage from combatants sometimes spawns a Threadling.",p2tags:"strand, threadling, trigger-taking-damage",p4name:"Knit Together",p4desc:"For a short time after your shields break, your next several Threadling hits restore health.",p4tags:"healing, sever, strand, threadling, trigger-shields-broken",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Great Hunt",source:'“Last Wish” Raid',sourceType:"RAID",p2name:"Taken Barrier",p2desc:"Grenade final blows temporarily reduce incoming damage.",p2tags:"damage-resistance, trigger-final-blow, trigger-grenade",p4name:"Taken Armaments",p4desc:"Grenade final blows grant additional Heavy ammo progress.",p4tags:"ammo, heavy-ammo, trigger-final-blow, trigger-grenade",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Iron Battalion",source:"Iron Banner",sourceType:"Crucible",vendors:"Saladin",subtype:"ironbanner",p2name:"Primary Honing",p2desc:"Increases handling and reload speed for Primary ammo weapons. Primary ammo weapons gain increased damage against non-boss combatants based on your Weapons stat.",p2tags:"anti-boss, damage-buff, handling, primary-ammo, reload",p4name:"Supercyclical",p4desc:"Final blows while your Super is active refund Super energy when it ends.",p4tags:"ability-energy, trigger-final-blow, trigger-super",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Iron Panoply",source:"Iron Banner",sourceType:"Crucible",vendors:"Saladin",subtype:"ironbanner",p2name:"Vigilant Watch",p2desc:"As your health gets lower, your weapons gain increased stability and handling. Weapon final blows while your shields are depleted heal you.",p2tags:"handling, healing, trigger-final-blow, trigger-low-health, trigger-shields-broken",p4name:"Iron Conviction",p4desc:"When your shields become broken, you gain increased ammo generation, flinch resistance, and damage resistance against nearby combatants for a short time. Final blows extend this effect.",p4tags:"ammo, damage-resistance, flinch-resistance, trigger-final-blow, trigger-shields-broken",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Kentarch 3",source:'“Garden of Salvation” Raid',sourceType:"RAID",p2name:"Network Admin",p2desc:"Being near allies creates a relay network that gives the wearer improved handling and reload speed. Being near other allied Network Admins additionally grants the wearer a bonus to Health stat.",p2tags:"handling, healing, reload, stat-bonus, team-play",p4name:"Network Upload",p4desc:"Weapon final blows grant the wearer and nearby allies melee energy.",p4tags:"ability-energy, team-play, trigger-final-blow",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Last Discipline",source:"Portal Activities",sourceType:"Portal",vendors:"Shaxx|Hawthorne:Crucible",p2name:"Terminal Velocity",p2desc:"Final blows with primary ammo weapons grant your primary ammo weapons temporarily increased reload speed.",p2tags:"primary-ammo, reload, trigger-final-blow",p4name:"Power Loader",p4desc:"Picking up an Orb of Power grants Special ammo progress.",p4tags:"ammo, orb-pickup, special-ammo, trigger-orb-pickup",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Legacy's Oath",source:'“Deep Stone Crypt” Raid',sourceType:"RAID",p2name:"Augmented Servos",p2desc:"Powered melees release an additional disorienting pulse when used to defeat a target.",p2tags:"disorient, trigger-melee",p4name:"God-like Judgment",p4desc:"When your shields are broken by a combatant, or upon casting your Super, release a swarm of heat seeking micro-missiles.",p4tags:"micro-missile, trigger-shields-broken, trigger-super",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Luminopotent",source:"Vanguard: Fireteam & Solo Ops",sourceType:"PVE",vendors:"Zavala",subtype:"fireteam,solo",p2name:"Ionic Overclock",p2desc:"While amplified, your Fusion Rifles, Linear Fusion Rifles, and Heat weapons gain increased handling, reload, and vent speeds.",p2tags:"amplified, arc, fusion-rifle, handling, linear-fusion-rifle, reload, trigger-amplified",p4name:"Shock and Clear",p4desc:"Final blows with Jolt or against jolted combatants create Ionic Traces.",p4tags:"arc, ionic-trace, jolt, jolted, trigger-final-blow",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Lustrous",source:"Solstice Engrams – Tenet of Bravery",sourceType:"Solstice Engrams",p2name:"Photogalvanic",p2desc:"Receiving healing temporarily grants your Solar weapons increased flinch resistance, handling, and reload speed.",p2tags:"flinch-resistance, handling, healing, reload, solar, trigger-taking-damage",p4name:"Cauterize",p4desc:"Rapid Solar final blows heal you.",p4tags:"healing, solar, trigger-final-blow",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"New Demotic",source:"Trials of Osiris",sourceType:"Crucible",vendors:"Saint-14",subtype:"trials",p2name:"Paroli",p2desc:"Primary ammo weapons gain a bonus to flinch resistance after sliding.",p2tags:"flinch-resistance, primary-ammo, trigger-sliding",p4name:"Martingale",p4desc:"Your weapons gain a temporary increase to handling and aim-down-sights speed when an ally is defeated or you revive an ally.",p4tags:"handling, team-play",p4requires2p:false,season:"Renegades / Lawless"},
+  {name:"Nezarec's Nightmare",source:'“Root of Nightmares” Raid',sourceType:"RAID",p2name:"Bad Dreams",p2desc:"Final blows versus subclass-debuffed targets have an escalating chance to spawn an Orb of Power.",p2tags:"orb-generation, trigger-final-blow",p4name:"Dream-Devourer",p4desc:"Performing a finisher versus a powerful combatant grants Devour. While you have Devour, gain damage resistance versus combatants.",p4tags:"anti-boss, damage-resistance, devour, trigger-finisher, void",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Oryx's Memory",source:'“King\'s Fall” Raid',sourceType:"RAID",p2name:"Iron Sharpens Iron",p2desc:"Final blows on Guardians and powerful combatants generate additional ammo progress.",p2tags:"ammo, anti-boss, trigger-final-blow",p4name:"Ascendant Escape",p4desc:"After a final blow on a powerful combatant, the next time your shields are broken, you become invisible.",p4tags:"anti-boss, invisible, trigger-final-blow, void",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Pantheos Resplendent",source:"Pantheon",sourceType:"Pantheon",p2name:"Well Prepared",p2desc:"Picking up ammo grants Armor Charge. Grants a bonus to Health stat per Armor Charge you have.",p2tags:"armor-charge, healing, stat-bonus, trigger-ammo-pickup",p4name:"Down the Line",p4desc:"Sustained damage on minibosses, Champions, and bosses increases weapon damage versus base and powerful combatants. Weapon final blows consume one stack each.",p4tags:"anti-boss, anti-champion, damage-buff, trigger-final-blow, trigger-sustained-damage",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Per Audacia",source:"Competitive Matches",sourceType:"Crucible",vendors:"Shaxx",subtype:"competitive",p2name:"Primary Chain",p2desc:"Primary ammo weapon final blows grant a stacking bonus to mobility and Primary weapon range and handling until you are defeated.",p2tags:"handling, primary-ammo, trigger-final-blow",p4name:"Sublime Transit",p4desc:"Increases mobility and grants enhanced sprint speed and slide distance.",p4tags:"mobility",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Promised",source:'“Salvation\'s Edge” Raid',sourceType:"RAID",p2name:"Stable Resonance",p2desc:"Defeating a powerful combatant generates Stable Resonance, which grants damage resistance and increased weapon damage for the duration.",p2tags:"anti-boss, damage-buff, damage-resistance",p4name:"Resonance Redirection",p4desc:"While you have Stable Resonance, continued weapon damage occasionally generates a resonance burst that damages and exhausts targets.",p4tags:"damage-buff",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Resonant Fury",source:'“Vow of the Disciple” Raid',sourceType:"RAID",p2name:"Resonant Plating",p2desc:"Your health begins regenerating immediately after taking melee damage from a powerful combatant.",p2tags:"anti-boss, healing, trigger-melee",p4name:"Siphoning Touch",p4desc:"Gain stacks of Siphoning Touch for weapon or Glaive melee hits. Switching weapons heals you and consumes all stacks.",p4tags:"glaive, healing, trigger-melee",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Reverie Dawn",source:"Dreaming City",sourceType:"DESTINATION",p2name:"A Wish for Protection",p2desc:"Taking significant damage in a short time generates a Protective Wish that makes it harder for combatants to hit you, and grants increased reload speed and flinch resistance.",p2tags:"flinch-resistance, reload",p4name:"A Wish Fulfilled",p4desc:"When the Protective Wish expires, it cures you. Rapid final blows prematurely end the Protective Wish.",p4tags:"cure, solar, trigger-final-blow",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Sage Protector",source:'“Equilibrium” Dungeon',sourceType:"DUNGEON",p2name:"Combat Meditation",p2desc:"Sword hits return grenade and class energy. Bonus energy is granted if Blade Focus is active.",p2tags:"sword",p4name:"Blade Focus",p4desc:"Briefly guard with a Sword to ready Blade Focus. While Blade Focus is readied, hitting a target with your sword increases Sword damage and lunge distance for a moderate duration.",p4tags:"sword",p4requires2p:"specific",season:"Renegades / Lawless"},
+  {name:"Seventh Seraph",source:"Cosmodrome",sourceType:"DESTINATION",p2name:"Rasputin's Wrath",p2desc:"Final blows with area-of-effect damage, Solar abilities, Seventh Seraph weapons, or IKELOS weapons grant Warmind Charges. Each stack of Warmind Charge increases your Weapons and Grenade stats.",p2tags:"solar, stat-bonus, trigger-final-blow",p4name:"Rasputin's Reprisal",p4desc:"While you have Warmind Charges, defeating powerful combatants, destroying a construct, or destroying a Tangle releases a Solar detonation that damages combatants and heals allies.",p4tags:"anti-boss, healing, solar, strand, tangle",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Shrewd Survivor",source:"Lawless Frontier",sourceType:"DESTINATION",p2name:"Reflex Action",p2desc:"Swapping to a Heat weapon, Submachine Gun, or Hand Cannon grants a short period of increased handling and accuracy. This effect is extended by dealing damage with that weapon.",p2tags:"hand-cannon, handling, machine-gun, smg",p4name:"Hotshot",p4desc:"Dealing final blows while Reflex Action is active grants a bonus to weapon stat and increases stability, reload, and aim assist for Heat weapons, Submachine Guns, and Hand Cannons for a moderate duration.",p4tags:"hand-cannon, machine-gun, reload, smg, stat-bonus, trigger-final-blow",p4requires2p:"specific",season:"Renegades / Lawless"},
+  {name:"Smoke Jumper",source:"Portal Activities",sourceType:"Portal",vendors:"Zavala|Hawthorne:Vanguard",p2name:"Ride Together, Die Together",p2desc:"When you pick up an Orb of Power, gain a brief period of rapidly decaying damage reduction.",p2tags:"damage-resistance, orb-pickup, trigger-orb-pickup",p4name:"Too Old for This",p4desc:"Defeating a powerful combatant with a finisher grants you Special ammo progress and replenishes a small amount of health.",p4tags:"ammo, anti-boss, healing, special-ammo, trigger-finisher",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Spacewalk",source:'“Vesper\'s Host” Dungeon',sourceType:"DUNGEON",p2name:"Augmented Armaments",p2desc:"Primary ammo weapons deal increased damage to disoriented combatants.",p2tags:"damage-buff, disorient, primary-ammo",p4name:"Augmented Explosives",p4desc:"Your grenade abilities release an additional disorienting pulse shortly after detonating.",p4tags:"disorient",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Swordmaster",source:"Portal Activities",sourceType:"Portal",vendors:"Zavala|Hawthorne:Vanguard|Xur",p2name:"Balestra",p2desc:"Damaging a target with a Sword, Glaive, or any melee attack exhausts them. Exhausted targets deal reduced outgoing damage.",p2tags:"glaive, sword, trigger-melee",p4name:"Stesso Tempo",p4desc:"Blocking attacks with a Sword or Glaive grants a short period of damage resistance against targets when you next drop your guard.",p4tags:"damage-resistance, glaive, sword",p4requires2p:false,season:"Renegades / Lawless"},
+  {name:"Taken King",source:'“Ghosts of the Deep” Dungeon',sourceType:"DUNGEON",p2name:"The Ceremony",p2desc:"Finishing combatants or reviving allies initiates a Lucent Hive ritual. While the ritual is active, gain increased Super stat.",p2tags:"team-play",p4name:"Lucent Swarm",p4desc:"Collecting Orbs of Power extends the Ceremony. While it is active, ability final blows occasionally spawn allied Arc moths.",p4tags:"arc, orb-generation, trigger-final-blow, trigger-orb-pickup",p4requires2p:"specific",season:"Monument of Triumph"},
+  {name:"Techeun's Regalia",source:'“The Shattered Throne” Dungeon',sourceType:"DUNGEON",p2name:"Queensfoil Rush",p2desc:"Gain a powerful overshield while performing your finisher. When you finish a target, release a slowing burst around you.",p2tags:"overshield, slow, stasis, trigger-finisher, void",p4name:"Truth to Power",p4desc:"Gain increasing damage resistance when you deal damage or land final blows. Finishers grant accelerated progress. At max stacks, the recharge rate of your abilities is also increased.",p4tags:"damage-resistance, trigger-final-blow, trigger-finisher",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Techsec",source:"Portal Activities",sourceType:"Portal",vendors:"Zavala|Hawthorne:Vanguard|Xur",p2name:"Wrecker",p2desc:"You deal significantly increased Kinetic damage to combatant shields, overshields, vehicles, and constructs.",p2tags:"damage-buff, kinetic, overshield, void",p4name:"Concussive Rounds",p4desc:"Defeating powerful combatants or breaking a combatant shield with Kinetic damage releases a disorienting Kinetic shockwave.",p4tags:"anti-boss, disorient, kinetic, trigger-shield-break",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Thriving Survivor",source:"Lawless Frontier",sourceType:"DESTINATION",p2name:"Opening Act",p2desc:"Final blows with grenades grant Heat weapons bonus stability and vent speed and grant Primary ammo weapons bonus stability and reload speed.",p2tags:"primary-ammo, reload, trigger-final-blow",p4name:"Room Clearing",p4desc:"Multiple final blows with Heat weapons or Primary ammo weapons grant bonuses to weapon and grenade stats and increased ammo generation for Heat weapons and Primary ammo weapons.",p4tags:"ammo, primary-ammo, stat-bonus, trigger-final-blow",p4requires2p:false,season:"Renegades / Lawless"},
+  {name:"Thunderhead",source:"Neomuna",sourceType:"DESTINATION",vendor:"Nimbus",p2name:"License to Thrill",p2desc:"Activating your grenade or the Nanotech Tracer Missiles Origin Trait provides stacking resistance to incoming damage at point-blank range.",p2tags:"trigger-grenade",p4name:"Lethal Weave",p4desc:"Defeating an unraveled combatant grants grenade ability energy. If you have max grenade energy, you are granted Special ammo meter progress instead.",p4tags:"ability-energy, special-ammo, strand, trigger-grenade, unravel, unraveled",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"TM Custom",source:'“Spire of the Watcher” Dungeon',sourceType:"DUNGEON",p2name:"Old Martian Diplomacy",p2desc:"Stowing a weapon after defeating a powerful combatant or a Guardian heals you a small amount and disorients nearby combatants.",p2tags:"anti-boss, disorient, healing, trigger-weapon-stow",p4name:"High Noon",p4desc:"Freshly drawn weapons deal increased precision damage to combatants for a short period. Weapons with the Tex Balanced Stock Origin Trait equipped or Exotics manufactured by the Tex Mechanica Foundry gain further increased benefits.",p4tags:"damage-buff, trigger-precision",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Triumphal Anthem",source:"General Crucible Matches",sourceType:"Crucible",vendors:"Shaxx",subtype:"general",p2name:"Scoot to Loot",p2desc:"Sliding collects nearby ammo and temporarily grants enhanced reload speed and handling to your weapons.",p2tags:"handling, reload, trigger-sliding",p4name:"Shoot to Scoot",p4desc:"Dealing damage with your weapons temporarily grants enhanced sliding. Sliding provides damage resistance.",p4tags:"damage-resistance, trigger-sliding",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Twofold Crown",source:"Trials of Osiris",sourceType:"Crucible",vendors:"Saint-14",subtype:"trials",p2name:"Crook and Flail",p2desc:"Picking up an ammo brick heals you.",p2tags:"ammo, healing, trigger-ammo-pickup",p4name:"Gift of Sight",p4desc:"Final blows with Primary ammo weapons grant you briefly increased radar resolution.",p4tags:"primary-ammo, trigger-final-blow",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Veritas",source:"Throne World",sourceType:"DESTINATION",vendor:"Fynch",p2name:"Lucent Transmutation",p2desc:"Performing a finisher on a combatant, or landing successive powered melee final blows, generates an Elemental pickup based on your Light subclass.",p2tags:"elemental-pickup, trigger-final-blow, trigger-finisher, trigger-melee",p4name:"Lucent Tithes",p4desc:"Performing a finisher on powerful combatants heals you and generates loyal Void moths.",p4tags:"anti-boss, healing, trigger-finisher, void",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Wayward Psyche",source:'“The Desert Perpetual” Epic Raid',sourceType:"RAID",p2name:"Special Relativity",p2desc:"Picking up ammo reloads stowed Special weapons from reserves.",p2tags:"reload, special-ammo, trigger-ammo-pickup",p4name:"Superluminal Motion",p4desc:"After dealing damage with your Super, health and shields regenerate over time while you are in motion. Additional Super damage refreshes this effect.",p4tags:"healing, trigger-super",p4requires2p:false,season:"Edge of Fate / Reclamation"},
+  {name:"Wild Anthem",source:"General Crucible Matches",sourceType:"Crucible",vendors:"Shaxx|Hawthorne:Crucible",subtype:"general",p2name:"Fanfare",p2desc:"Gain increased reload speed for the bottom half of your equipped weapon's magazine.",p2tags:"reload",p4name:"Suros Harmony",p4desc:"Reloading a weapon grants it a bonus to handling and reduces incoming flinch for a short time. Weapons with the SUROS Synergy Origin Trait are granted increased range instead.",p4tags:"flinch-resistance, handling, reload, trigger-reload",p4requires2p:false,season:"Renegades / Lawless"},
+  {name:"Wildwood",source:"EDZ",sourceType:"DESTINATION",vendor:"Devrim",p2name:"Watchtower",p2desc:"Precision final blows while aiming down sights grant damage resistance until you stop aiming down sights.",p2tags:"damage-resistance, trigger-final-blow, trigger-precision",p4name:"Field Expertise",p4desc:"Precision final blows with any weapon grant a stacking bonus to reload speed, target acquisition, and weapon damage against non-boss combatants for a short duration. Weapon final blows with non-precision direct hits end this effect early.",p4tags:"anti-boss, damage-buff, reload, trigger-final-blow, trigger-precision",p4requires2p:false,season:"Monument of Triumph"},
+  {name:"Yearning Echo",source:'“Grasp of Avarice” Dungeon',sourceType:"DUNGEON",p2name:"Untold Greed",p2desc:"Picking up ammo, Orbs of Power, Elemental pickups, or destroying a Strand Tangle grants stacks of Untold Greed, slightly reducing damage taken and providing reload speed to equipped weapons. When your shields are broken, some stacks are lost.",p2tags:"elemental-pickup, orb-pickup, reload, strand, tangle, trigger-ammo-pickup, trigger-shields-broken",p4name:"Overflowing Coffers",p4desc:"While you have stacks of Untold Greed, Orbs of Power and Elemental pickups provide more of their respective energy, and Strand Tangles deal increased damage. When your shields are broken, all stacks are converted into a fountain of Orbs of Power.",p4tags:"damage-buff, elemental-pickup, orb-pickup, strand, tangle, trigger-shields-broken",p4requires2p:"specific",season:"Monument of Triumph"},
+];
+
+// Sort alphabetically
+SETS.sort((a,b) => a.name.localeCompare(b.name));
+
+const parseTags = t => t ? t.split(',').map(s=>s.trim()).filter(Boolean) : [];
+
+// Escapes text for safe embedding inside an HTML attribute (handles quotes/apostrophes in perk descriptions)
+function escapeAttr(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ── Element keyword map — Arc = bright electric, Stasis = deep icy ──
+const ELEMENT_KEYWORDS = {
+  arc:      {label:'Arc',      color:'var(--arc)',       cls:'arc',      keywords:['arc','amplified','blind','blinding','bolt-charge','ionic-trace','jolt','jolted','jolts','speed-booster']},
+  solar:    {label:'Solar',    color:'var(--solar)',     cls:'solar',    keywords:['solar','cure','firesprite','ignite','ignition','radiant','restoration','scorch','scorched']},
+  void:     {label:'Void',     color:'var(--void)',      cls:'void',     keywords:['void','devour','invisibility','invisible','overshield','void-breach','volatile','weaken','weakened','weakening']},
+  stasis:   {label:'Stasis',   color:'var(--stasis)',    cls:'stasis',   keywords:['stasis','encased','freeze','frost-armor','frozen','shatter','slow','slowed','slowing','stasis-crystal','stasis-shard']},
+  strand:   {label:'Strand',   color:'var(--strand)',    cls:'strand',   keywords:['strand','sever','severed','suspend','suspended','tangle','threadling','unravel','unraveled','unraveling','woven-mail']},
+  prismatic:{label:'Prismatic',color:'var(--prismatic)', cls:'prismatic',keywords:['prismatic','transcendence','transcendent']},
+  kinetic:  {label:'Kinetic',  color:'var(--kinetic)',   cls:'kinetic',  keywords:['kinetic']},
+};
+
+const MISC_TAG_GROUPS = {
+  'Benefits':   ['ability-energy','ammo','armor-charge','damage-buff','damage-resistance','elemental-pickup','flinch-resistance','handling','healing','mobility','orb-generation','orb-pickup','overshield','reload','stat-bonus'],
+  'Weapons':    ['auto-rifle','bow','fusion-rifle','glaive','grenade-launcher','hand-cannon','linear-fusion-rifle','machine-gun','micro-missile','pulse-rifle','rocket-launcher','scout-rifle','shotgun','sidearm','smg','sniper-rifle','sword','trace-rifle'],
+  'Triggers':   ['trigger-ammo-pickup','trigger-amplified','trigger-class-ability','trigger-critical-health','trigger-final-blow','trigger-finisher','trigger-grenade','trigger-low-health','trigger-melee','trigger-orb-pickup','trigger-out-of-combat','trigger-precision','trigger-reload','trigger-shield-break','trigger-shields-broken','trigger-sliding','trigger-sprinting','trigger-super','trigger-sustained-damage','trigger-taking-damage','trigger-weapon-stow'],
+  'Combat':     ['anti-boss','anti-champion','disorient','heavy-ammo','primary-ammo','special-ammo','subclass-synergy','team-play'],
+};
+
+// ── Non-element keyword synonyms — literal phrases that appear in perk text for each misc tag.
+// Built the same way as ELEMENT_KEYWORDS: hand-checked against actual description text, not a
+// mechanical transform of the tag name, since many tags describe an effect rather than using its name.
+// These highlight in bold gold (no element color) since they aren't tied to a subclass element.
+const MISC_KEYWORDS = {
+  'ability-energy':       ['grenade energy','melee energy','Super energy','ability energy','grenade ability energy'],
+  'ammo':                 ['ammo','Ammo','ammo brick','ammo bricks','Special Ammo','Special ammo','Heavy ammo','Heavy Ammo'],
+  'armor-charge':         ['Armor Charge'],
+  'damage-buff':          ['increased damage','increased weapon damage','damage increases','deal increased','increases damage'],
+  'damage-resistance':    ['damage resistance','reduce incoming damage','reduce damage','damage reduction','reduced damage'],
+  'elemental-pickup':     ['Elemental pickup','Elemental pickups'],
+  'flinch-resistance':    ['flinch resistance','reduced flinch','reduce flinch'],
+  'handling':             ['handling'],
+  'healing':              ['heal','heals','heal you','healing','health regeneration','start health regeneration','regenerate','regenerating'],
+  'mobility':             ['mobility','sprint','sprinting','Speed Booster','slide','sliding','slide distance'],
+  'orb-generation':       ['creates an Orb of Power','create an Orb of Power','spawn an Orb of Power','spawn allied','generates an Orb of Power'],
+  'orb-pickup':           ['picking up an Orb of Power','pick up an Orb of Power','Orbs of Power','collect all nearby Orbs','Collecting Orbs of Power'],
+  'reload':               ['reload speed','reload','reloading','Reloading','reloaded'],
+  'stat-bonus':           ['stat bonus','bonus to Health stat','Health stat','Grenade stat','Melee stat','stat bonuses','grenade and melee stat','Weapons and Grenade stats','bonus to weapon stat'],
+  'trigger-amplified':    ['amplified'],
+  'trigger-ammo-pickup':  ['Picking up an ammo brick','Picking up ammo','picking up ammo'],
+  'trigger-class-ability':['using your class ability'],
+  'trigger-critical-health': ['critical health'],
+  'trigger-final-blow':   ['final blow','Final blow','final blows','Final blows','Final Blows'],
+  'trigger-finisher':     ['finisher','Performing a finisher','performing a finisher'],
+  'trigger-grenade':      ['grenade ability','your grenade','grenade final blows','Grenade final blows'],
+  'trigger-low-health':   ['health gets lower','As your health'],
+  'trigger-melee':        ['melee hits','melee attacks','melee damage','Melee final blows','powered melee'],
+  'trigger-orb-pickup':   ['picking up an Orb of Power','Picking up an Orb of Power'],
+  'trigger-out-of-combat':['out of combat'],
+  'trigger-precision':    ['Precision final blows','precision damage','non-precision'],
+  'trigger-reload':       ['Reloading a weapon','Reloading'],
+  'trigger-shield-break': ['breaking a combatant shield'],
+  'trigger-shields-broken':['shields are broken','shields become broken','shields break','shields are depleted'],
+  'trigger-sliding':      ['Sliding','sliding'],
+  'trigger-sprinting':    ['sprint','sprinting'],
+  'trigger-super':        ['your Super','casting your Super','Super energy','Super damage','Super is active'],
+  'trigger-sustained-damage': ['sustained damage','Sustained damage'],
+  'trigger-taking-damage':['Taking damage','taking damage','Receiving healing'],
+  'trigger-weapon-stow':  ['stow a weapon','stow your weapon','Stowing a weapon','weapon is stowed'],
+  'anti-boss':            ['powerful combatant','powerful combatants','non-boss combatants'],
+  'anti-champion':        ['Champions'],
+  'disorient':            ['disorient','disorients','disoriented','disorienting'],
+  'heavy-ammo':           ['Heavy ammo','Heavy Ammo'],
+  'primary-ammo':         ['Primary ammo','Primary Ammo'],
+  'special-ammo':         ['Special ammo','Special Ammo','Special weapons'],
+  'subclass-synergy':     ['subclass buff'],
+  'team-play':            ['ally','allies','an ally'],
+  'auto-rifle':           ['Auto Rifle','Auto Rifles'],
+  'bow':                  ['Bow'],
+  'fusion-rifle':         ['Fusion Rifle','Fusion Rifles'],
+  'glaive':               ['Glaive'],
+  'grenade-launcher':     ['Grenade Launcher'],
+  'hand-cannon':          ['Hand Cannon','Hand Cannons'],
+  'linear-fusion-rifle':  ['Linear Fusion Rifle','Linear Fusion Rifles'],
+  'machine-gun':          ['Submachine Gun','Submachine Guns'],
+  'micro-missile':        ['micro-missile','micro-missiles'],
+  'pulse-rifle':          ['Pulse Rifle'],
+  'rocket-launcher':      ['Rocket Launcher'],
+  'scout-rifle':          ['Scout Rifle','Scout Rifles'],
+  'shotgun':              ['Shotgun'],
+  'sidearm':              ['Sidearm','Sidearms'],
+  'smg':                  ['Submachine Gun','Submachine Guns'],
+  'sniper-rifle':         ['Sniper Rifle'],
+  'sword':                ['Sword'],
+  'trace-rifle':          ['Trace Rifle'],
+};
+
+// Every real tag value actually present across all sets' p2tags/p4tags — computed once from live data
+// so "dead" keyword/tag detection below never goes stale as sets are added or removed.
+const ALL_REAL_TAGS = new Set();
+SETS.forEach(s => {
+  parseTags(s.p2tags).forEach(t => ALL_REAL_TAGS.add(t));
+  parseTags(s.p4tags).forEach(t => ALL_REAL_TAGS.add(t));
+});
+
+// A tag/keyword pill is "dead" if no set currently carries that exact tag value — used to grey out
+// chips that are real in-game terms but aren't (yet) used by anything in this dataset, rather than
+// silently hiding them or letting them look broken when clicked.
+function isDeadTag(tag) {
+  return !ALL_REAL_TAGS.has(tag);
+}
+
+// Subtype pill colors — inherit from their parent Source Type's color family so they read clearly,
+// not generic gray. Crucible's PvP subtypes share the Crucible red but lighten slightly per type.
+const SUBTYPE_COLORS = {
+  general:     'var(--src-crucible)',
+  competitive: 'var(--src-crucible)',
+  ironbanner:  'var(--src-iron-banner)',
+  trials:      'var(--src-trials)',
+  srl:         'var(--src-srl)',
+  fireteam:    'var(--src-pve)',
+  pinnacle:    'var(--src-pve)',
+  arena:       'var(--src-pve)',
+  solo:        'var(--src-pve)',
+};
+
+// Focus vendors — vendors a player can spend resources at to specifically target a given set.
+// Distinct from a Destination's lore/drop-location vendor (e.g. Devrim on EDZ), which is not filterable.
+// key = matches card.dataset.vendors values; label = what's shown on the pill.
+const FOCUS_VENDORS = [
+  { key: 'Drifter',   label: 'Drifter' },
+  { key: 'Hawthorne', label: 'Hawthorne (clan engram drops only)' },
+  { key: 'Saint-14',  label: 'Saint-14' },
+  { key: 'Saladin',   label: 'Saladin' },
+  { key: 'Shaxx',     label: 'Shaxx' },
+  { key: 'Xur',       label: 'Xur (weekend rotation)' },
+  { key: 'Zavala',    label: 'Zavala' },
+];
+
+// Source type -> CSS key mapping
+function srcKey(st) {
+  const map = {
+    'DUNGEON':'DUNGEON','RAID':'RAID','Crucible':'Crucible','SRL':'SRL','PVE':'PVE',
+    'Trials':'Trials','Portal':'Portal','DESTINATION':'DESTINATION','Gambit':'Gambit',
+    'Iron Banner':'IronBanner','Solstice Engrams':'Solstice','Pantheon':'Pantheon',
+    'Pinnacle':'Pinnacle'
+  };
+  return map[st] || 'default';
+}
+
+// Display label override — internal sourceType value stays the same (for filtering/CSS),
+// but the visible pill/badge text reflects the renamed Source Types.
+const SOURCE_TYPE_LABELS = {
+  'PVE':    'Vanguard Ops',
+  'Portal': 'World/Portal',
+};
+function srcLabel(st) {
+  return SOURCE_TYPE_LABELS[st] || st;
+}
+
+// Crucible & Vanguard Ops subtype definitions — sub-filters like Element keyword groups
+const SOURCE_SUBTYPES = {
+  'Crucible': {
+    competitive: { label: 'Competitive' },
+    general:     { label: 'General PvP' },
+    ironbanner:  { label: 'Iron Banner' },
+    srl:         { label: 'Sparrow Racing League (SRL)' },
+    trials:      { label: 'Trials' },
+  },
+  'PVE': {
+    arena:    { label: 'Arena' },
+    fireteam: { label: 'Fireteam' },
+    pinnacle: { label: 'Pinnacle' },
+    solo:     { label: 'Solo' },
+  },
+};
+
+// State
+let activeSourceTypes = new Set();
+let activeElements = new Map();
+let activeMiscTags = new Set();
+let activeSubtypes = new Map(); // sourceType key -> Set of active subtype keys
+let viewMode = 'filter';
+let andMode = false;
+
+// ── Build source type pills ──
+const allSourceTypes = [...new Set(SETS.map(s=>s.sourceType))].sort((a, b) => srcLabel(a).localeCompare(srcLabel(b)));
+const sourceFiltersEl = document.getElementById('sourceFilters');
+const subtypeRowContainer = document.getElementById('subtypeRowContainer');
+allSourceTypes.forEach(st => {
+  const key = srcKey(st);
+  const pill = document.createElement('button');
+  pill.className = `source-pill sp-${key}`;
+  pill.textContent = srcLabel(st);
+  pill.onclick = () => {
+    if(activeSourceTypes.has(st)){
+      activeSourceTypes.delete(st);
+      pill.classList.remove('sp-active');
+      if(SOURCE_SUBTYPES[st]) collapseSubtypeRow(st);
+    } else {
+      activeSourceTypes.add(st);
+      pill.classList.add('sp-active');
+      if(SOURCE_SUBTYPES[st]) expandSubtypeRow(st, pill);
+    }
+    applyFilters();
+  };
+  sourceFiltersEl.appendChild(pill);
+  if(SOURCE_SUBTYPES[st]){
+    pill.dataset.hasSubtypes = 'true';
+  }
+});
+
+// "Focus at Vendors" pill — independent filter (renamed from the old generic "Focusable" toggle).
+// Expands into individual focus-vendor pills, same pattern as Crucible/Vanguard Ops subtypes.
+let vendorsPillEl = null;
+(function buildVendorsPill(){
+  const pill = document.createElement('button');
+  pill.className = 'source-pill sp-Focusable';
+  pill.textContent = 'Focus at Vendors';
+  pill.onclick = () => {
+    if(activeSourceTypes.has('__VENDORS__')){
+      activeSourceTypes.delete('__VENDORS__');
+      pill.classList.remove('sp-active');
+      collapseVendorRow();
+    } else {
+      activeSourceTypes.add('__VENDORS__');
+      pill.classList.add('sp-active');
+      expandVendorRow();
+    }
+    applyFilters();
+  };
+  sourceFiltersEl.appendChild(pill);
+  vendorsPillEl = pill;
+})();
+
+let activeVendors = new Set();
+
+function expandVendorRow() {
+  if(document.getElementById('vendorrow')) return;
+  const row = document.createElement('div');
+  row.className = 'active-group';
+  row.id = 'vendorrow';
+  FOCUS_VENDORS.forEach(({key: vendorKey, label: vendorLabel}) => {
+    const chip = document.createElement('span');
+    chip.className = 'subtype-pill';
+    chip.style.borderColor = 'var(--gold)';
+    chip.style.color = 'var(--text2)';
+    chip.textContent = vendorLabel;
+    chip.onclick = () => {
+      if(activeVendors.has(vendorKey)){
+        activeVendors.delete(vendorKey);
+        chip.classList.remove('sub-active');
+        chip.style.color = 'var(--text2)';
+        chip.style.borderColor = 'var(--gold)';
+      } else {
+        activeVendors.add(vendorKey);
+        chip.classList.add('sub-active');
+        chip.style.color = 'var(--gold2)';
+        chip.style.borderColor = 'var(--gold2)';
+        chip.style.background = 'var(--gold-bg)';
+      }
+      if(!activeVendors.has(vendorKey)) chip.style.background = 'transparent';
+      applyFilters();
+    };
+    row.appendChild(chip);
+  });
+  subtypeRowContainer.appendChild(row);
+}
+
+function collapseVendorRow() {
+  const row = document.getElementById('vendorrow');
+  if(row) row.remove();
+  activeVendors.clear();
+}
+
+function expandSubtypeRow(sourceTypeKey, parentPill) {
+  if(document.getElementById('subtyperow-' + sourceTypeKey)) return;
+  if(!activeSubtypes.has(sourceTypeKey)) activeSubtypes.set(sourceTypeKey, new Set());
+  const info = SOURCE_SUBTYPES[sourceTypeKey];
+  const row = document.createElement('div');
+  row.className = 'active-group';
+  row.id = 'subtyperow-' + sourceTypeKey;
+  Object.entries(info).forEach(([subKey, subInfo]) => {
+    const subColor = SUBTYPE_COLORS[subKey] || 'var(--border2)';
+    const chip = document.createElement('span');
+    chip.className = 'subtype-pill';
+    chip.style.borderColor = subColor;
+    chip.style.color = 'var(--text)';
+    chip.textContent = subInfo.label;
+    chip.onclick = () => {
+      const subSet = activeSubtypes.get(sourceTypeKey);
+      if(subSet.has(subKey)){
+        subSet.delete(subKey);
+        chip.classList.remove('sub-active');
+        chip.style.background = 'transparent';
+        chip.style.color = 'var(--text)';
+      } else {
+        subSet.add(subKey);
+        chip.classList.add('sub-active');
+        chip.style.background = subColor;
+        chip.style.color = '#fff';
+      }
+      if(!subSet.has(subKey)){
+        chip.style.background = 'transparent';
+        chip.style.color = 'var(--text)';
+      }
+      applyFilters();
+    };
+    row.appendChild(chip);
+  });
+  subtypeRowContainer.appendChild(row);
+}
+
+function collapseSubtypeRow(sourceTypeKey) {
+  const row = document.getElementById('subtyperow-' + sourceTypeKey);
+  if(row) row.remove();
+  activeSubtypes.delete(sourceTypeKey);
+}
+
+// ── Build element buttons ──
+const elemBtnsEl = document.getElementById('elementBtns');
+Object.entries(ELEMENT_KEYWORDS).forEach(([key,info]) => {
+  const btn = document.createElement('button');
+  btn.className = `elem-btn elem-btn-${info.cls}`;
+  btn.textContent = info.label;
+  btn.dataset.element = key;
+  btn.onclick = () => toggleElement(key, btn);
+  elemBtnsEl.appendChild(btn);
+});
+
+// ── Build tag column grid ──
+// Layout: col1=Benefits, col2=Weapons, col3=Triggers (2-col internal) + Combat below
+const tagColGrid = document.getElementById('tagColGrid');
+
+function makeTagPill(tag) {
+  const pill = document.createElement('button');
+  const dead = isDeadTag(tag);
+  pill.className = dead ? 'tag-pill-col dead-keyword' : 'tag-pill-col';
+  if (dead) {
+    pill.dataset.tooltip = 'No current sets use this keyword';
+    pill.classList.add('has-tooltip');
+    pill.innerHTML = `${tag.replace(/-/g,' ')}<span class="dead-asterisk">*</span>`;
+  } else {
+    pill.textContent = tag.replace(/-/g,' ');
+  }
+  pill.dataset.tag = tag;
+  pill.onclick = () => {
+    if (dead) return; // dead tags never match anything — clicking is a no-op
+    if(activeMiscTags.has(tag)){
+      activeMiscTags.delete(tag);
+      pill.classList.remove('active');
+    } else {
+      activeMiscTags.add(tag);
+      pill.classList.add('active');
+    }
+    updateKeywordIndicator();
+    applyFilters();
+  };
+  return pill;
+}
+
+// Shows a small "N keyword(s) selected" note next to the Collapse/Expand button so a selection
+// made while the tag columns are expanded isn't forgotten once the section is collapsed out of view.
+function updateKeywordIndicator() {
+  const indicator = document.getElementById('keywordSelectedIndicator');
+  const count = activeMiscTags.size;
+  if(count === 0){
+    indicator.style.display = 'none';
+    return;
+  }
+  indicator.style.display = 'inline-flex';
+  indicator.textContent = count === 1 ? '1 keyword selected' : `${count} keywords selected`;
+}
+
+// Appends a "* no matches" explainer pill to a column container, but only if at least one
+// tag in that group currently has zero matching sets — keeps the note from appearing needlessly.
+function appendNoMatchesExplainer(container, tagList) {
+  if (!tagList.some(t => isDeadTag(t))) return;
+  const explainer = document.createElement('span');
+  explainer.className = 'no-matches-pill has-tooltip';
+  explainer.dataset.tooltip = 'Tags marked with * are real Destiny 2 terms with no matching sets in this collection yet';
+  explainer.textContent = '* no matches';
+  container.appendChild(explainer);
+}
+
+// Col 1: Benefits
+const col1 = document.createElement('div');
+col1.className = 'tag-col';
+const head1 = document.createElement('div'); head1.className = 'tag-col-head'; head1.textContent = 'Benefits';
+col1.appendChild(head1);
+MISC_TAG_GROUPS['Benefits'].forEach(tag => col1.appendChild(makeTagPill(tag)));
+appendNoMatchesExplainer(col1, MISC_TAG_GROUPS['Benefits']);
+tagColGrid.appendChild(col1);
+
+// Col 2: Weapons
+const col2 = document.createElement('div');
+col2.className = 'tag-col';
+const head2 = document.createElement('div'); head2.className = 'tag-col-head'; head2.textContent = 'Weapons';
+col2.appendChild(head2);
+MISC_TAG_GROUPS['Weapons'].forEach(tag => col2.appendChild(makeTagPill(tag)));
+appendNoMatchesExplainer(col2, MISC_TAG_GROUPS['Weapons']);
+tagColGrid.appendChild(col2);
+
+// Col 3: Triggers (double-col internal) + Combat below
+const col3 = document.createElement('div');
+col3.className = 'tag-col';
+const head3 = document.createElement('div'); head3.className = 'tag-col-head'; head3.textContent = 'Triggers';
+col3.appendChild(head3);
+const trigGrid = document.createElement('div');
+trigGrid.className = 'tag-triggers-grid';
+MISC_TAG_GROUPS['Triggers'].forEach(tag => trigGrid.appendChild(makeTagPill(tag)));
+col3.appendChild(trigGrid);
+appendNoMatchesExplainer(col3, MISC_TAG_GROUPS['Triggers']);
+// Combat sub-section
+const combatSub = document.createElement('div');
+combatSub.className = 'tag-col-sub';
+const head4 = document.createElement('div'); head4.className = 'tag-col-head'; head4.textContent = 'Combat';
+combatSub.appendChild(head4);
+const combatGrid = document.createElement('div');
+combatGrid.className = 'tag-triggers-grid';
+MISC_TAG_GROUPS['Combat'].forEach(tag => combatGrid.appendChild(makeTagPill(tag)));
+combatSub.appendChild(combatGrid);
+appendNoMatchesExplainer(combatSub, MISC_TAG_GROUPS['Combat']);
+col3.appendChild(combatSub);
+tagColGrid.appendChild(col3);
+
+function toggleElement(key, btn) {
+  if(activeElements.has(key)){
+    activeElements.delete(key);
+    btn.classList.remove('active');
+  } else {
+    // Start with no specific keywords toggled on — selecting the element pill itself is enough to
+    // match sets tagged with that element. Users opt INTO specific keywords (Suspend, Radiant, etc.)
+    // rather than having to opt out of ones they don't want, especially under Match All.
+    activeElements.set(key, new Set());
+    btn.classList.add('active');
+  }
+  renderElementGroups();
+  applyFilters();
+}
+
+function renderElementGroups() {
+  const container = document.getElementById('activeElementGroups');
+  container.innerHTML = '';
+  if(activeElements.size === 0){ container.style.display = 'none'; return; }
+  container.style.display = 'flex';
+  const instruction = document.createElement('div');
+  instruction.className = 'keyword-instruction';
+  instruction.textContent = 'Select / toggle desired keywords as needed.';
+  container.appendChild(instruction);
+  activeElements.forEach((activeKws, key) => {
+    const info = ELEMENT_KEYWORDS[key];
+    const group = document.createElement('div');
+    group.className = 'active-group';
+    const parent = document.createElement('span');
+    parent.className = `group-dismiss pill-${info.cls}`;
+    parent.innerHTML = `${info.label} <span>×</span>`;
+    parent.onclick = () => {
+      activeElements.delete(key);
+      document.querySelector(`.elem-btn[data-element="${key}"]`).classList.remove('active');
+      renderElementGroups();
+      applyFilters();
+    };
+    group.appendChild(parent);
+    info.keywords.forEach(kw => {
+      const chip = document.createElement('span');
+      const dead = isDeadTag(kw);
+      let cls = `keyword-chip pill-${info.cls}${activeKws.has(kw) ? '' : ' off'}`;
+      if (dead) cls += ' dead-keyword';
+      chip.className = cls;
+      if (dead) {
+        chip.dataset.tooltip = 'No current sets use this keyword';
+        chip.classList.add('has-tooltip');
+        chip.innerHTML = `${kw.replace(/-/g,' ')}<span class="dead-asterisk">*</span>`;
+      } else {
+        chip.textContent = kw.replace(/-/g,' ');
+      }
+      chip.onclick = () => {
+        if (dead) return; // dead keywords never match anything — clicking is a no-op
+        if(activeKws.has(kw)){ activeKws.delete(kw); chip.classList.add('off'); }
+        else { activeKws.add(kw); chip.classList.remove('off'); }
+        applyFilters();
+      };
+      group.appendChild(chip);
+    });
+    // Explainer pill — only appears if this element actually has at least one dead keyword
+    if (info.keywords.some(kw => isDeadTag(kw))) {
+      const explainer = document.createElement('span');
+      explainer.className = 'no-matches-pill has-tooltip';
+      explainer.dataset.tooltip = 'Keywords marked with * are real Destiny 2 terms with no matching sets in this collection yet';
+      explainer.textContent = '* no matches';
+      group.appendChild(explainer);
+    }
+    container.appendChild(group);
+  });
+}
+
+// ── Tag section collapse ──
+function toggleTagSection() {
+  const grid = document.getElementById('tagColGrid');
+  const chevron = document.getElementById('tagChevron');
+  const label = document.getElementById('tagToggleLabel');
+  const isOpen = !grid.classList.contains('collapsed');
+  grid.classList.toggle('collapsed', isOpen);
+  chevron.classList.toggle('open', !isOpen);
+  label.textContent = isOpen ? 'Expand Keyword Tags' : 'Collapse Keyword Tags';
+}
+
+// ── Build cards (alphabetical, no season grouping) ──
+function buildCards() {
+  const grid = document.getElementById('mainGrid');
+  grid.innerHTML = '';
+  SETS.forEach(s => {
+    const card = buildCard(s);
+    grid.appendChild(card);
+  });
+}
+
+function buildCard(s) {
+  const card = document.createElement('div');
+  const key = srcKey(s.sourceType);
+  card.className = 'set-card';
+  card.id = 'card-' + s.name.replace(/[^a-zA-Z0-9]/g,'-');
+  card.dataset.name = s.name.toLowerCase();
+  card.dataset.source = s.source.toLowerCase();
+  card.dataset.sourceType = s.sourceType;
+
+  // `vendors` is a pipe-separated list of focus-vendor relationships, e.g. "Zavala|Hawthorne:Vanguard|Xur".
+  // Each entry is either a plain vendor name, or "Name:Designation" for vendors whose offering depends on a designation
+  // (e.g. Hawthorne's clan engrams decode differently depending on Crucible vs Vanguard Ops designation).
+  const vendorEntries = (s.vendors || '').split('|').filter(Boolean).map(entry => {
+    const [vendorName, designation] = entry.split(':');
+    return { vendorName, designation };
+  });
+  card.dataset.vendors = vendorEntries.map(v => v.vendorName).join(',');
+  card.dataset.subtype = s.subtype || '';
+  card.dataset.p2tags = s.p2tags;
+  card.dataset.p4tags = s.p4tags;
+  card.dataset.p2name = s.p2name.toLowerCase();
+  card.dataset.p4name = s.p4name.toLowerCase();
+  card.dataset.p2desc = s.p2desc.toLowerCase();
+  card.dataset.p4desc = s.p4desc.toLowerCase();
+
+  // Divider between perks
+  let dividerHTML;
+  if(s.p4requires2p === 'specific') {
+    dividerHTML = `
+      <div class="perk-synergy-divider">
+        <div class="perk-synergy-inner">
+          <span class="perk-synergy-arrow">↑</span>
+          <span class="perk-synergy-label">Specific Perk Synergy</span>
+        </div>
+      </div>`;
+  } else if(s.p4requires2p === 'general') {
+    dividerHTML = `
+      <div class="perk-synergy-divider">
+        <div class="perk-synergy-inner">
+          <span class="perk-synergy-arrow">↑</span>
+          <span class="perk-synergy-label">Perk Synergy</span>
+        </div>
+      </div>`;
+  } else {
+    dividerHTML = `<div class="perk-divider"></div>`;
+  }
+
+  // 2nd-line meta: a destination drop-vendor note (where it's earned, e.g. "Vendor: Devrim") and/or
+  // one line per focus-vendor relationship (e.g. "Focusable: Zavala", "Focusable: Hawthorne — Vanguard Engram").
+  let metaExtraHTML = '';
+  if (s.vendor) {
+    metaExtraHTML += `<div class="card-vendor-meta">Vendor: ${s.vendor}</div>`;
+  }
+  vendorEntries.forEach(({vendorName, designation}) => {
+    let label = designation ? `${vendorName} — ${designation} Engram` : vendorName;
+    if (vendorName === 'Xur') label += ' (weekend rotation)';
+    metaExtraHTML += `<div class="card-vendor-meta card-focusable-meta">Focusable: ${label}</div>`;
+  });
+
+  // Icon lookup — gracefully falls back to no icon if a set name is missing from ICON_MAP
+  const icons = ICON_MAP[s.name] || ['', ''];
+  const [p2Icon, p4Icon] = icons;
+
+  card.innerHTML = `
+    <div class="card-header" onclick="toggleCard(this.parentElement)">
+      <div class="card-title-group">
+        <div class="card-title">${s.name}</div>
+        <div class="card-meta">${s.source}</div>
+        ${metaExtraHTML}
+        <div class="card-season-meta">${s.season}</div>
+      </div>
+      <div class="card-badges">
+        <span class="source-badge sb-${key}">
+          <span class="source-badge-icon" title="Icon placeholder"></span>
+          ${srcLabel(s.sourceType)}
+        </span>
+      </div>
+      <span class="collapse-chevron">▼</span>
+    </div>
+    <div class="card-body">
+      <div class="perk-block">
+        ${p2Icon ? `<img class="perk-icon" src="${p2Icon}" alt="" loading="lazy" onerror="this.classList.add('icon-error')">` : ''}
+        <div class="perk-textcol">
+          <div class="perk-label">2-Piece</div>
+          <div class="perk-name" data-perk="2">${s.p2name}</div>
+          <div class="perk-desc" data-original="${escapeAttr(s.p2desc)}" data-own-tags="${escapeAttr(s.p2tags)}">${s.p2desc}</div>
+          <div class="perk-tags" data-tagrow="2">${renderTagPills(parseTags(s.p2tags))}</div>
+        </div>
+      </div>
+      ${dividerHTML}
+      <div class="perk-block">
+        ${p4Icon ? `<img class="perk-icon" src="${p4Icon}" alt="" loading="lazy" onerror="this.classList.add('icon-error')">` : ''}
+        <div class="perk-textcol">
+          <div class="perk-label">4-Piece</div>
+          <div class="perk-name" data-perk="4">${s.p4name}</div>
+          <div class="perk-desc" data-original="${escapeAttr(s.p4desc)}" data-own-tags="${escapeAttr(s.p4tags)}">${s.p4desc}</div>
+          <div class="perk-tags" data-tagrow="4">${renderTagPills(parseTags(s.p4tags))}</div>
+        </div>
+      </div>
+    </div>`;
+  return card;
+}
+
+function renderTagPills(tags) {
+  return tags.map(t=>`<span class="ptag" data-tag="${t}">${t.replace(/-/g,' ')}</span>`).join('');
+}
+
+// Build a lookup: keyword/phrase (lowercased) -> {tag, colorClass} for every phrase across both
+// ELEMENT_KEYWORDS (colored) and MISC_KEYWORDS (bold-only). Longer phrases are tried first so
+// "Special Ammo" matches before the bare "ammo" inside it would.
+function buildHighlightPhraseList(relevantTags) {
+  const entries = [];
+  relevantTags.forEach(tag => {
+    // Element tag itself (e.g. "strand") maps to its own keyword list. ELEMENT_KEYWORDS entries are
+    // stored hyphenated as an internal naming convention (matching the tag-pill format), but actual
+    // perk text uses spaces ("Frost Armor", not "frost-armor") — convert before searching.
+    // MISC_KEYWORDS values are hand-written literal phrases already in their real-text form, including
+    // genuine hyphens ("non-precision", "micro-missile") — left untouched.
+    if (ELEMENT_KEYWORDS[tag]) {
+      const info = ELEMENT_KEYWORDS[tag];
+      info.keywords.forEach(kw => entries.push({ phrase: kw.replace(/-/g, ' '), cls: 'hl-' + info.cls }));
+    }
+    if (MISC_KEYWORDS[tag]) {
+      MISC_KEYWORDS[tag].forEach(kw => entries.push({ phrase: kw, cls: 'hl-generic' }));
+    }
+  });
+  // Longest phrase first so overlapping matches prefer the more specific one
+  entries.sort((a, b) => b.phrase.length - a.phrase.length);
+  return entries;
+}
+
+// Escapes a string for safe use inside a RegExp
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Highlights occurrences of active-tag keywords in `text`. Only tags that are BOTH currently active
+// AND actually present on this specific perk (`ownTags`) are considered, so a Solar match on one card's
+// 2-piece doesn't bleed into highlighting an unrelated word on another perk that merely shares no tags.
+function highlightDescription(text, ownTags, activeTags) {
+  if (!activeTags || activeTags.size === 0) return text;
+  const relevantTags = ownTags.filter(t => activeTags.has(t));
+  if (relevantTags.length === 0) return text;
+
+  const phraseList = buildHighlightPhraseList(relevantTags);
+  if (phraseList.length === 0) return text;
+
+  // Find all non-overlapping match ranges in `text`, preferring longer/earlier matches first
+  const ranges = []; // {start, end, cls}
+  phraseList.forEach(({ phrase, cls }) => {
+    const re = new RegExp('\\b' + escapeRegex(phrase) + '\\b', 'gi');
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const start = m.index, end = m.index + m[0].length;
+      const overlaps = ranges.some(r => start < r.end && end > r.start);
+      if (!overlaps) ranges.push({ start, end, cls });
+    }
+  });
+
+  if (ranges.length === 0) return text;
+  ranges.sort((a, b) => a.start - b.start);
+
+  let result = '';
+  let cursor = 0;
+  ranges.forEach(({ start, end, cls }) => {
+    result += text.slice(cursor, start);
+    result += `<span class="${cls}">${text.slice(start, end)}</span>`;
+    cursor = end;
+  });
+  result += text.slice(cursor);
+  return result;
+}
+
+function toggleCard(card) {
+  card.classList.toggle('collapsed');
+}
+
+// Master tooltips on/off — toggles a body-level class that suppresses every .has-tooltip element at once
+function toggleTooltips() {
+  const enabled = document.getElementById('tooltipMasterToggle').checked;
+  document.body.classList.toggle('tooltips-off', !enabled);
+}
+
+function setView(mode, btn) {
+  viewMode = mode;
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+document.getElementById('logicToggle').addEventListener('change', function(){
+  andMode = this.checked;
+  const anyLbl = document.getElementById('logicLabelAny');
+  const allLbl = document.getElementById('logicLabelAll');
+  if(andMode) {
+    anyLbl.className = 'logic-label-any inactive';
+    allLbl.className = 'logic-label-all active-state';
+  } else {
+    anyLbl.className = 'logic-label-any active-state';
+    allLbl.className = 'logic-label-all inactive';
+  }
+  applyFilters();
+});
+
+function getActiveTagSet() {
+  const tags = new Set(activeMiscTags);
+  activeElements.forEach((activeKws, key) => {
+    tags.add(key);
+    activeKws.forEach(kw => tags.add(kw));
+  });
+  return tags;
+}
+
+function cardMatchesTags(card, activeTags) {
+  if(activeTags.size === 0) return true;
+  const p2 = parseTags(card.dataset.p2tags);
+  const p4 = parseTags(card.dataset.p4tags);
+  const allTags = new Set([...p2, ...p4]);
+  if(andMode){
+    return [...activeTags].every(t => allTags.has(t));
+  } else {
+    return [...activeTags].some(t => allTags.has(t));
+  }
+}
+
+function cardMatchesSearch(card, query) {
+  if(!query) return true;
+  return card.dataset.name.includes(query) ||
+         card.dataset.p2name.includes(query) ||
+         card.dataset.p4name.includes(query) ||
+         card.dataset.p2desc.includes(query) ||
+         card.dataset.p4desc.includes(query) ||
+         card.dataset.source.includes(query);
+}
+
+function cardMatchesSource(card) {
+  // Separate the real sourceType selections from the Vendors pseudo-filter
+  const realTypes = [...activeSourceTypes].filter(t => t !== '__VENDORS__');
+  const wantsVendors = activeSourceTypes.has('__VENDORS__');
+
+  if(realTypes.length === 0 && !wantsVendors) return true;
+
+  let matchesType = realTypes.length === 0 ? true : realTypes.includes(card.dataset.sourceType);
+
+  // If this sourceType has active subtype filters, the card's subtype must intersect them
+  if(matchesType && realTypes.length > 0) {
+    for(const st of realTypes) {
+      if(card.dataset.sourceType !== st) continue;
+      const subSet = activeSubtypes.get(st);
+      if(subSet && subSet.size > 0) {
+        const cardSubtypes = (card.dataset.subtype || '').split(',').filter(Boolean);
+        matchesType = cardSubtypes.some(cs => subSet.has(cs));
+      }
+    }
+  }
+
+  // Vendors: card must be focusable/obtainable at one of the active vendors (if any specific vendors chosen),
+  // otherwise just "is focusable/has a focus vendor at all" when the Vendors pill is on with none selected yet.
+  let matchesVendors = true;
+  if(wantsVendors) {
+    const cardVendors = (card.dataset.vendors || '').split(',').filter(Boolean);
+    if(activeVendors.size > 0) {
+      matchesVendors = cardVendors.some(v => activeVendors.has(v));
+    } else {
+      matchesVendors = cardVendors.length > 0;
+    }
+  }
+
+  if(realTypes.length > 0 && wantsVendors) return matchesType && matchesVendors;
+  if(wantsVendors) return matchesVendors;
+  return matchesType;
+}
+
+function handleSearchInput() {
+  const box = document.getElementById('searchBox');
+  const clearBtn = document.getElementById('searchClearBtn');
+  const hasText = box.value.length > 0;
+  box.classList.toggle('has-text', hasText);
+  clearBtn.style.display = hasText ? 'flex' : 'none';
+  applyFilters();
+}
+
+function clearSearch() {
+  const box = document.getElementById('searchBox');
+  box.value = '';
+  box.classList.remove('has-text');
+  document.getElementById('searchClearBtn').style.display = 'none';
+  box.focus();
+  applyFilters();
+}
+
+function applyFilters() {
+  const query = document.getElementById('searchBox').value.toLowerCase().trim();
+  const activeTags = getActiveTagSet();
+  const hasFilters = activeTags.size > 0 || activeSourceTypes.size > 0 || query.length > 0;
+
+  const matchedCards = [];
+  let visible = 0;
+
+  document.querySelectorAll('.set-card').forEach(card => {
+    const matchesSearch = cardMatchesSearch(card, query);
+    const matchesSource = cardMatchesSource(card);
+    const matchesTags   = cardMatchesTags(card, activeTags);
+    const matches       = matchesSearch && matchesSource && matchesTags;
+
+    // Update tag pill highlights
+    card.querySelectorAll('.ptag').forEach(pt => {
+      pt.classList.toggle('active-tag', activeTags.has(pt.dataset.tag));
+    });
+
+    // In-text keyword highlighting: re-render each perk's description from its stored clean
+    // original text every time, so toggling pills on/off never compounds on previously-injected spans.
+    card.querySelectorAll('.perk-desc').forEach(descEl => {
+      const original = descEl.dataset.original;
+      const ownTags = parseTags(descEl.dataset.ownTags);
+      descEl.innerHTML = highlightDescription(original, ownTags, activeTags);
+    });
+
+    if(!hasFilters){
+      card.classList.remove('highlighted','hidden');
+      visible++;
+    } else if(viewMode === 'highlight'){
+      card.classList.remove('hidden');
+      card.classList.toggle('highlighted', matches);
+      visible++;
+      if(matches) matchedCards.push(card);
+    } else {
+      card.classList.remove('highlighted');
+      if(matches){
+        card.classList.remove('hidden');
+        visible++;
+        matchedCards.push(card);
+      } else {
+        card.classList.add('hidden');
+      }
+    }
+  });
+
+  // Results count
+  const countEl = document.getElementById('resultsCount');
+  if(!hasFilters) countEl.textContent = `${SETS.length} sets`;
+  else countEl.textContent = `${matchedCards.length} of ${SETS.length} sets match`;
+
+  // Jump list
+  const jumpWrap = document.getElementById('jumpListWrap');
+  const jumpList = document.getElementById('jumpList');
+  jumpList.innerHTML = '';
+  if(hasFilters && matchedCards.length > 0 && matchedCards.length < SETS.length){
+    jumpWrap.classList.add('visible');
+    matchedCards.forEach(card => {
+      const setName = card.querySelector('.card-title').textContent;
+      const setObj = SETS.find(s => s.name === setName);
+      const a = document.createElement('a');
+      a.className = 'jump-link';
+      a.href = '#' + card.id;
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = setName;
+      a.appendChild(nameSpan);
+      if(setObj) {
+        const sub = document.createElement('span');
+        sub.className = 'jump-link-sub';
+        sub.textContent = setObj.source.replace(/^"|"$/g,'');
+        a.appendChild(sub);
+      }
+      a.onclick = (e) => {
+        e.preventDefault();
+        card.classList.remove('collapsed');
+        card.scrollIntoView({behavior:'smooth', block:'center'});
+      };
+      jumpList.appendChild(a);
+    });
+  } else {
+    jumpWrap.classList.remove('visible');
+  }
+
+  // No results message
+  const noResults = document.getElementById('noResults');
+  noResults.style.display = (hasFilters && matchedCards.length === 0) ? 'block' : 'none';
+}
+
+function clearAll() {
+  activeSourceTypes.clear();
+  activeElements.clear();
+  activeMiscTags.clear();
+  activeSubtypes.clear();
+  activeVendors.clear();
+  document.querySelectorAll('.source-pill.sp-active').forEach(p => p.classList.remove('sp-active'));
+  document.querySelectorAll('.elem-btn.active').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tag-pill-col.active').forEach(p => p.classList.remove('active'));
+  document.getElementById('subtypeRowContainer').innerHTML = '';
+  document.getElementById('activeElementGroups').innerHTML = '';
+  document.getElementById('activeElementGroups').style.display = 'none';
+  document.getElementById('searchBox').value = '';
+  document.getElementById('searchBox').classList.remove('has-text');
+  document.getElementById('searchClearBtn').style.display = 'none';
+  updateKeywordIndicator();
+  renderElementGroups();
+  applyFilters();
+}
+
+buildCards();
+applyFilters();
+</script>
+
+<footer class="page-footer">Designed by Meeples (Titan Main) · Destiny 2 Armor Set Bonuses</footer>
+</body>
+</html>
