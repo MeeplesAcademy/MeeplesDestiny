@@ -73,6 +73,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .eyebrow { font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:600; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); opacity:0.8; margin-bottom:0.4rem; }
 .page-title { font-family:'Cinzel',serif; font-size:clamp(1.8rem,4vw,3.2rem); font-weight:900; letter-spacing:0.05em; text-transform:uppercase; background:linear-gradient(180deg,var(--gold3) 0%,var(--gold) 60%,#8a6a20 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.1; }
 .page-sub { font-size:16px; color:var(--text2); letter-spacing:0.08em; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; margin-top:0.4rem; }
+.page-credit { font-size:12px; color:var(--text2); letter-spacing:0.06em; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; margin-top:0.35rem; }
 
 /* ── Controls ── */
 .controls { position:relative; z-index:1; padding:1.5rem 2rem; border-bottom:1px solid var(--border); background:var(--bg2); }
@@ -665,6 +666,88 @@ body.tooltips-off .has-tooltip { cursor:inherit; }
 
 /* No results */
 .no-results { text-align:center; padding:4rem 2rem; color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-size:18px; letter-spacing:0.1em; }
+
+/* ── Instructions Section ── */
+.instructions-box {
+  position:relative; z-index:1;
+  max-width:1400px; margin:1.5rem auto 0; padding:0 1.5rem;
+}
+.instructions-box-inner {
+  border:1px solid rgba(200,168,75,0.3);
+  border-radius:8px;
+  background:rgba(200,168,75,0.03);
+  padding:18px 22px;
+  display:flex; gap:24px; flex-wrap:wrap;
+}
+.instructions-main { flex:1; min-width:280px; }
+.instructions-header-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:4px; }
+.instructions-title {
+  font-family:'Cinzel',serif; font-size:18px; font-weight:700;
+  letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--gold);
+}
+/* Reuses the same chevron-toggle-button visual language as "Collapse Miscellaneous Keywords" */
+.instr-toggle-btn {
+  display:inline-flex; align-items:center; gap:9px;
+  cursor:pointer; user-select:none;
+  padding:7px 16px;
+  border:1.5px solid var(--gold);
+  border-radius:5px;
+  background:rgba(200,168,75,0.1);
+  transition:all 0.15s;
+  font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700;
+  letter-spacing:0.13em; text-transform:uppercase; color:var(--gold2);
+}
+.instr-toggle-btn:hover { background:rgba(200,168,75,0.18); }
+.instr-toggle-chevron { font-size:13px; color:var(--gold2); transition:transform 0.25s; }
+.instr-toggle-chevron.open { transform:rotate(180deg); }
+
+.instructions-body {
+  font-size:17px; line-height:1.7; color:var(--text2);
+  padding-top:12px;
+}
+.instructions-body.collapsed { display:none; }
+.instructions-body p { margin-bottom:0.9rem; }
+.instructions-body p:last-child { margin-bottom:0; }
+.instructions-body strong { color:var(--text); font-weight:600; }
+.instructions-body ul { margin:0.4rem 0 0.9rem 1.2rem; }
+.instructions-body li { margin-bottom:0.5rem; }
+.instructions-body li:last-child { margin-bottom:0; }
+
+/* ── Helpful Tools link cards ── */
+.tools-col {
+  display:flex; flex-direction:column; gap:12px;
+  min-width:260px;
+  border-left:1px solid var(--border2);
+  padding-left:24px;
+}
+.tools-col-label {
+  font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700;
+  letter-spacing:0.18em; text-transform:uppercase; color:var(--muted);
+  margin-bottom:2px;
+}
+.tool-card {
+  display:flex; align-items:center; gap:14px;
+  padding:10px 14px;
+  border:1px solid var(--border2);
+  border-radius:6px;
+  background:var(--bg2);
+  text-decoration:none;
+  transition:border-color 0.15s, background 0.15s;
+}
+.tool-card:hover { border-color:var(--gold); background:rgba(200,168,75,0.06); }
+.tool-icon {
+  width:54px; height:54px;
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--bg3);
+  border-radius:6px;
+  overflow:hidden;
+}
+.tool-icon img { max-width:80%; max-height:80%; object-fit:contain; }
+.tool-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.tool-name { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:600; letter-spacing:0.04em; color:var(--text2); }
+.tool-desc { font-size:14px; color:var(--muted); line-height:1.4; }
 </style>
 </head>
 <body>
@@ -673,7 +756,60 @@ body.tooltips-off .has-tooltip { cursor:inherit; }
   <div class="eyebrow">Destiny 2</div>
   <h1 class="page-title">Armor Set Bonuses</h1>
   <p class="page-sub">Monument of Triumph · Armor 3.0 · 56 Sets</p>
+  <p class="page-credit">Created by Meeples (Titan Main) · @GuardianMeeples (Twitter) · Bungie ID: Meeples#3871</p>
 </header>
+
+<!-- INSTRUCTIONS -->
+<div class="instructions-box">
+  <div class="instructions-box-inner">
+    <div class="instructions-main">
+      <div class="instructions-header-row">
+        <span class="instructions-title">Instructions</span>
+        <button class="instr-toggle-btn" id="instrToggleBtn" onclick="toggleInstructions()">
+          <span id="instrToggleLabel">Collapse Instructions</span>
+          <span class="instr-toggle-chevron open" id="instrChevron">▼</span>
+        </button>
+      </div>
+      <div class="instructions-body" id="instructionsBody">
+        <p>Welcome to Armor Set Bonuses! Just a little tool I made because I needed it, then thought to share it with the community. Using this you can find the armor sets that synergize with potential builds. Here are some functions and ways you can use it:</p>
+
+        <p><strong>Control Panel:</strong> determine how you want to see things.</p>
+        <ul>
+          <li>Choose "Show Only" (default) to see only what you're looking for &mdash;OR&mdash; "Highlight" to see what stands out against all the sets.</li>
+          <li>Match Any to see all your selections together &mdash;OR&mdash; Match All to only see <em>exactly</em> what you're choosing. (If a set doesn't include both/all of your filtering selections, it won't show.)</li>
+        </ul>
+
+        <p><strong>Filtering Options:</strong> what are you looking for?</p>
+        <ul>
+          <li>String search bar &mdash; type in pretty much anything and the sets with matching text strings will show.</li>
+          <li>Source filters &mdash; click these to see where sets can be acquired.</li>
+          <li>Elemental keyword filters &mdash; these help find subclass-oriented keywords (The Select All is so you can see literally everything highlighted for fun.)</li>
+          <li>Miscellaneous keywords &mdash; this collapsible section helps find Benefits, Weapon types, Triggers, and some extra Combat-flavored text in sets.</li>
+        </ul>
+
+        <p>HAVE FUN. Hope it's helpful. And check out the great tools on the right: D2 Armor Calculator will help you design &amp; build and figure out which armor to chase. Destiny Item Manager (DIM) will help you design &amp; build loadouts from your actual inventory and save them for game use.</p>
+      </div>
+    </div>
+
+    <div class="tools-col">
+      <div class="tools-col-label">Helpful Tools</div>
+      <a class="tool-card" href="https://destinyitemmanager.com/en/" target="_blank" rel="noopener">
+        <span class="tool-icon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIKCSB2aWV3Qm94PSIwIDAgNzEgMjUiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDcxIDI1OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxnPgoJPGc+CgkJPHBvbHlnb24gZmlsbD0iI2ZmZmZmZiIgcG9pbnRzPSIyOC45LDQuNiAyOC45LDcuOCA0MS45LDcuOCA0MS45LDE3LjYgMzIuMiwxNy42IDMyLjIsMTEuMSAyOC45LDExLjEgMjguOSwyMC45IDQ1LjIsMjAuOSA0NS4yLDQuNiIvPgoJCTxwb2x5Z29uIGZpbGw9IiNmZmZmZmYiIHBvaW50cz0iNjguNSw0LjYgNjMsOS43IDU3LjQsNC42IDU0LjksNC42IDU0LjksMjAuOCA1OC4xLDIwLjggNTguMSw5LjMgNjMsMTMuOCA2Ny44LDkuNCA2Ny44LDIwLjggNzEsMjAuOCA3MSw0LjYiLz4KCQk8cmVjdCB4PSI0OC40IiB5PSI0LjYiIGZpbGw9IiNmZmZmZmYiIHdpZHRoPSIzLjMiIGhlaWdodD0iMTYuMiIvPgoJPC9nPgoJPGc+CiAgICAgICAgPHJlY3QgeD0iMTAuNSIgeT0iMTAuOCIgdHJhbnNmb3JtPSJtYXRyaXgoMC43MDcxIC0wLjcwNzEgMC43MDcxIDAuNzA3MSAtNS4yNDY0IDEyLjMzMjgpIiBmaWxsPSIjRjM3NDIyIiB3aWR0aD0iMy41IiBoZWlnaHQ9IjMuNSIvPgoJCTxwb2x5Z29uIGZpbGw9IiNGMzc0MjIiIHBvaW50cz0iMTIuMywwLjIgOS44LDIuNyAxOS42LDEyLjUgMTIuMywxOS45IDQuOSwxMi41IDkuOCw3LjYgNy40LDUuMSAwLDEyLjUgMTIuMywyNC44IDI0LjUsMTIuNSIvPgoJPC9nPgo8L2c+Cjwvc3ZnPgo=" alt="DIM logo"></span>
+        <span class="tool-info">
+          <span class="tool-name">Destiny Item Manager</span>
+          <span class="tool-desc">Build loadouts from your inventory</span>
+        </span>
+      </a>
+      <a class="tool-card" href="https://d2-armor-calc-lac.vercel.app/" target="_blank" rel="noopener">
+        <span class="tool-icon"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiNlMmM5N2UiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDUxIDUxIiB2ZXJzaW9uPSIxLjEiIGlkPSJoZWxtZXRfYXJtb3IiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgPgo8cGF0aCBkPSJNMjQuNzcsNy4wM2MtOC4xNSwwLjM4LTE0LjQyLDcuNDEtMTQuNDIsMTUuNTd2MTYuMDZjMCwwLjIzLDAuMTMsMC40NCwwLjM0LDAuNTNsMTAuMzMsNC42OGMwLjc4LDAuMzUsMS42Ni0wLjIyLDEuNjYtMS4wNwoJdi01Ljc1YzAsMCwwLDAsMCwwVjMxLjljMC0wLjM5LTAuMTktMC43NS0wLjUyLTAuOTdsLTUuMzktMy42NGwwLDBjLTAuODctMC41Mi0xLjQzLTEuNS0xLjM0LTIuNjFjMC4xMy0xLjQ2LDEuNDYtMi41MiwyLjkzLTIuNTIKCWg0LjM2YzAuNjUsMCwxLjE3LDAuNTMsMS4xNywxLjE3djYuNzFjMCwwLDAsMC42MSwxLjYxLDAuNjFjMS42MSwwLDEuNjEtMC42MSwxLjYxLTAuNjF2LTYuNzFjMC0wLjY1LDAuNTItMS4xNywxLjE3LTEuMTdoNC4zNgoJYzEuNDcsMCwyLjgsMS4wNiwyLjkzLDIuNTJjMC4xLDEuMTEtMC40NywyLjA5LTEuMzQsMi42MWwwLDBsLTUuMzksMy42NGMtMC4zMiwwLjIyLTAuNTIsMC41OC0wLjUyLDAuOTd2NS4xNnY1Ljc1CgljMCwwLjg1LDAuODgsMS40MiwxLjY2LDEuMDdsMTAuMzMtNC42OGMwLjIxLTAuMSwwLjM0LTAuMywwLjM0LTAuNTNWMjIuMTdDNDAuNjYsMTMuNTYsMzMuNDcsNi42MiwyNC43Nyw3LjAzeiIvPgo8L3N2Zz4=" alt="D2 Armor Calculator logo"></span>
+        <span class="tool-info">
+          <span class="tool-name">D2 Armor Calculator</span>
+          <span class="tool-desc">Figure out which armor to chase</span>
+        </span>
+      </a>
+    </div>
+  </div>
+</div>
 
 <!-- CONTROLS -->
 <div class="controls">
@@ -1492,6 +1628,17 @@ function toggleTagSection() {
   grid.classList.toggle('collapsed', isOpen);
   chevron.classList.toggle('open', !isOpen);
   label.textContent = isOpen ? 'Expand Miscellaneous Keywords' : 'Collapse Miscellaneous Keywords';
+}
+
+// ── Instructions section collapse ──
+function toggleInstructions() {
+  const body = document.getElementById('instructionsBody');
+  const chevron = document.getElementById('instrChevron');
+  const label = document.getElementById('instrToggleLabel');
+  const isOpen = !body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', isOpen);
+  chevron.classList.toggle('open', !isOpen);
+  label.textContent = isOpen ? 'Expand Instructions' : 'Collapse Instructions';
 }
 
 // ── Build cards (alphabetical, no season grouping) ──
