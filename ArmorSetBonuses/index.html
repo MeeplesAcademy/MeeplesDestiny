@@ -679,7 +679,7 @@ body.tooltips-off .has-tooltip { cursor:inherit; }
   padding:18px 22px;
   display:flex; gap:24px; flex-wrap:wrap;
 }
-.instructions-main { flex:1; min-width:280px; }
+.instructions-main { flex:2 1 280px; min-width:280px; }
 .instructions-header-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:4px; }
 .instructions-title {
   font-family:'Cinzel',serif; font-size:18px; font-weight:700;
@@ -717,13 +717,13 @@ body.tooltips-off .has-tooltip { cursor:inherit; }
 /* ── Helpful Tools link cards ── */
 .tools-col {
   display:flex; flex-direction:column; gap:12px;
-  min-width:260px;
+  flex:1 1 320px; max-width:420px; min-width:260px;
   border-left:1px solid var(--border2);
   padding-left:24px;
 }
 .tools-col-label {
-  font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700;
-  letter-spacing:0.18em; text-transform:uppercase; color:var(--muted);
+  font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700;
+  letter-spacing:0.16em; text-transform:uppercase; color:var(--text);
   margin-bottom:2px;
 }
 .tool-card {
@@ -747,7 +747,7 @@ body.tooltips-off .has-tooltip { cursor:inherit; }
 .tool-icon img { max-width:80%; max-height:80%; object-fit:contain; }
 .tool-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
 .tool-name { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:600; letter-spacing:0.04em; color:var(--text2); }
-.tool-desc { font-size:14px; color:var(--muted); line-height:1.4; }
+.tool-desc { font-size:15px; color:var(--muted); line-height:1.4; }
 </style>
 </head>
 <body>
@@ -805,6 +805,13 @@ body.tooltips-off .has-tooltip { cursor:inherit; }
         <span class="tool-info">
           <span class="tool-name">D2 Armor Calculator</span>
           <span class="tool-desc">Figure out which armor to chase</span>
+        </span>
+      </a>
+      <a class="tool-card" href="https://ko-fi.com/guardianmeeples" target="_blank" rel="noopener">
+        <span class="tool-icon"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjZTJjOTdlIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPktvLWZpPC90aXRsZT48cGF0aCBkPSJNMTEuMzUxIDIuNzE1Yy0yLjcgMC00Ljk4Ni4wMjUtNi44My4yNkMyLjA3OCAzLjI4NSAwIDUuMTU0IDAgOC42MWMwIDMuNTA2LjE4MiA2LjEzIDEuNTg1IDguNDkzIDEuNTg0IDIuNzAxIDQuMjMzIDQuMTgyIDcuNjYyIDQuMTgyaC44M2M0LjIwOSAwIDYuNDk0LTIuMjM0IDcuNjM3LTRhOS41IDkuNSAwIDAgMCAxLjA5MS0yLjMzOEMyMS43OTIgMTQuNjg4IDI0IDEyLjIyIDI0IDkuMjA4di0uNDE1YzAtMy4yNDctMi4xMy01LjUwNy01Ljc5Mi01Ljg3LTEuNTU4LS4xNTYtMi42NS0uMjA4LTYuODU3LS4yMDhtMCAxLjk0N2M0LjIwOCAwIDUuMDkuMDUyIDYuNTcxLjE4MiAyLjYyNC4zMTEgNC4xMyAxLjU4NCA0LjEzIDR2LjM5YzAgMi4xNTYtMS43OTIgMy44NDQtMy44NyAzLjg0NGgtLjkzNWwtLjE1Ni42NDljLS4yMDggMS4wMTMtLjU5NyAxLjgxOC0xLjAzOSAyLjU0Ni0uOTA5IDEuNDI4LTIuNTQ1IDMuMDY0LTUuOTIyIDMuMDY0aC0uODA1Yy0yLjU3MSAwLTQuODMxLS44ODMtNi4wNzgtMy4xOTUtMS4wOS0yLTEuMjk4LTQuMTU1LTEuMjk4LTcuNTA2IDAtMi4xODEuODU3LTMuNDAyIDMuMDEyLTMuNzE0IDEuNTMzLS4yMzMgMy41NTktLjI2IDYuMzktLjI2bTYuNTQ3IDIuMjg3Yy0uNDE2IDAtLjY1LjIzNC0uNjUuNTQ2djIuOTM1YzAgLjMxMS4yMzQuNTQ1LjY1LjU0NSAxLjMyNCAwIDIuMDUxLS43NTQgMi4wNTEtMnMtLjcyNy0yLjAyNi0yLjA1Mi0yLjAyNm0tMTAuMzkuMTgyYy0xLjgxOCAwLTMuMDEzIDEuNDgtMy4wMTMgMy4xNDIgMCAxLjUzMy44NTggMi44NTcgMS45NDkgMy44OTcuNzI3LjcwMSAxLjg3IDEuNDI5IDIuNjQ5IDEuODk2YTEuNDcgMS40NyAwIDAgMCAxLjUwNyAwYy43OC0uNDY3IDEuOTIyLTEuMTk1IDIuNjIzLTEuODk2IDEuMTE3LTEuMDM5IDEuOTc0LTIuMzY0IDEuOTc0LTMuODk3IDAtMS42NjItMS4yNDctMy4xNDItMy4wMzktMy4xNDItMS4wNjUgMC0xLjc5Mi41NDUtMi4zMzggMS4yOTgtLjQ5My0uNzUzLTEuMjQ2LTEuMjk4LTIuMzEyLTEuMjk4Ii8+PC9zdmc+" alt="Ko-fi logo"></span>
+        <span class="tool-info">
+          <span class="tool-name">Support on Ko-fi</span>
+          <span class="tool-desc">I'm unemployed and looking for work. If this tool helped you, help support my efforts by buying me a Ko-fi. I have a few more projects in the works!</span>
         </span>
       </a>
     </div>
