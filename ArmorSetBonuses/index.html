@@ -663,6 +663,8 @@ body.tooltips-off .has-tooltip { cursor:inherit; }
 
 /* ── Page footer ── */
 .page-footer { position:relative; z-index:1; text-align:center; padding:1.5rem 2rem; border-top:1px solid var(--border); font-size:14px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; }
+.footer-divider { display:inline-block; margin:0 0.5em; opacity:0.6; }
+.visit-counter strong { color:var(--gold2); font-weight:600; }
 
 /* No results */
 .no-results { text-align:center; padding:4rem 2rem; color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-size:18px; letter-spacing:0.1em; }
@@ -2187,6 +2189,28 @@ buildCards();
 applyFilters();
 </script>
 
-<footer class="page-footer">Designed by Meeples (Titan Main) · Destiny 2 Armor Set Bonuses</footer>
+<footer class="page-footer">
+  Designed by Meeples (Titan Main) · Destiny 2 Armor Set Bonuses
+  <span class="footer-divider">·</span>
+  <span class="visit-counter">Total Visits: <strong id="visitCount">—</strong></span>
+</footer>
+
+<!-- GoatCounter pageview tracking -->
+<script data-goatcounter="https://guardianmeeples.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+<!-- GoatCounter public count display -->
+<script>
+fetch('https://guardianmeeples.goatcounter.com/counter/TOTAL.json')
+  .then(r => r.json())
+  .then(data => {
+    const el = document.getElementById('visitCount');
+    if (el && data && data.count) el.textContent = data.count;
+  })
+  .catch(() => {
+    const el = document.getElementById('visitCount');
+    if (el) el.textContent = '—';
+  });
+</script>
+
 </body>
 </html>
