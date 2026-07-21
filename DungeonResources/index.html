@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeples: Dungeon Resources</title>
+<meta name="description" content="Meeples — Destiny 2 Dungeon Resources. Maps, encounter guides, and tools for all 11 dungeons.">
+<meta property="og:title" content="Meeples: Dungeon Resources">
+<meta property="og:description" content="Destiny 2 dungeon maps, encounter instructions, and resources — all 11 dungeons.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#080a0f; --bg2:#0d1018; --bg3:#12161f; --bg4:#181d28;
+  --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.12); --border3:rgba(200,168,75,0.25);
+  --text:#e8eaf0; --muted:#5a6070; --muted2:#8a9090;
+  --gold:#c8a84b; --gold2:#e2c97e; --gold3:#f5e6b8; --gold-bg:rgba(200,168,75,0.08);
+  --titan:#e05c3a; --hunter:#5a9fd4; --warlock:#a670d4;
+  --green:#4ade80; --red:#f87171;
+}
+body { background:var(--bg); color:var(--text); font-family:'Barlow',sans-serif; font-weight:300; min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 15% 20%,rgba(200,168,75,0.04) 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,rgba(74,158,255,0.03) 0%,transparent 50%); pointer-events:none; z-index:0; }
+
+/* ── Page header ── */
+.page-header { position:relative; z-index:1; text-align:center; padding:3.5rem 2rem 2.5rem; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(200,168,75,0.05) 0%,transparent 100%); }
+.page-header::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:120px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+.eyebrow { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:600; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; opacity:0.8; }
+.guardian-name { font-family:'Cinzel',serif; font-size:clamp(1.1rem,2vw,1.35rem); font-weight:600; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); opacity:0.75; margin-bottom:0.5rem; }
+.page-title { font-family:'Cinzel',serif; font-size:clamp(2rem,5vw,4rem); font-weight:900; letter-spacing:0.06em; text-transform:uppercase; background:linear-gradient(180deg,var(--gold3) 0%,var(--gold) 60%,#8a6a20 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; margin-bottom:0.75rem; }
+.page-sub { font-size:clamp(1rem,2.5vw,1.4rem); color:var(--muted2); letter-spacing:0.12em; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; font-weight:400; margin-top:0.25rem; }
+
+/* ── Instructions section ── */
+.instructions-section { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:2.5rem 2rem 0; }
+.instructions-label { font-size:18px; font-weight:600; color:var(--text); margin-bottom:0.4rem; letter-spacing:0.04em; text-transform:uppercase; }
+.instructions-text { font-size:18px; font-weight:400; color:var(--text); line-height:1.5; margin-bottom:1.25rem; }
+.instructions-toggle { display:inline-flex; align-items:center; gap:8px; background:transparent; border:1px solid rgba(255,255,255,0.2); border-radius:5px; padding:8px 18px; font-size:16px; font-family:'Barlow',sans-serif; font-weight:400; color:var(--text); cursor:pointer; transition:all 0.2s; margin-top:1.5rem; }
+.instructions-toggle:hover { border-color:var(--gold); color:var(--gold); }
+.instructions-body { overflow:hidden; max-height:0; opacity:0; transition:max-height 0.4s ease, opacity 0.3s ease; }
+.instructions-body.open { max-height:4200px; opacity:1; }
+.instructions-headline { font-family:'Barlow Condensed',sans-serif; font-size:28px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--gold2); margin:2rem 0 1rem; }
+.instructions-prose { font-size:18px; color:var(--text); line-height:1.6; }
+.instructions-prose p { margin-bottom:1rem; }
+.instructions-prose p:last-child { margin-bottom:0; }
+.instructions-prose ul { list-style:disc; margin:0 0 1rem 1.25rem; }
+.instructions-prose ul ul { margin:0.5rem 0 0 1.25rem; }
+.instructions-prose li { margin-bottom:0.5rem; }
+.instructions-prose li:last-child { margin-bottom:0; }
+.instructions-columns { display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:start; margin-top:0.5rem; }
+.instructions-columns ul { margin-top:0; }
+@media (max-width:900px) { .instructions-columns { grid-template-columns:1fr; gap:1.5rem; } }
+.instructions-prose strong { color:var(--gold2); font-weight:600; }
+.instructions-divider { height:1px; background:linear-gradient(90deg,transparent,var(--border2),transparent); margin:2.5rem 0 0; }
+
+/* ── Section header (shared) ── */
+.section-header { display:flex; align-items:baseline; gap:16px; margin-bottom:1.25rem; max-width:1400px; margin-left:auto; margin-right:auto; }
+.section-title { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:600; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); opacity:0.8; }
+.section-sub { font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:0.08em; color:var(--muted); }
+
+/* ── Gallery ── */
+.gallery { position:relative; z-index:1; display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1.5rem; max-width:1400px; margin:2rem auto; padding:0 1.5rem 3rem; }
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; transition:border-color 0.3s,box-shadow 0.3s; }
+.card:hover { border-color:rgba(255,255,255,0.12); }
+.card-banner { position:relative; height:140px; background:var(--bg3); overflow:hidden; }
+.banner-img { width:100%; height:100%; object-fit:cover; object-position:center; display:block; opacity:0.85; transition:opacity 0.3s; }
+.card:hover .banner-img { opacity:1; }
+.banner-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:repeating-linear-gradient(45deg,var(--bg3) 0px,var(--bg3) 10px,var(--bg4) 10px,var(--bg4) 20px); }
+.banner-placeholder-text { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
+.emblem-strip { position:relative; width:100%; aspect-ratio:474/96; background:var(--bg3); border-bottom:1px solid var(--border); overflow:hidden; }
+.emblem-wrap { width:100%; height:100%; }
+.emblem-img { width:100%; height:100%; object-fit:cover; object-position:left center; display:block; }
+.emblem-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:repeating-linear-gradient(90deg,var(--bg3) 0px,var(--bg3) 20px,var(--bg4) 20px,var(--bg4) 40px); font-size:10px; font-weight:600; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.15em; text-transform:uppercase; }
+.card-body { padding:1.25rem; flex:1; display:flex; flex-direction:column; }
+.card-number { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+.card-title { font-family:'Cinzel',serif; font-size:22px; font-weight:700; letter-spacing:0.04em; color:var(--text); margin-bottom:0.25rem; line-height:1.2; }
+.card-divider { height:1px; background:linear-gradient(90deg,var(--gold),transparent); margin:0.75rem 0; opacity:0.3; }
+
+/* ── Resource blocks (Maps / Encounter Instructions / Resources) ── */
+.resource-blocks { display:flex; flex-direction:column; gap:10px; padding-top:0.25rem; }
+.resource-block { background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:10px 12px; }
+.resource-block-title { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold2); margin-bottom:4px; }
+.resource-block-body { font-size:14px; color:var(--muted2); line-height:1.5; }
+.resource-block-body.placeholder { font-style:italic; color:var(--muted); }
+
+/* ── Footer ── */
+.page-footer { position:relative; z-index:1; text-align:center; padding:2rem; border-top:1px solid var(--border); font-size:11px; color:var(--muted); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="eyebrow">Destiny 2</div>
+  <div class="guardian-name">Meeples</div>
+  <h1 class="page-title">Dungeon Resources</h1>
+  <p class="page-sub">Maps · Encounter Guides · Tools</p>
+</header>
+
+<!-- INSTRUCTIONS SECTION -->
+<div class="instructions-section">
+  <p class="instructions-label">Familiarity Breeds Confidence!</p>
+  <div class="instructions-body" id="instructionsBody">
+    <div class="instructions-prose">
+      <p>&ldquo;Familiarity Breeds Confidence.&rdquo; That&rsquo;s my motto for Destiny&rsquo;s dungeons. The more you know about a dungeon&rsquo;s encounters, the more confidence you can have to control the encounter. The more you can control the room, the &lsquo;easier&rsquo; the encounter can be.</p>
+      <p class="instructions-headline">What Does &ldquo;Control the Room&rdquo; Mean?</p>
+      <div class="instructions-columns">
+        <div class="instructions-col">
+          <ul>
+            <li><strong>What are the mechanics that need to be done to unlock the room, or drop the boss&rsquo; immunity shield?</strong>
+              <ul>
+                <li>What steps do you need to take, in what order?</li>
+                <li>If the order doesn&rsquo;t matter, what is optimal or feels like the best flow to you?</li>
+                <li>Meta doesn&rsquo;t matter! What works for YOU?</li>
+              </ul>
+            </li>
+            <li><strong>Learn the enemy spawns!</strong>
+              <ul>
+                <li>What enemies start out in the encounter?</li>
+                <li>Which enemies spawn at its start and where do they spawn?</li>
+                <li><strong>KEY:</strong> <em>What triggers more enemy spawns during an encounter?</em>
+                  <ul>
+                    <li><strong>Mechanics:</strong> doing a thing spawns certain enemies.</li>
+                    <li><strong>Timer:</strong> certain enemies spawn every 30, 45, or 60 seconds, etc.</li>
+                    <li><strong>Kill:</strong> killing a certain enemy spawns a different enemy, OR killing all of a certain enemy respawns them all.</li>
+                    <li><em>Knowing these triggers can help you have awareness of what&rsquo;s about to happen so you can be ready. Control The Room!</em></li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="instructions-col">
+          <p><strong>For example:</strong> I died a million times solo in Pit of Heresy&rsquo;s Chamber of Suffering encounter. It was overwhelming to me trying to kill the knights who drop the orbs that I needed to dunk, while making sure the central totem&rsquo;s &ldquo;anger timer&rdquo; didn&rsquo;t expire and kill me, all while trying to not be killed by the swarms of enemies who wouldn&rsquo;t stop showing up. Then I learned the reasons. Certain enemies spawned on a timer in known locations. Certain enemies spawned after every dunk, in known locations. I could time killing a knight from a distance, get to the orb, pick it up, and check back on the totem to reset its wipe timer before dunking. All that, and a weapon which helped me clear the room quickly so I wasn&rsquo;t always feeling the pressure from the hordes, made it doable. The encounter went from stressful chaos to manageable rotations, and my confidence soared. I was eventually able to get my first Solo Flawless of any dungeon in there. I went from panicking and thinking I&rsquo;d never be able to do it solo, to being able to do it &lsquo;easily&rsquo; regularly. All because I learned the encounter. &ldquo;Familiarity Breeds Confidence.&rdquo;</p>
+          <p>Some folks consider certain dungeons &ldquo;easy.&rdquo; I say &ldquo;easy is relative.&rdquo; Different players have different skill levels and experience with the game. One gamer might go into a dungeon solo for the very first time knowing nothing about the encounters and complete it solo flawless. Another might die a million times solo before they eventually complete it solo (or solo flawless). I cheer for them all.</p>
+          <p><strong>If you&rsquo;re on this page, I hope these resources help you the way they&rsquo;ve helped me.</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="instructions-toggle" id="instructionsBtn" onclick="toggleInstructions()" aria-expanded="false">
+    Explain
+  </button>
+  <div class="instructions-divider"></div>
+</div>
+
+<!-- GALLERY -->
+<div style="position:relative;z-index:1;padding:1.5rem 2rem 0;max-width:1400px;margin:0 auto;">
+  <div class="section-header" style="margin-bottom:0;padding-bottom:1rem;border-bottom:1px solid var(--border);">
+    <span class="section-title" style="font-size:28px;">Dungeon Details</span>
+    <span class="section-sub" style="font-size:18px;">Maps, encounter instructions &amp; resources</span>
+  </div>
+</div>
+<main class="gallery" id="gallery"></main>
+
+<footer class="page-footer">Destiny 2 · Meeples · Dungeon Resources</footer>
+
+<script>
+const G = 'https://raw.githubusercontent.com/MeeplesAcademy/DestinyDungeonConquest/main/DungeonChallenge';
+
+const DUNGEONS = [
+  { id:'shattered-throne',   name:'Shattered Throne',    num:'01' },
+  { id:'pit-of-heresy',      name:'Pit of Heresy',        num:'02' },
+  { id:'prophecy',           name:'Prophecy',             num:'03' },
+  { id:'grasp-of-avarice',   name:'Grasp of Avarice',     num:'04' },
+  { id:'duality',            name:'Duality',              num:'05' },
+  { id:'spire-of-watcher',   name:'Spire of the Watcher', num:'06' },
+  { id:'ghosts-of-the-deep', name:'Ghosts of the Deep',   num:'07' },
+  { id:'warlords-ruin',      name:"Warlord's Ruin",        num:'08' },
+  { id:'vespers-host',       name:"Vesper's Host",         num:'09' },
+  { id:'sundered-doctrine',  name:'Sundered Doctrine',    num:'10' },
+  { id:'equilibrium',        name:'Equilibrium',          num:'11' },
+];
+
+const bannerImages = {};
+const emblemImages = {};
+
+const STATIC_BANNERS = {
+  'shattered-throne':G+'/01-Shattered_Throne_DR.jpg','pit-of-heresy':G+'/02-Pit_Of_Heresy_DR.jpg',
+  'prophecy':G+'/03-Prophecy_DR.jpg','grasp-of-avarice':G+'/04-Grasp_Of_Avarice_DR.jpg',
+  'duality':G+'/05-Duality_DR.jpg','spire-of-watcher':G+'/06-Spire_Of_The_Watcher_DR.jpg',
+  'ghosts-of-the-deep':G+'/07-Ghosts_Of_The_Deep_DR.jpg','warlords-ruin':G+'/08-Warlords_Ruin_DR.jpg',
+  'vespers-host':G+'/09-Vespers_Host_DR.jpg','sundered-doctrine':G+'/10-Sundered_Doctrine_DR.jpg',
+  'equilibrium':G+'/11-Equilibrium_DR.jpg',
+};
+const STATIC_EMBLEMS = {
+  'shattered-throne':G+'/01-Shattered_Throne_EMBLEM.jpg','pit-of-heresy':G+'/02-Pit_Of_Heresy_EMBLEM.jpg',
+  'prophecy':G+'/03-Prophecy_EMBLEM.jpg','grasp-of-avarice':G+'/04-Grasp_Of_Avarice_EMBLEM.jpg',
+  'duality':G+'/05-Duality_EMBLEM.jpg','spire-of-watcher':G+'/06-Spire_Of_The_Watcher_EMBLEM.jpg',
+  'ghosts-of-the-deep':G+'/07-Ghosts_Of_The_Deep_EMBLEM.jpg','warlords-ruin':G+'/08-Warlords_Ruin_EMBLEM.jpg',
+  'vespers-host':G+'/09-Vespers_Host_EMBLEM.jpg','sundered-doctrine':G+'/10-Sundered_Doctrine_EMBLEM.jpg',
+  'equilibrium':G+'/11-Equilibrium_EMBLEM.jpg',
+};
+
+function loadStaticData() {
+  Object.assign(bannerImages, STATIC_BANNERS);
+  Object.assign(emblemImages, STATIC_EMBLEMS);
+}
+
+// ── Instructions toggle ──
+function toggleInstructions() {
+  const btn  = document.getElementById('instructionsBtn');
+  const body = document.getElementById('instructionsBody');
+  const open = body.classList.toggle('open');
+  btn.setAttribute('aria-expanded', open);
+  btn.textContent = open ? 'Collapse' : 'Explain';
+}
+
+// ── Gallery ──
+function renderGallery() {
+  const gallery = document.getElementById('gallery');
+  gallery.innerHTML = '';
+  DUNGEONS.forEach(dungeon => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    // Banner
+    const banner = document.createElement('div'); banner.className = 'card-banner';
+    if (bannerImages[dungeon.id]) {
+      const img = document.createElement('img'); img.className = 'banner-img';
+      img.src = bannerImages[dungeon.id]; img.alt = dungeon.name; banner.appendChild(img);
+    } else {
+      const ph = document.createElement('div'); ph.className = 'banner-placeholder';
+      ph.innerHTML = `<div class="banner-placeholder-text">${dungeon.name}</div>`; banner.appendChild(ph);
+    }
+    card.appendChild(banner);
+
+    // Emblem
+    const es = document.createElement('div'); es.className = 'emblem-strip';
+    const ew = document.createElement('div'); ew.className = 'emblem-wrap';
+    if (emblemImages[dungeon.id]) {
+      const ei = document.createElement('img'); ei.className = 'emblem-img';
+      ei.src = emblemImages[dungeon.id]; ei.alt = dungeon.name + ' Emblem'; ew.appendChild(ei);
+    } else {
+      const ep = document.createElement('div'); ep.className = 'emblem-placeholder';
+      ep.textContent = 'Emblem'; ew.appendChild(ep);
+    }
+    es.appendChild(ew); card.appendChild(es);
+
+    // Body
+    const body = document.createElement('div'); body.className = 'card-body';
+    const num = document.createElement('div'); num.className = 'card-number';
+    num.textContent = `Dungeon ${dungeon.num}`; body.appendChild(num);
+    const title = document.createElement('div'); title.className = 'card-title';
+    title.textContent = dungeon.name; body.appendChild(title);
+
+    const divider = document.createElement('div'); divider.className = 'card-divider'; body.appendChild(divider);
+
+    // Resource blocks: Maps / Encounter Instructions / Resources
+    const blocks = document.createElement('div'); blocks.className = 'resource-blocks';
+    [
+      { title:'Maps', text:'Coming soon.' },
+      { title:'Encounter Instructions', text:'Coming soon.' },
+      { title:'Resources', text:'Coming soon.' },
+    ].forEach(section => {
+      const block = document.createElement('div'); block.className = 'resource-block';
+      const t = document.createElement('div'); t.className = 'resource-block-title'; t.textContent = section.title;
+      block.appendChild(t);
+      const b = document.createElement('div'); b.className = 'resource-block-body placeholder'; b.textContent = section.text;
+      block.appendChild(b);
+      blocks.appendChild(block);
+    });
+    body.appendChild(blocks);
+
+    card.appendChild(body);
+    gallery.appendChild(card);
+  });
+}
+
+loadStaticData();
+renderGallery();
+</script>
+</body>
+</html>
