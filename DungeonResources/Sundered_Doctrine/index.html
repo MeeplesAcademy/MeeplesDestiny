@@ -67,7 +67,8 @@ body { min-height:100vh; }
 .symbol-slot:hover { border-color:var(--gold); }
 .symbol-slot img { width:100%; height:100%; object-fit:cover; display:block; }
 .symbol-popover {
-  position:absolute; z-index:60; top:calc(100% + 8px); left:50%; transform:translateX(-50%);
+  position:fixed; z-index:200; transform:translateX(-50%);
+  pointer-events:auto;
   background:var(--bg3); border:1px solid var(--border2); border-radius:8px; padding:8px;
   display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;
   box-shadow:0 12px 32px rgba(0,0,0,0.6);
@@ -77,9 +78,26 @@ body { min-height:100vh; }
 .symbol-popover button:hover { border-color:var(--gold); }
 .symbol-popover img { width:40px; height:40px; object-fit:cover; display:block; border-radius:4px; }
 
+.zone-label {
+  position:absolute; transform:translate(-50%,-50%);
+  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:15px; letter-spacing:0.07em; text-transform:uppercase;
+  padding:5px 14px; border-radius:6px; border:2.5px solid; white-space:nowrap; pointer-events:none;
+}
+.zone-label.swampy { color:#9fd94a; border-color:#9fd94a; background:rgba(159,217,74,0.1); }
+.zone-label.stone { color:#a8adb5; border-color:#a8adb5; background:rgba(168,173,181,0.1); }
+
+.lens-bearer {
+  position:absolute; transform:translate(-50%,-50%);
+  width:2.6%; aspect-ratio:1/1; min-width:18px;
+  pointer-events:none;
+}
+.lens-bearer svg { width:100%; height:100%; display:block; overflow:visible; }
+
 .next-round-inline { display:flex; flex-direction:column; align-items:stretch; gap:0.6rem; }
 .reset-symbols-btn { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:7px 18px; border-radius:6px; border:2px solid #e0517a; background:rgba(224,81,122,0.1); color:#ff8fae; cursor:pointer; transition:all 0.15s; }
 .reset-symbols-btn:hover { background:#e0517a; color:#0a0c10; border-color:#ff8fae; }
+.full-reset-btn { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:6px 18px; border-radius:6px; border:2px solid #ff3b3b; background:rgba(255,59,59,0.12); color:#ff7a7a; cursor:pointer; transition:all 0.15s; }
+.full-reset-btn:hover { background:#ff3b3b; color:#0a0c10; border-color:#ffb3b3; }
 .next-round-btn { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:13px 30px; border-radius:6px; border:1.5px solid var(--gold); background:transparent; color:var(--gold2); cursor:pointer; transition:all 0.15s; white-space:nowrap; }
 .next-round-btn:hover { background:var(--gold); color:#0a0c10; }
 
@@ -113,6 +131,7 @@ footer a:hover { text-decoration:underline; }
     <div class="next-round-inline">
       <button class="next-round-btn" data-next="round2">Next Round ▼</button>
       <button class="reset-symbols-btn" data-round="round1">Reset Round</button>
+      <button class="full-reset-btn">Full Encounter Reset</button>
     </div>
   </div>
   <div class="map-wrap"><canvas></canvas></div>
@@ -126,6 +145,7 @@ footer a:hover { text-decoration:underline; }
     <div class="next-round-inline">
       <button class="next-round-btn" data-next="round3">Next Round ▼</button>
       <button class="reset-symbols-btn" data-round="round2">Reset Round</button>
+      <button class="full-reset-btn">Full Encounter Reset</button>
     </div>
   </div>
   <div class="map-wrap"><canvas></canvas></div>
@@ -138,6 +158,7 @@ footer a:hover { text-decoration:underline; }
     <div class="symbol-boxes"></div>
     <div class="next-round-inline">
       <button class="reset-symbols-btn" data-round="round3">Reset Round</button>
+      <button class="full-reset-btn">Full Encounter Reset</button>
     </div>
   </div>
   <div class="map-wrap"><canvas></canvas></div>
@@ -527,6 +548,21 @@ const SYMBOL_NAMES = ['Darkness','Drink','Give','Guardian','Hive','Kill','Light'
 // SymbolPicker.assignments into the next round's picker before/after it's constructed.
 const SYMBOLS_PERSIST_ACROSS_ROUNDS = false;
 
+// Static map annotations: aesthetic zone labels and Lens Bearer (Subjugator) enemy markers.
+// Purely informational, non-interactive — positioned the same way as everything else,
+// as a percentage of the fixed COORD_W/COORD_H coordinate space.
+const ZONE_LABELS = [
+  { text: 'SWAMPY ROOMS', cls: 'swampy', x: 1385, y: 1856 },
+  { text: 'STONE ROOMS', cls: 'stone', x: 3678, y: 1856 },
+];
+const LENS_BEARERS = [
+  { room: 'L1', type: 'strand', x: 1165, y: 1290 },
+  { room: 'L2', type: 'stasis', x: 1165, y: 390 },
+  { room: 'R2', type: 'strand', x: 3902, y: 428 },
+  { room: 'R1', type: 'stasis', x: 3902, y: 1111 },
+];
+const LENS_BEARER_COLORS = { strand: '#3ecf5d', stasis: '#4aa8ff' };
+
 class SymbolPicker {
   constructor(mapWrapEl) {
     this.mapWrap = mapWrapEl;
@@ -534,6 +570,27 @@ class SymbolPicker {
     this.slots = {};
     this.openPopover = null;
     this.buildDOM();
+    this.addAnnotations();
+  }
+
+  addAnnotations() {
+    ZONE_LABELS.forEach(z => {
+      const el = document.createElement('div');
+      el.className = 'zone-label ' + z.cls;
+      el.textContent = z.text;
+      el.style.left = (z.x / COORD_W * 100) + '%';
+      el.style.top = (z.y / COORD_H * 100) + '%';
+      this.overlay.appendChild(el);
+    });
+    LENS_BEARERS.forEach(b => {
+      const el = document.createElement('div');
+      el.className = 'lens-bearer';
+      el.style.left = (b.x / COORD_W * 100) + '%';
+      el.style.top = (b.y / COORD_H * 100) + '%';
+      el.title = 'Lens Bearer (' + (b.type === 'strand' ? 'Strand' : 'Stasis') + ')';
+      el.innerHTML = `<svg viewBox="0 0 100 100"><polygon points="8,14 92,14 50,90" fill="${LENS_BEARER_COLORS[b.type]}" stroke="#0a0c10" stroke-width="6" stroke-linejoin="round"/></svg>`;
+      this.overlay.appendChild(el);
+    });
   }
 
   imgSrc(name) {
@@ -589,7 +646,21 @@ class SymbolPicker {
       });
       pop.appendChild(btn);
     });
-    anchorEl.appendChild(pop);
+    // Append to document.body (not anything inside .map-wrap) since .map-wrap has
+    // overflow:hidden to round the canvas corners — any popover living inside that
+    // tree gets sliced off whenever it extends past the map's edge. position:fixed
+    // + viewport coordinates lets it render fully outside that clipping boundary.
+    document.body.appendChild(pop);
+    const anchorRect = anchorEl.getBoundingClientRect();
+    const popW = 260, popH = 172; // approx grid size, used for boundary clamping before layout
+    let left = anchorRect.left + anchorRect.width / 2;
+    let top = anchorRect.bottom + 8;
+    left = Math.max(12, Math.min(left, window.innerWidth - popW / 2 - 12));
+    if (top + popH > window.innerHeight - 12) {
+      top = anchorRect.top - popH - 8; // flip above if no room below
+    }
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
     this.openPopover = pop;
     setTimeout(() => {
       this._outsideHandler = (e) => { if (!pop.contains(e.target)) this.closePicker(); };
@@ -639,6 +710,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const roundId = btn.dataset.round;
       if (symbolPickers[roundId]) symbolPickers[roundId].reset();
       if (puzzleRounds[roundId]) puzzleRounds[roundId].resetSelections();
+    });
+  });
+
+  document.querySelectorAll('.full-reset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ['round1', 'round2', 'round3'].forEach(roundId => {
+        if (symbolPickers[roundId]) symbolPickers[roundId].reset();
+        if (puzzleRounds[roundId]) puzzleRounds[roundId].resetSelections();
+      });
+      document.getElementById('round1').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
 });
