@@ -60,20 +60,23 @@ body { min-height:100vh; }
   position:absolute; transform:translate(-50%,-50%);
   width:4%; aspect-ratio:1/1; min-width:24px;
   pointer-events:auto; cursor:pointer;
+  padding:0; background:none; border:none;
+}
+.symbol-slot-inner {
+  width:100%; height:100%;
   border:2px solid var(--gold); border-radius:6px;
-  background:#05060a; overflow:hidden; padding:0;
+  background:#05060a; overflow:hidden;
   transition:border-color 0.15s, box-shadow 0.15s;
 }
-.symbol-slot:hover { border-color:var(--gold3); box-shadow:0 0 8px rgba(245,230,184,0.5); }
-.symbol-slot::after {
-  content: attr(data-tooltip);
-  position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
-  background:var(--bg3); color:var(--text); border:1px solid var(--border2);
-  padding:4px 9px; border-radius:5px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600;
-  white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 0.08s; z-index:100;
+.symbol-slot:hover .symbol-slot-inner { border-color:var(--gold3); box-shadow:0 0 8px rgba(245,230,184,0.5); }
+.symbol-slot-inner img { width:100%; height:100%; object-fit:cover; display:block; }
+.symbol-tooltip {
+  position:fixed; z-index:300; transform:translateX(-50%);
+  background:var(--bg3); color:#c9cdd6; border:1px solid var(--border2);
+  padding:5px 10px; border-radius:5px; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600;
+  white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 0.08s;
 }
-.symbol-slot:hover::after { opacity:1; }
-.symbol-slot img { width:100%; height:100%; object-fit:cover; display:block; }
+.symbol-tooltip.visible { opacity:1; }
 .symbol-popover {
   position:fixed; z-index:200; transform:translateX(-50%);
   pointer-events:auto;
@@ -96,10 +99,18 @@ body { min-height:100vh; }
 
 .lens-bearer {
   position:absolute; transform:translate(-50%,-50%);
-  width:2.6%; aspect-ratio:1/1; min-width:18px;
-  pointer-events:none;
+  width:3.57%; aspect-ratio:1/1; min-width:26px;
+  pointer-events:auto; cursor:default;
 }
-.lens-bearer svg { width:100%; height:100%; display:block; overflow:visible; }
+.lens-bearer-fill { position:absolute; inset:0; clip-path: polygon(8% 12%, 92% 12%, 50% 92%); background:#0d1018; }
+.lens-bearer-border { position:absolute; inset:0; }
+.lens-bearer-border svg { width:100%; height:100%; display:block; }
+.lens-bearer-icon {
+  position:absolute; left:50%; transform:translate(-50%,-50%);
+  width:62%; height:62%;
+  -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain;
+  mask-repeat:no-repeat; mask-position:center; mask-size:contain;
+}
 
 .next-round-inline { display:flex; flex-direction:column; align-items:stretch; gap:0.6rem; }
 .reset-symbols-btn { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:7px 18px; border-radius:6px; border:2px solid #e0517a; background:rgba(224,81,122,0.1); color:#ff8fae; cursor:pointer; transition:all 0.15s; }
@@ -570,6 +581,8 @@ const LENS_BEARERS = [
   { room: 'R1', type: 'stasis', x: 3902, y: 1111 },
 ];
 const LENS_BEARER_COLORS = { strand: '#3ecf5d', stasis: '#4aa8ff' };
+const LENS_BEARER_ICONS = { strand: "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAQAAABIkb+zAAAE9klEQVR42u2bW2wVRRzG5yy1LW0hLUWLNjREiVFSxJB4CVKiJJQYkZjUy4MPGHkw8RYf1KgxGjFEMDahNmo0aeKDULEJhqACMWJoMRRRtCLVithKSK1YS2nTi23P9/lgaXdPd/57djxnpw/7PXV3/v+Z37fd2Z3LHqVixYoVK1asWLFmp1iMWpTYpjAWlqCdRDuutk1ihn8zekiSRA9utU0THr8GQ5wShlFjmygc/tOYoEdI4lnbVGmKc/A2fYV3Occ2XaBQhM+oFQ5gnm1CGb8cbRSFNi62TanHvxHnGCic40rbpP74d2EgGJ8kMYgNtmln4j+G8fTwSRLjeMI2sUt0UJs+/JSJHXRskyullEIB9oTHJ0nsRYFtesUyfG2GT5I8jkV2r/516BKv8Sh2YESM6ML19vAr8acI14s1SqEKvWLUeVRawWcpOkWw07h20uhSnBYjz7LUhoHdItRXWOgx2yL2hd2R42OVDMS8FLt5aBQNV0VtYK8A8zp9MqiwTcjZFy3+AoxpURqEvAZt1pj7lsu+gRrtpbzA+ULePPRpLdxnxmL2Ol+hK+DHiQGhsUG1J3yd2TBwlbbkWEDmEV1BojxKA/nakv6AzD5dAS+L0sCgtiToOurnY0NRGujUlqwLyLzToM7MC7drnyXjFDojV+inPVgbpYFc/K0FOYEiDX4hvtE/fpEboQGlUCe8VY+xzCfjCrQKOfWR4iuFcgwLOJ1YlhK/DGeE+BELiy14RgDqwS2e2LX6W44k8Xzk+ErR0Q3o0I4lnshNGBXxD1qa3rMQX/jgHGKxK0ZhC0XhsK7TRyDk46MUnPfdb1Tk4oMA/Cbkm7efAVHxtSmYJF5yzwRQgsMB+NuZsIo/CboZYyRG8aDn7DXoEOHH8Iht8mnYdTiDNZ4zq3BexL+I9bapPfI+R3C/9JYgcRbLbRMLwnNIivjf4krbjFoxB+8FdNx9LLRNqcefj4MB+PWzZE3aF38xfhDhx/GUbUYJfyW6RfxB3GObURA2YlDE78ZNHrtlpi1lB/9JeYMJJ1Hhid+MkVlzO9HBmwEd93P3YhcVts6iDs1CaZWUJNHAHFd8Hj50lX1i+ZGKRTwuwifxgsduKY6kRJywuMmE8oDh2gge8MT7bnTgFxiuyf1PcS6+F/H/4m0e/NW6rSa0WbmRUC/id2CpJ/puabMP70SPX5n6RZAHqDl110ue3CCJG6I2IEwVsctvkUqeXmJXtPhF+vE+XqUmiwqv6Du8tDGSeQMbNBj/4CE5U7/Ego1RGnjRF6EvnQVa3KFZ5HrZjMXsZV4x8xT/UFXOoTQa/FKtZrdPfkVwbuYMzPzKpF9VO6fSbPInVe2zk5OXXnZmDMzYTeHjzo8hGj3FR2ecHI3SwO8p+M3OzpDNNrI55VRXlAa+SzmuNajjjYA6sykUuOdfuOgeMKcr5qDfVceQ6XjI6D/gDKsm12FrYiJ8HYkJ1eo6bEpEukupEts5Df2bWR3q10t/cEJtM6zD2ECHqps6uGDY9vRHCXXOz6YGjMU8HJ28f98yq+HSXBpHLe0RYOF/X0pjv2H+pySJk7jcCr5SSqEEzSQGTK4gHfSSaMECa/hKKYVc7DQbSaKaRCMNBxAZFBW2oIWh87AfW8NnZcvEJt4bEn89HrZN7QVaHub3Yiym4fdZWRTnph0ZIjZWrFixYsWKFSur+hfSDWTkVRWgrgAAAABJRU5ErkJggg==", stasis: "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" };
+const LENS_BEARER_ICON_VOFFSET = { strand: 40, stasis: 44 }; // % vertical position of icon within the triangle
 
 class SymbolPicker {
   constructor(mapWrapEl) {
@@ -595,8 +608,29 @@ class SymbolPicker {
       el.className = 'lens-bearer';
       el.style.left = (b.x / COORD_W * 100) + '%';
       el.style.top = (b.y / COORD_H * 100) + '%';
-      el.title = 'Lens Bearer (' + (b.type === 'strand' ? 'Strand' : 'Stasis') + ')';
-      el.innerHTML = `<svg viewBox="0 0 100 100"><polygon points="8,14 92,14 50,90" fill="${LENS_BEARER_COLORS[b.type]}" stroke="#0a0c10" stroke-width="6" stroke-linejoin="round"/></svg>`;
+      const typeLabel = b.type === 'strand' ? 'Strand' : 'Stasis';
+      el.dataset.tooltip = typeLabel + ' Lens Bearer';
+      const color = LENS_BEARER_COLORS[b.type];
+
+      const fill = document.createElement('div');
+      fill.className = 'lens-bearer-fill';
+      el.appendChild(fill);
+
+      const border = document.createElement('div');
+      border.className = 'lens-bearer-border';
+      border.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="8,12 92,12 50,92" fill="none" stroke="${color}" stroke-width="4"/></svg>`;
+      el.appendChild(border);
+
+      const icon = document.createElement('div');
+      icon.className = 'lens-bearer-icon';
+      icon.style.top = LENS_BEARER_ICON_VOFFSET[b.type] + '%';
+      icon.style.backgroundColor = color;
+      icon.style.webkitMaskImage = `url(data:image/png;base64,${LENS_BEARER_ICONS[b.type]})`;
+      icon.style.maskImage = `url(data:image/png;base64,${LENS_BEARER_ICONS[b.type]})`;
+      el.appendChild(icon);
+
+      el.addEventListener('mouseenter', () => this.showTooltip(el));
+      el.addEventListener('mouseleave', () => this.hideTooltip());
       this.overlay.appendChild(el);
     });
   }
@@ -616,21 +650,47 @@ class SymbolPicker {
       slot.style.left = (x / COORD_W * 100) + '%';
       slot.style.top = (y / COORD_H * 100) + '%';
       slot.dataset.tooltip = 'Click to select and assign a symbol.';
+      const inner = document.createElement('div');
+      inner.className = 'symbol-slot-inner';
       const img = document.createElement('img');
       img.src = this.imgSrc('Blank');
       img.alt = room + ' symbol';
-      slot.appendChild(img);
+      inner.appendChild(img);
+      slot.appendChild(inner);
       slot.addEventListener('click', (e) => {
         e.stopPropagation();
         this.togglePicker(room, slot);
       });
+      slot.addEventListener('mouseenter', () => this.showTooltip(slot));
+      slot.addEventListener('mouseleave', () => this.hideTooltip());
       this.overlay.appendChild(slot);
       this.slots[room] = { button: slot, img };
     }
     this.mapWrap.appendChild(this.overlay);
   }
 
+  showTooltip(anchorEl) {
+    this.hideTooltip();
+    const tip = document.createElement('div');
+    tip.className = 'symbol-tooltip';
+    tip.textContent = anchorEl.dataset.tooltip;
+    document.body.appendChild(tip);
+    const rect = anchorEl.getBoundingClientRect();
+    let left = rect.left + rect.width / 2;
+    left = Math.max(12, Math.min(left, window.innerWidth - 12));
+    tip.style.left = left + 'px';
+    tip.style.top = (rect.top - 8) + 'px';
+    tip.style.transform = 'translate(-50%, -100%)';
+    requestAnimationFrame(() => tip.classList.add('visible'));
+    this.tooltipEl = tip;
+  }
+
+  hideTooltip() {
+    if (this.tooltipEl) { this.tooltipEl.remove(); this.tooltipEl = null; }
+  }
+
   togglePicker(room, anchorEl) {
+    this.hideTooltip();
     if (this.openPopover && this.openPopover._room === room) {
       this.closePicker();
       return;
