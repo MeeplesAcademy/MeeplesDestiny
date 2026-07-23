@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vesper's Host — Dismemberment Tracker · Destiny 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #080a0f;
+  --bg2:      #0d1018;
+  --bg3:      #12161f;
+  --bg4:      #181d28;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
+  --text:     #dde1ec;
+  --text2:    #a8b0c0;
+  --muted:    #606878;
+  --gold:     #c8a84b;
+  --gold2:    #e2c97e;
+  --gold3:    #f5e6b8;
+  --lens-navy:  #2a2f6b;
+  --lens-lit:   #4fa8e0;
+  --lens-lit2:  #8fc7ec;
+  --lens-off:   #6b7178;
+  --lens-num:   #f0f2f6;
+  --sel-blue:   #4fa8e0;
+  --sel-blue2:  #8fc7ec;
+  --phase-blue: #3d8fd6;
+  --phase-blue2:#63aee8;
+  --reset-red:  #ff3b3b;
+  --reset-red2: #ff7a7a;
+}
+html, body { background: var(--bg); color: var(--text); font-family:'Barlow',sans-serif; }
+body { min-height:100vh; }
+
+/* ── Header ── */
+.page-header { text-align:center; padding:2.5rem 1.5rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg2); }
+.page-title { font-family:'Cinzel',serif; font-size:clamp(1.6rem,4vw,2.8rem); font-weight:900; letter-spacing:0.05em; text-transform:uppercase; background:linear-gradient(180deg,var(--gold3) 0%,var(--gold) 60%,#8a6a20 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.15; }
+.page-sub { font-size:clamp(1.15rem,2.6vw,1.65rem); font-weight:600; color:var(--text2); letter-spacing:0.08em; text-transform:uppercase; font-family:'Barlow Condensed',sans-serif; margin-top:0.6rem; }
+.page-note { font-size:15px; color:var(--muted); margin-top:1rem; line-height:1.7; max-width:640px; margin-left:auto; margin-right:auto; }
+
+/* ── Tracker Section ── */
+.tracker-section { max-width:1200px; margin:0 auto; padding:2.5rem 1.5rem 3rem; }
+
+.phase-bar {
+  display:flex; align-items:center; justify-content:center; gap:1.6rem; flex-wrap:wrap;
+  margin-bottom:2.4rem; padding:1.2rem 1.5rem; background:var(--bg2); border:1px solid var(--border2); border-radius:10px;
+}
+.phase-counter { display:flex; align-items:center; gap:0.7rem; font-family:'Barlow Condensed',sans-serif; }
+.phase-counter-label { font-size:15px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text2); }
+.phase-counter-value { font-family:'Cinzel',serif; font-size:1.8rem; font-weight:700; color:var(--gold2); min-width:2ch; text-align:center; }
+
+.phase-btn {
+  font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  padding:12px 26px; border-radius:8px; border:2px solid var(--phase-blue2); background:rgba(61,143,214,0.12); color:var(--phase-blue2);
+  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}
+.phase-btn:hover { background:var(--phase-blue); color:#06090d; border-color:var(--phase-blue2); }
+
+.reset-btn {
+  font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  padding:11px 22px; border-radius:8px; border:2px solid var(--reset-red); background:rgba(255,59,59,0.1); color:var(--reset-red2);
+  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}
+.reset-btn:hover { background:var(--reset-red); color:#06090d; border-color:var(--reset-red2); }
+
+.toggle-note { text-align:center; font-family:'Barlow',sans-serif; font-size:17px; font-weight:500; color:var(--text); letter-spacing:0.01em; margin-bottom:1.6rem; }
+
+.combo-grid-row { display:flex; justify-content:center; flex-wrap:wrap; gap:1.2rem; margin-bottom:1.2rem; }
+.combo-grid-row:last-child { margin-bottom:0; }
+
+.combo-card {
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.7rem;
+  background:var(--bg2); border:2px solid var(--border2); border-radius:14px;
+  width:204px; height:204px;
+  cursor:pointer; user-select:none; transition:border-color 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.combo-card:hover { border-color:var(--sel-blue2); }
+.combo-card.selected { border:4px solid var(--sel-blue); box-shadow:0 0 16px rgba(79,168,224,0.35); }
+
+.combo-num { font-family:'Cinzel',serif; font-size:1.92rem; font-weight:700; color:var(--lens-num); transition:font-size 0.15s; }
+.combo-card.selected .combo-num { font-size:3.36rem; }
+
+.lens-icon circle.ring { fill:none; stroke:var(--lens-navy); }
+.lens-icon circle.dot-off { fill:none; stroke:var(--lens-off); }
+.lens-icon circle.dot-on { fill:var(--lens-lit); stroke:var(--lens-lit2); }
+
+/* ── Footer ── */
+footer { text-align:center; padding:2rem 1.5rem 3rem; font-size:13px; color:var(--muted); line-height:1.8; }
+footer a { color:var(--gold2); text-decoration:none; }
+footer a:hover { text-decoration:underline; }
+
+@media (max-width: 640px) {
+  .tracker-section { padding:2rem 1rem 2.5rem; }
+  .combo-card { width:29%; height:auto; aspect-ratio:1/1; }
+  .combo-grid-row { gap:0.6rem; }
+  .phase-bar { gap:1rem; padding:1rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">Vesper's Host</div>
+  <div class="page-sub">Dismemberment (2nd Encounter) — Raneiks Unified</div>
+  <div class="page-note">Track the two numbers revealed on each trip upstairs. Once all four panel numbers are marked, shoot the matching panels downstairs to drop the shield.</div>
+</div>
+
+<section class="tracker-section">
+  <div class="phase-bar">
+    <div class="phase-counter">
+      <span class="phase-counter-label">Damage Phases</span>
+      <span class="phase-counter-value" id="phaseCount">0</span>
+    </div>
+    <button class="phase-btn" id="phaseCompleteBtn" title="Click to reset for the next round.">Damage Phase Complete</button>
+    <button class="reset-btn" id="resetBtn">Reset Encounter</button>
+  </div>
+
+  <div class="toggle-note">Click a box to highlight it (toggle).</div>
+
+  <div class="combo-grid-row" id="rowTop"></div>
+  <div class="combo-grid-row" id="rowBottom"></div>
+</section>
+
+<footer>
+  MeeplesDestiny · <a href="https://github.com/MeeplesAcademy/MeeplesDestiny" target="_blank" rel="noopener">GitHub</a>
+</footer>
+
+<script>
+const LAYOUTS = {
+  1:[1,0,0,0], 2:[0,1,0,0], 3:[1,1,0,0], 4:[0,0,1,0], 5:[1,0,1,0],
+  6:[0,1,1,0], 7:[1,1,1,0], 8:[0,0,0,1], 9:[1,0,0,1]
+};
+const POSITIONS = [
+  {x:60,y:22}, // top
+  {x:98,y:60}, // right
+  {x:60,y:98}, // bottom
+  {x:22,y:60}  // left
+];
+
+function buildLensSVG(num, size) {
+  const lit = LAYOUTS[num];
+  let dots = '';
+  POSITIONS.forEach((p, i) => {
+    dots += lit[i]
+      ? `<circle class="dot-on" cx="${p.x}" cy="${p.y}" r="12" stroke-width="1.5"/>`
+      : `<circle class="dot-off" cx="${p.x}" cy="${p.y}" r="12" stroke-width="2"/>`;
+  });
+  return `<svg class="lens-icon" width="${size}" height="${size}" viewBox="0 0 120 120" aria-hidden="true">
+    <circle class="ring" cx="60" cy="60" r="52" stroke-width="4"/>
+    ${dots}
+  </svg>`;
+}
+
+function refreshCard(card) {
+  const num = card.dataset.num;
+  const selected = card.classList.contains('selected');
+  const iconSize = selected ? 90 : 110;
+  card.innerHTML = buildLensSVG(num, iconSize) + `<div class="combo-num">${num}</div>`;
+}
+
+function makeCard(num) {
+  const card = document.createElement('div');
+  card.className = 'combo-card';
+  card.dataset.num = num;
+  card.setAttribute('role', 'checkbox');
+  card.setAttribute('aria-checked', 'false');
+  card.tabIndex = 0;
+  refreshCard(card);
+  const toggle = () => {
+    const selected = card.classList.toggle('selected');
+    card.setAttribute('aria-checked', String(selected));
+    refreshCard(card);
+  };
+  card.addEventListener('click', toggle);
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  });
+  return card;
+}
+
+const rowTop = document.getElementById('rowTop');
+const rowBottom = document.getElementById('rowBottom');
+[1,2,3,4,5].forEach(n => rowTop.appendChild(makeCard(n)));
+[6,7,8,9].forEach(n => rowBottom.appendChild(makeCard(n)));
+
+let phaseCount = 0;
+const phaseCountEl = document.getElementById('phaseCount');
+
+function clearSelections() {
+  document.querySelectorAll('.combo-card.selected').forEach(c => {
+    c.classList.remove('selected');
+    c.setAttribute('aria-checked', 'false');
+    refreshCard(c);
+  });
+}
+
+document.getElementById('phaseCompleteBtn').addEventListener('click', () => {
+  clearSelections();
+  phaseCount += 1;
+  phaseCountEl.textContent = phaseCount;
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  clearSelections();
+  phaseCount = 0;
+  phaseCountEl.textContent = phaseCount;
+});
+</script>
+</body>
+</html>
