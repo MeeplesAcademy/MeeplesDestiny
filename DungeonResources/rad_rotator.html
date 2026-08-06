@@ -48,6 +48,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .section-head-center .collapse-toggle { position:absolute; right:0; top:50%; transform:translateY(-50%); }
 .section-subdates { display:flex; justify-content:center; gap:28px; flex-wrap:wrap; font-family:'Barlow Condensed',sans-serif; font-size:19px; color:var(--text2); letter-spacing:0.03em; margin-top:0.6rem; }
 .section-subdates strong { color:var(--gold2); font-weight:600; }
+.featured-tab-dates { margin-top:0; margin-bottom:1.75rem; }
 
 /* ── Collapsible toggle ── */
 .collapse-toggle { display:inline-flex; align-items:center; gap:8px; background:transparent; border:1px solid var(--border2); border-radius:5px; padding:7px 16px; font-size:14px; font-family:'Barlow Condensed',sans-serif; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; color:var(--text2); cursor:pointer; transition:all 0.2s; }
@@ -214,42 +215,38 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 <header class="page-header">
   <div class="eyebrow">Destiny 2</div>
   <h1 class="page-title">Raid &amp; Dungeon Rotator</h1>
-  <p class="page-sub">View this week's featured Raid &amp; Dungeon pairings.<br>Also, scroll down to see future rotations, look ahead, or search any future date.</p>
+  <p class="page-sub">View this week's featured Raid &amp; Dungeon pairings.<br>Or check future rotations, look ahead, or search any future date — all in one place below.</p>
 </header>
 
-<!-- ═══════════════ FEATURED THIS WEEK ═══════════════ -->
-<section class="section" id="featured-week-section">
-  <div class="section-head-center">
-    <div class="section-title">Featured This Week</div>
-    <div class="section-subdates">
-      <span>Weekly Reset: <strong id="fw-reset-date">—</strong></span>
-      <span>Today: <strong id="fw-today-date">—</strong></span>
-    </div>
-  </div>
-  <div class="rad-columns">
-    <div class="rad-col raid-col-frame">
-      <div class="rad-col-label raid-label">Raids</div>
-      <div class="rad-cards-row" id="fw-raid-slot"></div>
-      <div class="rad-locked-wrap" id="fw-raid-locked-slot"></div>
-    </div>
-    <div class="rad-col dungeon-col-frame">
-      <div class="rad-col-label dungeon-label">Dungeons</div>
-      <div class="rad-cards-row" id="fw-dungeon-slot"></div>
-      <div class="rad-locked-wrap" id="fw-dungeon-locked-slot"></div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════ FUTURE ROTATIONS / LOOK UP / SEARCH (TABS) ═══════════════ -->
+<!-- ═══════════════ FEATURED THIS WEEK / FUTURE ROTATIONS / LOOK UP / SEARCH (ALL TABS) ═══════════════ -->
 <section class="section" id="rotations-hub-section">
-  <div class="hub-title">See The Future</div>
   <div class="tab-bar">
-    <button class="tab-btn active" id="tab-btn-future" data-tab="future">Future Rotations</button>
+    <button class="tab-btn active" id="tab-btn-featured" data-tab="featured">Featured This Week</button>
+    <button class="tab-btn" id="tab-btn-future" data-tab="future">Future Rotations</button>
     <button class="tab-btn" id="tab-btn-lookup" data-tab="lookup">Look Up</button>
     <button class="tab-btn" id="tab-btn-search" data-tab="search">Search</button>
   </div>
 
-  <div class="tab-panel active" id="tab-panel-future" data-panel="future">
+  <div class="tab-panel active" id="tab-panel-featured" data-panel="featured">
+    <div class="section-subdates featured-tab-dates">
+      <span>Weekly Reset: <strong id="fw-reset-date">—</strong></span>
+      <span>Today: <strong id="fw-today-date">—</strong></span>
+    </div>
+    <div class="rad-columns">
+      <div class="rad-col raid-col-frame">
+        <div class="rad-col-label raid-label">Raids</div>
+        <div class="rad-cards-row" id="fw-raid-slot"></div>
+        <div class="rad-locked-wrap" id="fw-raid-locked-slot"></div>
+      </div>
+      <div class="rad-col dungeon-col-frame">
+        <div class="rad-col-label dungeon-label">Dungeons</div>
+        <div class="rad-cards-row" id="fw-dungeon-slot"></div>
+        <div class="rad-locked-wrap" id="fw-dungeon-locked-slot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-panel-future" data-panel="future">
     <p class="section-note">Every reset (Tuesday, 9am PST / 10am PDT) brings a new Raid pairing and a new Dungeon pairing. View the next two months below — pick a List or Calendar view.</p>
     <div class="subtab-bar">
       <button class="subtab-btn active" id="subtab-btn-list" data-subtab="list">List View</button>
