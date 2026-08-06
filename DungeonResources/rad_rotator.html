@@ -176,16 +176,16 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .cal-month-title { font-family:'Cinzel',serif; font-size:20px; font-weight:700; color:var(--gold2); padding:1rem 1.4rem; border-bottom:1px solid var(--border2); background:var(--bg3); }
 .cal-dow-row { display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--border2); }
 .cal-dow { padding:9px 11px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); }
-.cal-week { display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:minmax(24px,auto); border-bottom:1px solid var(--border); }
+.cal-week { display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:minmax(27px,auto); border-bottom:1px solid var(--border); }
 .cal-week:last-child { border-bottom:none; }
 .cal-daynum { padding:7px 9px 3px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; color:var(--text2); border-right:1px solid var(--border); }
 .cal-daynum:last-child { border-right:none; }
 .cal-daynum.out-month { color:var(--muted); opacity:0.4; }
 .cal-daynum.is-today { color:var(--text); }
 .cal-daynum.is-today span { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--gold); color:#0a0c10; font-weight:700; }
-.cal-event { margin:1px 0; padding:2px 9px; font-family:'Barlow',sans-serif; font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cal-event.raid { background:rgba(169,127,208,0.14); color:var(--raid-accent); border-top:1.5px solid var(--raid-accent); border-bottom:1.5px solid var(--raid-accent); }
-.cal-event.dungeon { background:rgba(212,180,90,0.14); color:var(--dungeon-accent); border-top:1.5px solid var(--dungeon-accent); border-bottom:1.5px solid var(--dungeon-accent); }
+.cal-event { margin:1px 0; padding:3px 9px; font-family:'Barlow',sans-serif; font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cal-event.raid { background:transparent; color:var(--raid-accent); border-top:1.5px solid var(--raid-accent); border-bottom:1.5px solid var(--raid-accent); }
+.cal-event.dungeon { background:transparent; color:var(--dungeon-accent); border-top:1.5px solid var(--dungeon-accent); border-bottom:1.5px solid var(--dungeon-accent); }
 .cal-event.seg-start { border-left:1.5px solid currentColor; border-top-left-radius:5px; border-bottom-left-radius:5px; margin-left:3px; }
 .cal-event.cont-end { border-right:1.5px solid currentColor; border-top-right-radius:5px; border-bottom-right-radius:5px; margin-right:3px; }
 
