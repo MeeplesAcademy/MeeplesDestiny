@@ -278,7 +278,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
   <div class="tab-panel" id="tab-panel-lookup" data-panel="lookup">
     <div class="lookup-grid">
       <div class="lookup-panel">
-        <div class="rad-col-label raid-label">Raid</div>
+        <div class="rad-col-label raid-label">Choose A Raid</div>
         <div class="lookup-panel-head">
           <select id="lookup-raid-select"></select>
         </div>
@@ -286,7 +286,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
         <div class="lookup-list" id="lookup-raid-list"></div>
       </div>
       <div class="lookup-panel">
-        <div class="rad-col-label dungeon-label">Dungeon</div>
+        <div class="rad-col-label dungeon-label">Choose A Dungeon</div>
         <div class="lookup-panel-head">
           <select id="lookup-dungeon-select"></select>
         </div>
@@ -297,7 +297,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
   </div>
 
   <div class="tab-panel" id="tab-panel-search" data-panel="search">
-    <p class="section-note">Enter a date to see that week's pairing, or type a Raid or Dungeon name to see its next four upcoming weeks.</p>
+    <p class="section-note">Enter a date to see that week's pairing, or type a Raid or Dungeon name to see its upcoming weeks over the next 6 months.</p>
     <div class="search-box">
       <div class="search-field">
         <label for="search-input">Date or Raid / Dungeon name</label>
@@ -321,7 +321,7 @@ const DUNGEON_LIST = ["The Shattered Throne","Pit of Heresy","Prophecy","Grasp o
 const DUNGEON_OFFSET = 4;
 const DUNGEON_ANCHOR_LEAD = 4;
 
-const ALWAYS_RAID = "Desert Perpetual";
+const ALWAYS_RAID = "The Desert Perpetual";
 const ALWAYS_DUNGEON = "Equilibrium";
 
 // Anchor: the reset week of 2026-07-07 (17:00 UTC), confirmed against 5 weeks of known data.
@@ -371,7 +371,7 @@ const CARD_IMAGES = {
   "Root of Nightmares": "Root_of_Nightmares_Card.jpg",
   "Crota's End": "Crotas_End_Card.jpg",
   "Salvation's Edge": "Salvations_Edge_Card.jpg",
-  "Desert Perpetual": "Desert_Perpetual_Card.jpg",
+  "The Desert Perpetual": "Desert_Perpetual_Card.jpg",
   // Dungeons
   "The Shattered Throne": "The_Shattered_Throne_Card.jpg",
   "Pit of Heresy": "Pit_of_Heresy_Card.jpg",
@@ -440,6 +440,7 @@ document.getElementById('fw-dungeon-locked-slot').innerHTML = cardHTML(ALWAYS_DU
 /* ══════════════════ FUTURE ROTATIONS (2 months) ══════════════════ */
 const futureBody = document.getElementById('future-table-body');
 const FUTURE_WEEKS = 9; // ~2 months
+const LOOKUP_MONTHS = 6; // shared by Search and Look Up, for consistent result windows
 let futureRows = '';
 for (let i = 0; i < FUTURE_WEEKS; i++) {
   const resetTs = currentReset + i * WEEK_MS;
@@ -582,17 +583,15 @@ function findItemMatch(str) {
   return null;
 }
 
-function nextOccurrencesForItem(name, list, anchorLead, offset, count, fromTs) {
+function nextOccurrencesForItem(name, list, anchorLead, offset, fromTs, toTs) {
   const results = [];
   let resetTs = fromTs;
-  let guard = 0;
-  while (results.length < count && guard < 5000) {
+  while (resetTs < toTs) {
     const [a, b] = pairForReset(resetTs, list, anchorLead, offset);
     if (a === name || b === name) {
       results.push({ date: resetTs, partner: a === name ? b : a });
     }
     resetTs += WEEK_MS;
-    guard++;
   }
   return results;
 }
@@ -616,7 +615,8 @@ function runSearch() {
     const list = itemMatch.type === 'raid' ? RAID_LIST : DUNGEON_LIST;
     const anchorLead = itemMatch.type === 'raid' ? RAID_ANCHOR_LEAD : DUNGEON_ANCHOR_LEAD;
     const offset = itemMatch.type === 'raid' ? RAID_OFFSET : DUNGEON_OFFSET;
-    const occurrences = nextOccurrencesForItem(itemMatch.name, list, anchorLead, offset, 4, currentReset);
+    const searchEndTs = currentReset + Math.ceil(LOOKUP_MONTHS * 4.345) * WEEK_MS;
+    const occurrences = nextOccurrencesForItem(itemMatch.name, list, anchorLead, offset, currentReset, searchEndTs);
     let rows = occurrences.map(o => `
       <div class="search-result-row">
         <span class="rr-tag ${itemMatch.type}">${itemMatch.type}</span>
@@ -624,7 +624,7 @@ function runSearch() {
         <span class="rr-item">paired with <strong>${o.partner}</strong></span>
       </div>`).join('');
     searchResult.className = 'search-result';
-    searchResult.innerHTML = `<div class="search-result-title">Next 4 weeks featuring ${itemMatch.name}</div>${rows}`;
+    searchResult.innerHTML = `<div class="search-result-title">Next 6 months featuring ${itemMatch.name}</div>${rows}`;
     return;
   }
 
@@ -655,8 +655,6 @@ const raidSelect = document.getElementById('lookup-raid-select');
 const dungeonSelect = document.getElementById('lookup-dungeon-select');
 RAID_LIST.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; raidSelect.appendChild(o); });
 DUNGEON_LIST.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; dungeonSelect.appendChild(o); });
-
-const LOOKUP_MONTHS = 6;
 
 function renderLookup(type) {
   const isRaid = type === 'raid';
