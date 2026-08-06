@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeples: Raid &amp; Dungeon Rotator</title>
+<meta name="description" content="Meeples — Destiny 2 Raid & Dungeon Rotator. See which raids and dungeons are featured this week, look ahead, or search any future date.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#080a0f; --bg2:#0d1018; --bg3:#12161f; --bg4:#181d28;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13); --border3:rgba(200,168,75,0.25);
+  --text:#dde1ec; --text2:#a8b0c0; --muted:#606878; --muted2:#8a9090;
+  --gold:#c8a84b; --gold2:#e2c97e; --gold3:#f5e6b8; --gold-bg:rgba(200,168,75,0.08);
+  --src-raid-badge: #603c76;
+  --src-dungeon-badge: #634f1c;
+  --raid-accent: #a97fd0;
+  --dungeon-accent: #d4b45a;
+  --green:#4ade80; --red:#f87171;
+}
+body { background:var(--bg); color:var(--text); font-family:'Barlow',sans-serif; font-weight:300; min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 15% 20%,rgba(200,168,75,0.04) 0%,transparent 50%),radial-gradient(ellipse at 85% 80%,rgba(74,158,255,0.03) 0%,transparent 50%); pointer-events:none; z-index:0; }
+
+/* ── Page header ── */
+.page-header { position:relative; z-index:1; text-align:center; padding:3.5rem 2rem 2.5rem; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(200,168,75,0.05) 0%,transparent 100%); }
+.page-header::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:120px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+.eyebrow { font-family:'Barlow Condensed',sans-serif; font-size:28px; font-weight:600; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; opacity:0.8; }
+.page-title { font-family:'Cinzel',serif; font-size:clamp(2rem,5vw,4rem); font-weight:900; letter-spacing:0.06em; text-transform:uppercase; background:linear-gradient(180deg,var(--gold3) 0%,var(--gold) 60%,#8a6a20 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; margin-bottom:0.75rem; }
+.page-sub { font-size:clamp(1rem,2.2vw,1.3rem); color:var(--muted2); letter-spacing:0.04em; font-weight:400; max-width:640px; margin:0 auto; }
+
+/* ── Sections ── */
+.section { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:2.75rem 1.75rem; border-bottom:1px solid var(--border); }
+.section:last-of-type { border-bottom:none; }
+.section-head { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem; }
+.section-head-left { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; }
+.section-title { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold); opacity:0.9; }
+.section-head-center .section-title { font-size:32px; }
+.section-dates { display:flex; gap:22px; flex-wrap:wrap; font-family:'Barlow Condensed',sans-serif; font-size:15px; color:var(--text2); letter-spacing:0.03em; }
+.section-dates strong { color:var(--gold2); font-weight:600; }
+.section-note { font-size:16px; color:var(--muted2); margin-top:-0.5rem; margin-bottom:1.25rem; line-height:1.65; max-width:820px; }
+
+/* ── Centered section header (with optional absolute-positioned side control) ── */
+.section-head-center { position:relative; text-align:center; margin-bottom:1.5rem; }
+.section-head-center .section-title { display:inline-block; }
+.section-head-center .collapse-toggle { position:absolute; right:0; top:50%; transform:translateY(-50%); }
+.section-subdates { display:flex; justify-content:center; gap:28px; flex-wrap:wrap; font-family:'Barlow Condensed',sans-serif; font-size:19px; color:var(--text2); letter-spacing:0.03em; margin-top:0.6rem; }
+.section-subdates strong { color:var(--gold2); font-weight:600; }
+
+/* ── Collapsible toggle ── */
+.collapse-toggle { display:inline-flex; align-items:center; gap:8px; background:transparent; border:1px solid var(--border2); border-radius:5px; padding:7px 16px; font-size:14px; font-family:'Barlow Condensed',sans-serif; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; color:var(--text2); cursor:pointer; transition:all 0.2s; }
+.collapse-toggle:hover { border-color:var(--gold); color:var(--gold); }
+.collapse-toggle .chevron { display:inline-block; transition:transform 0.25s; color:var(--muted); font-size:12px; }
+.collapse-toggle.open .chevron { transform:rotate(180deg); }
+.collapse-body { overflow:hidden; max-height:0; opacity:0; transition:max-height 0.4s ease, opacity 0.3s ease; }
+.collapse-body.open { max-height:900px; opacity:1; }
+
+/* ── Two-column RAD layout ── */
+.rad-columns { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+.rad-col { display:flex; flex-direction:column; gap:0.9rem; padding:1.5rem 1.5rem 1.75rem; border:2px solid transparent; }
+.rad-col.raid-col-frame { border-color:var(--raid-accent); border-right:none; border-radius:14px 0 0 14px; }
+.rad-col.dungeon-col-frame { border-color:var(--dungeon-accent); border-left:none; border-radius:0 14px 14px 0; }
+.rad-col-label { font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); text-align:center; }
+.rad-col-label.raid-label { color:var(--raid-accent); }
+.rad-col-label.dungeon-label { color:var(--dungeon-accent); }
+.rad-cards-row { display:grid; grid-template-columns:1fr 1fr; gap:0.9rem; }
+.rad-cards-row.single { grid-template-columns:1fr; }
+.rad-locked-wrap { display:flex; justify-content:center; margin-top:0.9rem; }
+.rad-locked-wrap .rad-card { width:100%; max-width:calc(50% - 0.45rem); }
+
+/* ── RAD Card ── */
+.rad-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; transition:border-color 0.3s,box-shadow 0.3s,transform 0.2s; }
+.rad-card:hover { transform:translateY(-2px); }
+.rad-card.raid { border-color:rgba(169,127,208,0.18); }
+.rad-card.raid:hover { border-color:rgba(169,127,208,0.45); box-shadow:0 0 30px rgba(169,127,208,0.08); }
+.rad-card.dungeon { border-color:rgba(212,180,90,0.18); }
+.rad-card.dungeon:hover { border-color:rgba(212,180,90,0.45); box-shadow:0 0 30px rgba(212,180,90,0.08); }
+.rad-card-banner { position:relative; height:120px; background:var(--bg3); overflow:hidden; }
+.rad-card-banner img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.3s; }
+.rad-card:hover .rad-card-banner img { transform:scale(1.04); }
+.banner-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:repeating-linear-gradient(45deg,var(--bg3) 0px,var(--bg3) 10px,var(--bg4) 10px,var(--bg4) 20px); }
+.banner-placeholder-text { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:0 10px; text-align:center; }
+.rad-card-body { padding:1rem 1.1rem 1.1rem; flex:1; display:flex; flex-direction:column; gap:6px; }
+.rad-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; border-radius:3px; padding:3px 9px; width:fit-content; }
+.rad-badge.raid { color:var(--raid-accent); background:rgba(169,127,208,0.1); border:1px solid rgba(169,127,208,0.25); }
+.rad-badge.dungeon { color:var(--dungeon-accent); background:rgba(212,180,90,0.1); border:1px solid rgba(212,180,90,0.25); }
+.rad-card-title { font-family:'Cinzel',serif; font-size:18px; font-weight:700; letter-spacing:0.02em; color:var(--text); line-height:1.25; }
+.rad-card.locked .rad-card-title { color:var(--gold2); }
+.rad-card-pairnote { display:flex; flex-direction:column; gap:2px; margin-top:10px; padding-top:10px; position:relative; }
+.rad-card-pairnote::before { content:''; position:absolute; top:0; left:0; width:100%; height:1px; background:linear-gradient(90deg, rgba(179,201,168,0.65) 0%, rgba(179,201,168,0.15) 65%, transparent 100%); }
+.rad-card-pairnote .pn-label { display:flex; align-items:center; justify-content:center; gap:6px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#b3c9a8; margin-bottom:2px; }
+.rad-card-pairnote .pn-item { font-family:'Barlow',sans-serif; font-size:14px; font-weight:400; color:var(--text2); line-height:1.35; }
+.rad-card-pairnote .pn-or { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin:1px 0; }
+.locked-pin { font-size:14px; color:var(--muted2); font-family:'Barlow Condensed',sans-serif; letter-spacing:0.1em; text-transform:uppercase; display:flex; align-items:center; gap:5px; margin-top:2px; }
+
+/* ── Always Featured special styling ── */
+.always-featured-frame { border:1px solid var(--border3); border-radius:12px; padding:1.5rem; background:linear-gradient(180deg,rgba(200,168,75,0.04) 0%,transparent 100%); }
+
+/* ── Future Rotations table ── */
+.rotation-table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:var(--bg2); }
+.rotation-table { width:100%; border-collapse:collapse; min-width:560px; }
+.rotation-table th { padding:17px 18px; text-align:left; font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text); border-bottom:2px solid var(--gold); background:var(--bg4); }
+.th-icon-box { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:6px; border:2px solid; background:var(--bg3); vertical-align:middle; margin-right:10px; overflow:hidden; position:relative; top:-2px; }
+.th-icon-box.icon-raid { border-color:var(--raid-accent); }
+.th-icon-box.icon-dungeon { border-color:var(--dungeon-accent); }
+.th-icon-box img { width:100%; height:100%; object-fit:cover; display:block; }
+.th-icon-placeholder { width:100%; height:100%; background:repeating-linear-gradient(45deg,var(--bg3) 0,var(--bg3) 4px,var(--bg4) 4px,var(--bg4) 8px); }
+.rotation-table td { padding:15px 18px; border-bottom:1px solid var(--border); vertical-align:middle; }
+.rotation-table tr:last-child td { border-bottom:none; }
+.rotation-table tr:hover td { background:rgba(255,255,255,0.02); }
+.rotation-table tr.is-current-week td { background:var(--gold-bg); }
+.rt-date { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; color:#c3c9d6; letter-spacing:0.025em; white-space:nowrap; }
+.rt-pair { font-size:16px; color:var(--text2); line-height:1.65; }
+.rt-pair .item { color:var(--text); }
+.rt-pair .sep { color:var(--muted); padding:0 4px; }
+.current-week-tag { display:inline-block; margin-left:8px; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#0a0c10; background:var(--gold); border-radius:3px; padding:2px 7px; vertical-align:middle; }
+
+/* ── Search ── */
+.search-box { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:1.25rem; }
+.search-field { flex:1; min-width:240px; display:flex; flex-direction:column; gap:6px; }
+.search-field label { font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted2); }
+.search-field input { background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:12px 15px; color:var(--text); font-family:'Barlow',sans-serif; font-size:16px; font-weight:400; }
+.search-field input:focus { outline:none; border-color:var(--gold); }
+.search-field input::placeholder { color:var(--muted); }
+.search-btn { background:var(--gold); color:#0a0c10; border:none; border-radius:6px; padding:12px 24px; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:background 0.2s; height:47px; }
+.search-btn:hover { background:var(--gold2); }
+.search-result { background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:1.25rem 1.5rem; min-height:56px; }
+.search-result.empty { color:var(--muted2); font-size:16px; display:flex; align-items:center; }
+.search-result-title { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold2); margin-bottom:10px; }
+.search-result-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:16px; }
+.search-result-row:last-child { border-bottom:none; }
+.search-result-row .rr-date { font-family:'Barlow Condensed',sans-serif; color:var(--text2); min-width:100px; }
+.search-result-row .rr-item { color:var(--text); }
+.search-result-row .rr-tag { font-size:12px; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.08em; text-transform:uppercase; padding:3px 8px; border-radius:3px; }
+.search-result-row .rr-tag.raid { color:var(--raid-accent); background:rgba(169,127,208,0.1); border:1px solid rgba(169,127,208,0.25); }
+.search-result-row .rr-tag.dungeon { color:var(--dungeon-accent); background:rgba(212,180,90,0.1); border:1px solid rgba(212,180,90,0.25); }
+.search-error { color:var(--red); font-size:15px; }
+
+/* ── Lookup (dropdowns) ── */
+.lookup-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.75rem; justify-items:center; }
+.lookup-panel { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:1.25rem 1.4rem 1.5rem; width:100%; max-width:560px; }
+.lookup-panel .rad-col-label { border-bottom:none; padding-bottom:0; margin-bottom:0.7rem; text-align:left; font-size:18px; }
+.lookup-panel-head { display:flex; align-items:center; gap:10px; margin-bottom:0.6rem; flex-wrap:wrap; }
+.lookup-panel select { flex:1; min-width:160px; background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:10px 13px; color:var(--text); font-family:'Barlow',sans-serif; font-size:16px; }
+.lookup-panel select:focus { outline:none; border-color:var(--gold); }
+.lookup-range-note { font-family:'Barlow',sans-serif; font-size:16px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase; color:#b3c9a8; margin-bottom:0.9rem; }
+.lookup-list { display:flex; flex-direction:column; gap:7px; max-height:400px; overflow-y:auto; }
+.lookup-row { display:grid; grid-template-columns:minmax(120px,0.85fr) auto minmax(150px,1.15fr); align-items:baseline; gap:12px; background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:12px 16px; }
+.lookup-row .lr-date { color:#c3c9d6; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:18px; letter-spacing:0.025em; white-space:nowrap; text-align:left; }
+.lookup-row .lr-with { color:var(--muted2); font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; text-align:center; }
+.lookup-row .lr-partner { color:var(--text); font-family:'Barlow',sans-serif; font-weight:300; font-size:16px; text-align:right; }
+
+/* ── Tabs (Future Rotations / Search / Look Up share one space) ── */
+.tab-bar { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:1.75rem; }
+.tab-btn { background:transparent; border:1px solid var(--border2); border-radius:7px; padding:10px 24px; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); cursor:pointer; transition:all 0.2s; }
+.tab-btn.active { background:var(--gold); border-color:var(--gold); color:#0a0c10; }
+.tab-btn:hover:not(.active) { border-color:var(--gold); color:var(--gold); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* ── Sub-tabs (List / Calendar within Future Rotations) ── */
+.subtab-bar { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:2rem; }
+.subtab-btn { background:transparent; border:1.5px solid var(--border2); border-radius:8px; padding:11px 28px; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text2); cursor:pointer; transition:all 0.2s; }
+.subtab-btn.active { background:rgba(200,168,75,0.14); border-color:var(--gold); color:var(--gold2); }
+.subtab-btn:hover:not(.active) { border-color:var(--gold); color:var(--gold); }
+.subtab-panel { display:none; }
+.subtab-panel.active { display:block; }
+
+/* ── Calendar view ── */
+.cal-legend { display:flex; justify-content:center; gap:26px; margin-bottom:1.5rem; font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text2); }
+.cal-legend-item { display:flex; align-items:center; gap:8px; }
+.cal-legend-swatch { width:13px; height:13px; border-radius:3px; }
+.cal-legend-swatch.raid { background:rgba(169,127,208,0.2); border:1.5px solid var(--raid-accent); }
+.cal-legend-swatch.dungeon { background:rgba(212,180,90,0.2); border:1.5px solid var(--dungeon-accent); }
+.cal-month { margin-bottom:2rem; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--bg2); }
+.cal-month-title { font-family:'Cinzel',serif; font-size:20px; font-weight:700; color:var(--gold2); padding:1rem 1.4rem; border-bottom:1px solid var(--border2); background:var(--bg3); }
+.cal-dow-row { display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--border2); }
+.cal-dow { padding:9px 11px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); }
+.cal-week { display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:minmax(24px,auto); border-bottom:1px solid var(--border); }
+.cal-week:last-child { border-bottom:none; }
+.cal-daynum { padding:7px 9px 3px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; color:var(--text2); border-right:1px solid var(--border); }
+.cal-daynum:last-child { border-right:none; }
+.cal-daynum.out-month { color:var(--muted); opacity:0.4; }
+.cal-daynum.is-today { color:var(--text); }
+.cal-daynum.is-today span { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--gold); color:#0a0c10; font-weight:700; }
+.cal-event { margin:1px 0; padding:2px 9px; font-family:'Barlow',sans-serif; font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cal-event.raid { background:rgba(169,127,208,0.14); color:var(--raid-accent); border-top:1.5px solid var(--raid-accent); border-bottom:1.5px solid var(--raid-accent); }
+.cal-event.dungeon { background:rgba(212,180,90,0.14); color:var(--dungeon-accent); border-top:1.5px solid var(--dungeon-accent); border-bottom:1.5px solid var(--dungeon-accent); }
+.cal-event.seg-start { border-left:1.5px solid currentColor; border-top-left-radius:5px; border-bottom-left-radius:5px; margin-left:3px; }
+.cal-event.cont-end { border-right:1.5px solid currentColor; border-top-right-radius:5px; border-bottom-right-radius:5px; margin-right:3px; }
+
+/* ── Footer ── */
+.page-footer { position:relative; z-index:1; text-align:center; padding:2.5rem 1.5rem 3.5rem; color:var(--muted); font-size:13px; }
+.page-footer a { color:var(--gold2); text-decoration:none; }
+.page-footer a:hover { text-decoration:underline; }
+
+/* ── Responsive ── */
+@media (max-width:820px) {
+  .rad-columns { grid-template-columns:1fr; gap:1.5rem; }
+  .rad-col.raid-col-frame, .rad-col.dungeon-col-frame { border-right:2px solid; border-left:2px solid; border-radius:14px; }
+  .rad-cards-row { grid-template-columns:1fr 1fr; }
+  .lookup-grid { grid-template-columns:1fr; }
+  .section-head { flex-direction:column; align-items:flex-start; }
+  .section-head-center .collapse-toggle { position:static; transform:none; display:block; margin:0.9rem auto 0; }
+}
+@media (max-width:520px) {
+  .rad-cards-row { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="eyebrow">Destiny 2</div>
+  <h1 class="page-title">Raid &amp; Dungeon Rotator</h1>
+  <p class="page-sub">Track this week's featured Raid &amp; Dungeon pairings, look ahead, or search any future date.</p>
+</header>
+
+<!-- ═══════════════ FEATURED THIS WEEK ═══════════════ -->
+<section class="section" id="featured-week-section">
+  <div class="section-head-center">
+    <div class="section-title">Featured This Week</div>
+    <div class="section-subdates">
+      <span>Weekly Reset: <strong id="fw-reset-date">—</strong></span>
+      <span>Today: <strong id="fw-today-date">—</strong></span>
+    </div>
+  </div>
+  <div class="rad-columns">
+    <div class="rad-col raid-col-frame">
+      <div class="rad-col-label raid-label">Raids</div>
+      <div class="rad-cards-row" id="fw-raid-slot"></div>
+      <div class="rad-locked-wrap" id="fw-raid-locked-slot"></div>
+    </div>
+    <div class="rad-col dungeon-col-frame">
+      <div class="rad-col-label dungeon-label">Dungeons</div>
+      <div class="rad-cards-row" id="fw-dungeon-slot"></div>
+      <div class="rad-locked-wrap" id="fw-dungeon-locked-slot"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FUTURE ROTATIONS / LOOK UP / SEARCH (TABS) ═══════════════ -->
+<section class="section" id="rotations-hub-section">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-btn-future" data-tab="future">Future Rotations</button>
+    <button class="tab-btn" id="tab-btn-lookup" data-tab="lookup">Look Up</button>
+    <button class="tab-btn" id="tab-btn-search" data-tab="search">Search</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-panel-future" data-panel="future">
+    <p class="section-note">Every reset (Tuesday, 9am PST / 10am PDT) brings a new Raid pairing and a new Dungeon pairing. Rolling out the next two months below — pick a List or Calendar view.</p>
+    <div class="subtab-bar">
+      <button class="subtab-btn active" id="subtab-btn-list" data-subtab="list">List View</button>
+      <button class="subtab-btn" id="subtab-btn-calendar" data-subtab="calendar">Calendar View</button>
+    </div>
+
+    <div class="subtab-panel active" id="subtab-panel-list" data-subpanel="list">
+      <div class="rotation-table-wrap">
+        <table class="rotation-table">
+          <thead>
+            <tr><th>Reset Date (Tuesday)</th><th><span class="th-icon-box icon-raid"><span class="th-icon-placeholder"></span></span>Featured Raids</th><th><span class="th-icon-box icon-dungeon"><span class="th-icon-placeholder"></span></span>Featured Dungeons</th></tr>
+            <!-- To add real icons later: replace the <span class="th-icon-placeholder"></span> above with
+                 <img src="YOUR_RAID_ICON_URL" alt="Raid"> / <img src="YOUR_DUNGEON_ICON_URL" alt="Dungeon"> -->
+          </thead>
+          <tbody id="future-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subtab-panel" id="subtab-panel-calendar" data-subpanel="calendar">
+      <div class="cal-legend">
+        <div class="cal-legend-item"><span class="cal-legend-swatch raid"></span>Raids</div>
+        <div class="cal-legend-item"><span class="cal-legend-swatch dungeon"></span>Dungeons</div>
+      </div>
+      <div id="calendar-container"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-panel-lookup" data-panel="lookup">
+    <div class="lookup-grid">
+      <div class="lookup-panel">
+        <div class="rad-col-label raid-label">Raid</div>
+        <div class="lookup-panel-head">
+          <select id="lookup-raid-select"></select>
+        </div>
+        <div class="lookup-range-note">The Next 6 Months</div>
+        <div class="lookup-list" id="lookup-raid-list"></div>
+      </div>
+      <div class="lookup-panel">
+        <div class="rad-col-label dungeon-label">Dungeon</div>
+        <div class="lookup-panel-head">
+          <select id="lookup-dungeon-select"></select>
+        </div>
+        <div class="lookup-range-note">The Next 6 Months</div>
+        <div class="lookup-list" id="lookup-dungeon-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-panel-search" data-panel="search">
+    <p class="section-note">Enter a date to see that week's pairing, or type a Raid or Dungeon name to see its next four upcoming weeks.</p>
+    <div class="search-box">
+      <div class="search-field">
+        <label for="search-input">Date or Raid / Dungeon name</label>
+        <input type="text" id="search-input" placeholder="e.g. 12/25/2026, or &quot;Duality&quot;">
+      </div>
+      <button class="search-btn" id="search-btn">Search</button>
+    </div>
+    <div class="search-result empty" id="search-result">Search results will appear here.</div>
+  </div>
+</section>
+
+<footer class="page-footer"></footer>
+
+<script>
+/* ══════════════════ ROTATION DATA ══════════════════ */
+const RAID_LIST = ["Last Wish","Garden of Salvation","Deep Stone Crypt","Vault of Glass","Vow of the Disciple","King's Fall","Root of Nightmares","Crota's End","Salvation's Edge"];
+const RAID_OFFSET = 4;
+const RAID_ANCHOR_LEAD = 4; // lead index at ANCHOR_DATE
+
+const DUNGEON_LIST = ["The Shattered Throne","Pit of Heresy","Prophecy","Grasp of Avarice","Duality","Spire of the Watcher","Ghosts of the Deep","Warlord's Ruin","Vesper's Host","Sundered Doctrine"];
+const DUNGEON_OFFSET = 4;
+const DUNGEON_ANCHOR_LEAD = 4;
+
+const ALWAYS_RAID = "Desert Perpetual";
+const ALWAYS_DUNGEON = "Equilibrium";
+
+// Anchor: the reset week of 2026-07-07 (17:00 UTC), confirmed against 5 weeks of known data.
+const ANCHOR_RESET_UTC = Date.UTC(2026, 6, 7, 17, 0, 0); // months are 0-indexed: 6 = July
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function mod(n, m) { return ((n % m) + m) % m; }
+
+// Returns the UTC timestamp (ms) of the most recent reset at or before the given Date.
+function resetForDate(d) {
+  const t = d.getTime();
+  const weeksSinceAnchor = Math.floor((t - ANCHOR_RESET_UTC) / WEEK_MS);
+  return ANCHOR_RESET_UTC + weeksSinceAnchor * WEEK_MS;
+}
+
+// Returns [leadIndex] for a given reset timestamp against a given list length/anchor lead.
+function leadIndexForReset(resetTs, anchorLead, listLen) {
+  const weeksSinceAnchor = Math.round((resetTs - ANCHOR_RESET_UTC) / WEEK_MS);
+  return mod(anchorLead + weeksSinceAnchor, listLen);
+}
+
+function pairForReset(resetTs, list, anchorLead, offset) {
+  const lead = leadIndexForReset(resetTs, anchorLead, list.length);
+  const partner = mod(lead + offset, list.length);
+  return [list[lead], list[partner]];
+}
+
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', timeZone:'UTC' });
+}
+function fmtDow(ts) {
+  return new Date(ts).toLocaleDateString('en-US', { weekday:'long', timeZone:'UTC' });
+}
+
+/* ══════════════════ RENDER HELPERS ══════════════════ */
+// Card banner images. Path convention: DungeonResources/Rotation_Images/<file> in the repo.
+// Any name not listed here just falls back to the diagonal-stripe placeholder.
+const CARD_IMAGE_BASE = 'https://meeplesacademy.github.io/MeeplesDestiny/DungeonResources/Rotation_Images/';
+const CARD_IMAGES = {
+  // Raids
+  "Last Wish": "Last_Wish_Card.jpg",
+  "Garden of Salvation": "Garden_of_Salvation_Card.jpg",
+  "Deep Stone Crypt": "Deep_Stone_Crypt_Card.jpg",
+  "Vault of Glass": "Vault_of_Glass_Card.jpg",
+  "Vow of the Disciple": "Vow_of_the_Disciple_Card.jpg",
+  "King's Fall": "Kings_Fall_Card.jpg",
+  "Root of Nightmares": "Root_of_Nightmares_Card.jpg",
+  "Crota's End": "Crotas_End_Card.jpg",
+  "Salvation's Edge": "Salvations_Edge_Card.jpg",
+  "Desert Perpetual": "Desert_Perpetual_Card.jpg",
+  // Dungeons
+  "The Shattered Throne": "The_Shattered_Throne_Card.jpg",
+  "Pit of Heresy": "Pit_of_Heresy_Card.jpg",
+  "Prophecy": "Prophecy_Card.jpg",
+  "Grasp of Avarice": "Grasp_of_Avarice_Card.jpg",
+  "Duality": "Duality_Card.jpg",
+  "Spire of the Watcher": "Spire_of_the_Watcher_Card.jpg",
+  "Ghosts of the Deep": "Ghosts_of_the_Deep_Card.jpg",
+  "Warlord's Ruin": "Warlords_Ruin_Card.jpg",
+  "Vesper's Host": "Vespers_Host_Card.jpg",
+  "Sundered Doctrine": "Sundered_Doctrine_Card.jpg",
+  "Equilibrium": "Equilibrium_Card.jpg",
+};
+
+// The two items this item always pairs with: once as lead (item+offset), once as the
+// partner when the other item leads (item-offset).
+function fixedPartnersFor(name, list, offset) {
+  const idx = list.indexOf(name);
+  if (idx === -1) return null;
+  const p1 = list[mod(idx + offset, list.length)];
+  const p2 = list[mod(idx - offset, list.length)];
+  return [p1, p2];
+}
+
+function cardHTML(name, type, locked) {
+  const badgeLabel = type === 'raid' ? 'Raid' : 'Dungeon';
+  let pairNote = '';
+  if (!locked) {
+    const list = type === 'raid' ? RAID_LIST : DUNGEON_LIST;
+    const offset = type === 'raid' ? RAID_OFFSET : DUNGEON_OFFSET;
+    const partners = fixedPartnersFor(name, list, offset);
+    if (partners) {
+      pairNote = `<div class="rad-card-pairnote"><div class="pn-label">⇄ Always Featured With Either ⇄</div><div class="pn-item">${partners[0]}</div><div class="pn-or">OR</div><div class="pn-item">${partners[1]}</div></div>`;
+    }
+  }
+  const imgFile = CARD_IMAGES[name];
+  const bannerInner = imgFile
+    ? `<img src="${CARD_IMAGE_BASE}${imgFile}" alt="${name}" loading="lazy">`
+    : `<div class="banner-placeholder"><span class="banner-placeholder-text">${name}</span></div>`;
+  return `
+    <div class="rad-card ${type}${locked ? ' locked' : ''}">
+      <div class="rad-card-banner">${bannerInner}</div>
+      <div class="rad-card-body">
+        <span class="rad-badge ${type}">${badgeLabel}</span>
+        <div class="rad-card-title">${name}</div>
+        ${pairNote}
+        ${locked ? '<div class="locked-pin">📌 Always Featured</div>' : ''}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════ FEATURED THIS WEEK ══════════════════ */
+const now = new Date();
+const currentReset = resetForDate(now);
+document.getElementById('fw-reset-date').textContent = fmtDate(currentReset);
+document.getElementById('fw-today-date').textContent = now.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+const [curRaidA, curRaidB] = pairForReset(currentReset, RAID_LIST, RAID_ANCHOR_LEAD, RAID_OFFSET);
+const [curDunA, curDunB] = pairForReset(currentReset, DUNGEON_LIST, DUNGEON_ANCHOR_LEAD, DUNGEON_OFFSET);
+document.getElementById('fw-raid-slot').innerHTML = cardHTML(curRaidA, 'raid', false) + cardHTML(curRaidB, 'raid', false);
+document.getElementById('fw-dungeon-slot').innerHTML = cardHTML(curDunA, 'dungeon', false) + cardHTML(curDunB, 'dungeon', false);
+document.getElementById('fw-raid-locked-slot').innerHTML = cardHTML(ALWAYS_RAID, 'raid', true);
+document.getElementById('fw-dungeon-locked-slot').innerHTML = cardHTML(ALWAYS_DUNGEON, 'dungeon', true);
+
+
+/* ══════════════════ FUTURE ROTATIONS (2 months) ══════════════════ */
+const futureBody = document.getElementById('future-table-body');
+const FUTURE_WEEKS = 9; // ~2 months
+let futureRows = '';
+for (let i = 0; i < FUTURE_WEEKS; i++) {
+  const resetTs = currentReset + i * WEEK_MS;
+  const [rA, rB] = pairForReset(resetTs, RAID_LIST, RAID_ANCHOR_LEAD, RAID_OFFSET);
+  const [dA, dB] = pairForReset(resetTs, DUNGEON_LIST, DUNGEON_ANCHOR_LEAD, DUNGEON_OFFSET);
+  futureRows += `
+    <tr class="${i === 0 ? 'is-current-week' : ''}">
+      <td class="rt-date">${fmtDate(resetTs)}${i === 0 ? '<span class="current-week-tag">This Week</span>' : ''}</td>
+      <td class="rt-pair"><span class="item">${rA}</span><span class="sep">&amp;</span><span class="item">${rB}</span></td>
+      <td class="rt-pair"><span class="item">${dA}</span><span class="sep">&amp;</span><span class="item">${dB}</span></td>
+    </tr>`;
+}
+futureBody.innerHTML = futureRows;
+
+/* ══════════════════ FUTURE ROTATIONS — CALENDAR VIEW ══════════════════ */
+function isValidTuesday(ts) {
+  const diff = ts - currentReset;
+  return diff >= 0 && diff < FUTURE_WEEKS * WEEK_MS && diff % WEEK_MS === 0;
+}
+
+function buildMonthWeeks(year, month) {
+  // month is 0-indexed. Returns array of weeks, each an array of 7 UTC timestamps (Sun..Sat).
+  const first = Date.UTC(year, month, 1);
+  const firstDow = new Date(first).getUTCDay();
+  const start = first - firstDow * 24 * 60 * 60 * 1000;
+  const lastDateNum = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const last = Date.UTC(year, month, lastDateNum);
+  const lastDow = new Date(last).getUTCDay();
+  const end = last + (6 - lastDow) * 24 * 60 * 60 * 1000;
+  const weeks = [];
+  for (let wk = start; wk <= end; wk += WEEK_MS) {
+    const week = [];
+    for (let d = 0; d < 7; d++) week.push(wk + d * 24 * 60 * 60 * 1000);
+    weeks.push(week);
+  }
+  return weeks;
+}
+
+function calEventHTML(type, label, isSegStart, isContEnd) {
+  const cls = ['cal-event', type];
+  if (isSegStart) cls.push('seg-start');
+  if (isContEnd) cls.push('cont-end');
+  return `<div class="${cls.join(' ')}">${label}</div>`;
+}
+
+function buildMonthHTML(year, month) {
+  const monthName = new Date(Date.UTC(year, month, 1)).toLocaleDateString('en-US', { month:'long', year:'numeric', timeZone:'UTC' });
+  const weeks = buildMonthWeeks(year, month);
+  const todayMidnight = Math.floor(currentReset / 86400000) * 86400000; // currentReset's calendar day at 00:00 UTC, for comparing against day cells
+
+  let weeksHTML = '';
+  weeks.forEach(week => {
+    let cellsHTML = '';
+    week.forEach((ts, i) => {
+      const d = new Date(ts);
+      const inMonth = d.getUTCMonth() === month;
+      const isToday = ts === todayMidnight;
+      const dayNum = d.getUTCDate();
+      const cls = ['cal-daynum'];
+      if (!inMonth) cls.push('out-month');
+      if (isToday) cls.push('is-today');
+      const content = isToday ? `<span>${dayNum}</span>` : dayNum;
+      cellsHTML += `<div class="${cls.join(' ')}" style="grid-column:${i + 1};grid-row:1;">${content}</div>`;
+    });
+
+    const tueTs = week[2] + 17 * 60 * 60 * 1000; // align midnight-UTC date to the 17:00 UTC reset hour
+    const prevTueTs = tueTs - WEEK_MS;
+    let eventsHTML = '';
+    let row = 2;
+    // Raids on top, Dungeons below
+    if (isValidTuesday(prevTueTs)) {
+      const [rA, rB] = pairForReset(prevTueTs, RAID_LIST, RAID_ANCHOR_LEAD, RAID_OFFSET);
+      const [dA, dB] = pairForReset(prevTueTs, DUNGEON_LIST, DUNGEON_ANCHOR_LEAD, DUNGEON_OFFSET);
+      eventsHTML += `<div class="${['cal-event','raid','cont-end'].join(' ')}" style="grid-column:1/3;grid-row:${row};">${rA} &amp; ${rB}</div>`;
+      eventsHTML += `<div class="${['cal-event','dungeon','cont-end'].join(' ')}" style="grid-column:1/3;grid-row:${row + 1};">${dA} &amp; ${dB}</div>`;
+    }
+    if (isValidTuesday(tueTs)) {
+      const [rA, rB] = pairForReset(tueTs, RAID_LIST, RAID_ANCHOR_LEAD, RAID_OFFSET);
+      const [dA, dB] = pairForReset(tueTs, DUNGEON_LIST, DUNGEON_ANCHOR_LEAD, DUNGEON_OFFSET);
+      eventsHTML += `<div class="${['cal-event','raid','seg-start'].join(' ')}" style="grid-column:3/8;grid-row:${row};">${rA} &amp; ${rB}</div>`;
+      eventsHTML += `<div class="${['cal-event','dungeon','seg-start'].join(' ')}" style="grid-column:3/8;grid-row:${row + 1};">${dA} &amp; ${dB}</div>`;
+    }
+
+    weeksHTML += `<div class="cal-week">${cellsHTML}${eventsHTML}</div>`;
+  });
+
+  const dowHTML = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  return `
+    <div class="cal-month">
+      <div class="cal-month-title">${monthName}</div>
+      <div class="cal-dow-row">${dowHTML}</div>
+      ${weeksHTML}
+    </div>`;
+}
+
+const calendarContainer = document.getElementById('calendar-container');
+const calMonthsSeen = new Set();
+let calendarHTML = '';
+for (let i = 0; i < FUTURE_WEEKS; i++) {
+  const tueTs = currentReset + i * WEEK_MS;
+  const d = new Date(tueTs);
+  const key = d.getUTCFullYear() + '-' + d.getUTCMonth();
+  if (!calMonthsSeen.has(key)) {
+    calMonthsSeen.add(key);
+    calendarHTML += buildMonthHTML(d.getUTCFullYear(), d.getUTCMonth());
+  }
+}
+calendarContainer.innerHTML = calendarHTML;
+
+/* ══════════════════ SEARCH ══════════════════ */
+const searchInput = document.getElementById('search-input');
+const searchBtn = document.getElementById('search-btn');
+const searchResult = document.getElementById('search-result');
+
+function tryParseDate(str) {
+  const s = str.trim();
+  // Accept M/D/YYYY, YYYY-MM-DD, "Month D, YYYY", etc.
+  let d = new Date(s + 'T12:00:00');
+  if (!isNaN(d.getTime())) return d;
+  d = new Date(s);
+  if (!isNaN(d.getTime())) return d;
+  return null;
+}
+
+function findItemMatch(str) {
+  const q = str.trim().toLowerCase();
+  if (!q) return null;
+  let match = RAID_LIST.find(r => r.toLowerCase() === q);
+  if (match) return { name: match, type: 'raid' };
+  match = DUNGEON_LIST.find(d => d.toLowerCase() === q);
+  if (match) return { name: match, type: 'dungeon' };
+  if (ALWAYS_RAID.toLowerCase() === q) return { name: ALWAYS_RAID, type: 'raid', locked: true };
+  if (ALWAYS_DUNGEON.toLowerCase() === q) return { name: ALWAYS_DUNGEON, type: 'dungeon', locked: true };
+  // partial match fallback
+  match = RAID_LIST.find(r => r.toLowerCase().includes(q));
+  if (match) return { name: match, type: 'raid' };
+  match = DUNGEON_LIST.find(d => d.toLowerCase().includes(q));
+  if (match) return { name: match, type: 'dungeon' };
+  return null;
+}
+
+function nextOccurrencesForItem(name, list, anchorLead, offset, count, fromTs) {
+  const results = [];
+  let resetTs = fromTs;
+  let guard = 0;
+  while (results.length < count && guard < 5000) {
+    const [a, b] = pairForReset(resetTs, list, anchorLead, offset);
+    if (a === name || b === name) {
+      results.push({ date: resetTs, partner: a === name ? b : a });
+    }
+    resetTs += WEEK_MS;
+    guard++;
+  }
+  return results;
+}
+
+function runSearch() {
+  const raw = searchInput.value;
+  if (!raw || !raw.trim()) {
+    searchResult.className = 'search-result empty';
+    searchResult.innerHTML = 'Search results will appear here.';
+    return;
+  }
+
+  // 1) Try item-name match first (so "King's Fall" isn't misread as a date)
+  const itemMatch = findItemMatch(raw);
+  if (itemMatch) {
+    if (itemMatch.locked) {
+      searchResult.className = 'search-result';
+      searchResult.innerHTML = `<div class="search-result-title">${itemMatch.name}</div><div class="search-result-row"><span class="rr-item">${itemMatch.name} is Always Featured and does not rotate.</span></div>`;
+      return;
+    }
+    const list = itemMatch.type === 'raid' ? RAID_LIST : DUNGEON_LIST;
+    const anchorLead = itemMatch.type === 'raid' ? RAID_ANCHOR_LEAD : DUNGEON_ANCHOR_LEAD;
+    const offset = itemMatch.type === 'raid' ? RAID_OFFSET : DUNGEON_OFFSET;
+    const occurrences = nextOccurrencesForItem(itemMatch.name, list, anchorLead, offset, 4, currentReset);
+    let rows = occurrences.map(o => `
+      <div class="search-result-row">
+        <span class="rr-tag ${itemMatch.type}">${itemMatch.type}</span>
+        <span class="rr-date">${fmtDate(o.date)}</span>
+        <span class="rr-item">paired with <strong>${o.partner}</strong></span>
+      </div>`).join('');
+    searchResult.className = 'search-result';
+    searchResult.innerHTML = `<div class="search-result-title">Next 4 weeks featuring ${itemMatch.name}</div>${rows}`;
+    return;
+  }
+
+  // 2) Try date parse
+  const parsed = tryParseDate(raw);
+  if (parsed) {
+    const resetTs = resetForDate(parsed);
+    const [rA, rB] = pairForReset(resetTs, RAID_LIST, RAID_ANCHOR_LEAD, RAID_OFFSET);
+    const [dA, dB] = pairForReset(resetTs, DUNGEON_LIST, DUNGEON_ANCHOR_LEAD, DUNGEON_OFFSET);
+    searchResult.className = 'search-result';
+    searchResult.innerHTML = `
+      <div class="search-result-title">Week of ${fmtDate(resetTs)} (reset ${fmtDate(resetTs)})</div>
+      <div class="search-result-row"><span class="rr-tag raid">Raids</span><span class="rr-item"><strong>${rA}</strong> &amp; <strong>${rB}</strong></span></div>
+      <div class="search-result-row"><span class="rr-tag dungeon">Dungeons</span><span class="rr-item"><strong>${dA}</strong> &amp; <strong>${dB}</strong></span></div>`;
+    return;
+  }
+
+  // 3) No match
+  searchResult.className = 'search-result';
+  searchResult.innerHTML = `<span class="search-error">Couldn't recognize that as a date or a Raid/Dungeon name. Try a format like "12/25/2026" or a full name like "Vault of Glass".</span>`;
+}
+
+searchBtn.addEventListener('click', runSearch);
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+
+/* ══════════════════ LOOKUP DROPDOWNS ══════════════════ */
+const raidSelect = document.getElementById('lookup-raid-select');
+const dungeonSelect = document.getElementById('lookup-dungeon-select');
+RAID_LIST.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; raidSelect.appendChild(o); });
+DUNGEON_LIST.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; dungeonSelect.appendChild(o); });
+
+const LOOKUP_MONTHS = 6;
+
+function renderLookup(type) {
+  const isRaid = type === 'raid';
+  const select = isRaid ? raidSelect : dungeonSelect;
+  const list = isRaid ? RAID_LIST : DUNGEON_LIST;
+  const anchorLead = isRaid ? RAID_ANCHOR_LEAD : DUNGEON_ANCHOR_LEAD;
+  const offset = isRaid ? RAID_OFFSET : DUNGEON_OFFSET;
+  const container = document.getElementById(isRaid ? 'lookup-raid-list' : 'lookup-dungeon-list');
+
+  const name = select.value;
+  const endTs = currentReset + Math.ceil(LOOKUP_MONTHS * 4.345) * WEEK_MS;
+  let resetTs = currentReset;
+  const rows = [];
+  while (resetTs < endTs) {
+    const [a, b] = pairForReset(resetTs, list, anchorLead, offset);
+    if (a === name || b === name) {
+      rows.push({ date: resetTs, partner: a === name ? b : a });
+    }
+    resetTs += WEEK_MS;
+  }
+  container.innerHTML = rows.length
+    ? rows.map(r => `<div class="lookup-row"><span class="lr-date">${fmtDate(r.date)}</span><span class="lr-with">with</span><span class="lr-partner">${r.partner}</span></div>`).join('')
+    : `<div class="lookup-row"><span class="lr-partner">No upcoming weeks in this range.</span></div>`;
+}
+
+raidSelect.addEventListener('change', () => renderLookup('raid'));
+dungeonSelect.addEventListener('change', () => renderLookup('dungeon'));
+
+renderLookup('raid');
+renderLookup('dungeon');
+
+/* ══════════════════ TABS ══════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === target));
+  });
+});
+
+document.querySelectorAll('.subtab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.subtab;
+    document.querySelectorAll('.subtab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.subtab-panel').forEach(p => p.classList.toggle('active', p.dataset.subpanel === target));
+  });
+});
+</script>
+</body>
+</html>
