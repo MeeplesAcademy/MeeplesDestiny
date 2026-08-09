@@ -64,6 +64,11 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .rad-col.raid-col-frame { border-color:var(--raid-accent); border-right:none; border-radius:14px 0 0 14px; }
 .rad-col.dungeon-col-frame { border-color:var(--dungeon-accent); border-left:none; border-radius:0 14px 14px 0; }
 .rad-col-label { font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); text-align:center; }
+.api-badge { text-align:center; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-top:6px; }
+.api-badge.loading { color:var(--muted2); }
+.api-badge.confirmed { color:#7cd67c; }
+.api-badge.conflict { color:#ef6461; }
+.api-badge.unavailable { color:var(--muted); font-style:italic; text-transform:none; letter-spacing:0.02em; }
 .rad-col-label.raid-label { color:var(--raid-accent); }
 .rad-col-label.dungeon-label { color:var(--dungeon-accent); }
 .rad-cards-row { display:grid; grid-template-columns:1fr 1fr; gap:0.9rem; }
@@ -234,6 +239,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
     <div class="rad-columns">
       <div class="rad-col raid-col-frame">
         <div class="rad-col-label raid-label">Raids</div>
+        <div id="raid-api-badge" class="api-badge loading">Checking API…</div>
         <div class="rad-cards-row" id="fw-raid-slot"></div>
         <div class="rad-locked-wrap" id="fw-raid-locked-slot"></div>
       </div>
@@ -431,6 +437,68 @@ document.getElementById('fw-raid-slot').innerHTML = cardHTML(curRaidA, 'raid', f
 document.getElementById('fw-dungeon-slot').innerHTML = cardHTML(curDunA, 'dungeon', false) + cardHTML(curDunB, 'dungeon', false);
 document.getElementById('fw-raid-locked-slot').innerHTML = cardHTML(ALWAYS_RAID, 'raid', true);
 document.getElementById('fw-dungeon-locked-slot').innerHTML = cardHTML(ALWAYS_DUNGEON, 'dungeon', true);
+
+/* ══════════════════ BUNGIE API RAID VERIFICATION ══════════════════
+   Live cross-check of this week's featured raids against Bungie's own API.
+   Bungie API keys are designed to be used client-side like this — security comes
+   from the registered Origin on the key (set at bungie.net/en/Application), not
+   from keeping the key secret. Dungeons are NOT checked here: they aren't
+   reliably exposed through this endpoint the way raids are. */
+const BUNGIE_API_KEY = '1820faa996594154a0bc7ed8406374a6';
+
+// Each raid's milestoneHash is permanent — identified once via GetDestinyEntityDefinition.
+const RAID_MILESTONES = {
+  '3022338715': 'The Desert Perpetual',
+  '3181387331': 'Last Wish',
+  '2712317338': 'Garden of Salvation',
+  '541780856':  'Deep Stone Crypt',
+  '2136320298': 'Vow of the Disciple',
+  '1888320892': 'Vault of Glass',
+  '292102995':  "King's Fall",
+  '3699252268': 'Root of Nightmares',
+  '540415767':  "Crota's End",
+  '4196566271': 'Salvation\'s Edge',
+};
+
+async function checkRaidApiStatus() {
+  const badge = document.getElementById('raid-api-badge');
+  if (!badge) return;
+  try {
+    const resp = await fetch('https://www.bungie.net/Platform/Destiny2/Milestones/', {
+      headers: { 'X-API-Key': BUNGIE_API_KEY }
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const milestones = data.Response || {};
+
+    const apiFeatured = [];
+    for (const hash in RAID_MILESTONES) {
+      const m = milestones[hash];
+      if (m && Array.isArray(m.activities)) {
+        const isFeatured = m.activities.some(a => Array.isArray(a.challengeObjectiveHashes) && a.challengeObjectiveHashes.length > 0);
+        if (isFeatured) apiFeatured.push(RAID_MILESTONES[hash]);
+      }
+    }
+
+    const expected = [curRaidA, curRaidB, ALWAYS_RAID].slice().sort();
+    const actual = apiFeatured.slice().sort();
+    const matches = expected.length === actual.length && expected.every((v, i) => v === actual[i]);
+
+    if (matches) {
+      badge.className = 'api-badge confirmed';
+      badge.textContent = '✓ API Confirmed';
+    } else {
+      badge.className = 'api-badge conflict';
+      badge.textContent = '⚠ API Conflict — double-check in-game';
+      console.warn('Raid API conflict — expected:', expected, 'API reported:', actual);
+    }
+  } catch (err) {
+    badge.className = 'api-badge unavailable';
+    badge.textContent = 'API check unavailable';
+    console.warn('Raid API check failed:', err);
+  }
+}
+checkRaidApiStatus();
 
 
 /* ══════════════════ FUTURE ROTATIONS (2 months) ══════════════════ */
