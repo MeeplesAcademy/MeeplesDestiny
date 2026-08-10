@@ -64,7 +64,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .rad-col.raid-col-frame { border-color:var(--raid-accent); border-right:none; border-radius:14px 0 0 14px; }
 .rad-col.dungeon-col-frame { border-color:var(--dungeon-accent); border-left:none; border-radius:0 14px 14px 0; }
 .rad-col-label { font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); text-align:center; }
-.api-badge { text-align:center; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-top:6px; }
+.api-badge { text-align:center; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-top:14px; }
 .api-badge.loading { color:var(--muted2); }
 .api-badge.confirmed { color:#7cd67c; }
 .api-badge.conflict { color:#ef6461; }
@@ -239,9 +239,9 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
     <div class="rad-columns">
       <div class="rad-col raid-col-frame">
         <div class="rad-col-label raid-label">Raids</div>
-        <div id="raid-api-badge" class="api-badge loading">Checking API…</div>
         <div class="rad-cards-row" id="fw-raid-slot"></div>
         <div class="rad-locked-wrap" id="fw-raid-locked-slot"></div>
+        <div id="raid-api-badge" class="api-badge loading">Checking API…</div>
       </div>
       <div class="rad-col dungeon-col-frame">
         <div class="rad-col-label dungeon-label">Dungeons</div>
