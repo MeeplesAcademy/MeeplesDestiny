@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vesper's Host — Dungeon Guide · Destiny 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #080a0f;
+  --bg2:      #0d1018;
+  --bg3:      #12161f;
+  --bg4:      #181d28;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
+  --text:     #dde1ec;
+  --text2:    #a8b0c0;
+  --muted:    #606878;
+  --gold:     #c8a84b;
+  --gold2:    #e2c97e;
+  --gold3:    #f5e6b8;
+  --lens-navy:  #2a2f6b;
+  --lens-lit:   #4fa8e0;
+  --lens-lit2:  #8fc7ec;
+  --lens-off:   #6b7178;
+  --lens-num:   #f0f2f6;
+  --sel-blue:   #4fa8e0;
+  --sel-blue2:  #8fc7ec;
+  --phase-blue: #3d8fd6;
+  --phase-blue2:#63aee8;
+  --reset-red:  #ff3b3b;
+  --reset-red2: #ff7a7a;
+}
+html, body { background: var(--bg); color: var(--text); font-family:'Barlow',sans-serif; }
+body { min-height:100vh; }
+
+/* ── Page Header ── */
+.page-header { text-align:center; padding:2.5rem 1.5rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg2); }
+.page-title { font-family:'Cinzel',serif; font-size:clamp(1.6rem,4vw,2.8rem); font-weight:900; letter-spacing:0.05em; text-transform:uppercase; background:linear-gradient(180deg,var(--gold3) 0%,var(--gold) 60%,#8a6a20 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.15; }
+.page-sub { font-size:clamp(1.05rem,2.4vw,1.4rem); font-weight:600; color:var(--text); letter-spacing:0.04em; text-transform:uppercase; font-family:'Barlow',sans-serif; margin-top:0.6rem; }
+.page-note { font-size:15px; color:var(--text); margin-top:1rem; line-height:1.7; max-width:640px; margin-left:auto; margin-right:auto; }
+
+/* ── Sections ── */
+.sections-wrap { max-width:1200px; margin:0 auto; padding:2.5rem 1.5rem 3.5rem; display:flex; flex-direction:column; gap:1rem; }
+
+.dungeon-section { background:var(--bg2); border:1px solid var(--border2); border-radius:12px; overflow:hidden; }
+.dungeon-section > summary {
+  list-style:none; cursor:pointer; padding:1.1rem 1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  -webkit-tap-highlight-color:transparent;
+}
+.dungeon-section > summary::-webkit-details-marker { display:none; }
+.dungeon-section > summary:hover { background:var(--bg3); }
+
+.section-heading { display:flex; align-items:baseline; gap:0.9rem; flex-wrap:wrap; }
+.section-name { font-family:'Cinzel',serif; font-size:1.3rem; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--gold2); }
+.section-tag { font-family:'Barlow',sans-serif; font-size:14px; font-weight:500; letter-spacing:0.03em; color:var(--text); text-transform:uppercase; }
+
+.section-chevron { flex-shrink:0; width:22px; height:22px; color:var(--muted); transition:transform 0.2s; }
+.dungeon-section[open] > summary .section-chevron { transform:rotate(180deg); }
+
+.section-body { padding:0 1.5rem 1.8rem; border-top:1px solid var(--border); padding-top:1.5rem; }
+.section-intro { font-size:17px; font-family:'Barlow',sans-serif; color:var(--text); line-height:1.75; max-width:820px; margin-bottom:1.4rem; }
+.section-intro.bold { font-weight:700; }
+.section-intro + .section-intro { margin-top:-0.8rem; }
+
+/* ── Map placeholders / frames ── */
+.map-frame { position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--border2); background:var(--bg3); }
+.map-frame img { display:block; width:100%; height:auto; }
+.map-fallback {
+  display:none; flex-direction:column; align-items:center; justify-content:center; gap:0.4rem;
+  min-height:260px; padding:2rem; text-align:center; color:var(--text);
+  font-family:'Barlow',sans-serif; font-size:15px; letter-spacing:0.02em;
+}
+.map-fallback span { font-size:13px; color:var(--text); opacity:0.85; }
+
+.map-placeholder {
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem;
+  min-height:220px; border:1.5px dashed var(--border2); border-radius:10px; background:var(--bg3);
+  color:var(--text); font-family:'Barlow',sans-serif; font-size:15px; letter-spacing:0.02em; text-align:center; padding:2rem;
+}
+
+/* ── Shared buttons ── */
+.btn-blue {
+  font-family:'Barlow',sans-serif; font-size:15px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+  padding:11px 22px; border-radius:8px; border:2px solid var(--phase-blue2); background:rgba(61,143,214,0.12); color:var(--phase-blue2);
+  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}
+.btn-blue:hover { background:var(--phase-blue); color:#06090d; border-color:var(--phase-blue2); }
+
+.btn-red {
+  font-family:'Barlow',sans-serif; font-size:14px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+  padding:10px 20px; border-radius:8px; border:2px solid var(--reset-red); background:rgba(255,59,59,0.1); color:var(--reset-red2);
+  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}
+.btn-red:hover { background:var(--reset-red); color:#06090d; border-color:var(--reset-red2); }
+
+/* ── Dismemberment tracker (folded in) ── */
+.phase-bar {
+  display:flex; align-items:center; justify-content:center; gap:1.6rem; flex-wrap:wrap;
+  margin-bottom:1.4rem; padding:1.2rem 1.5rem; background:var(--bg3); border:1px solid var(--border2); border-radius:10px;
+}
+.phase-counter { display:flex; align-items:center; gap:0.7rem; font-family:'Barlow',sans-serif; }
+.phase-counter-label { font-size:15px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--text); }
+.phase-counter-value { font-family:'Cinzel',serif; font-size:1.8rem; font-weight:700; color:var(--gold2); min-width:2ch; text-align:center; }
+
+.toggle-note { text-align:center; font-family:'Barlow',sans-serif; font-size:17px; font-weight:500; color:var(--text); letter-spacing:0.01em; margin-bottom:1.6rem; }
+
+.combo-grid-row { display:flex; justify-content:center; flex-wrap:wrap; gap:1.2rem; margin-bottom:1.2rem; }
+.combo-grid-row:last-child { margin-bottom:0; }
+
+.combo-card {
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.7rem;
+  background:var(--bg2); border:2px solid var(--border2); border-radius:14px;
+  width:204px; height:204px;
+  cursor:pointer; user-select:none; transition:border-color 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.combo-card:hover { border-color:var(--sel-blue2); }
+.combo-card.selected { border:4px solid var(--sel-blue); box-shadow:0 0 16px rgba(79,168,224,0.35); }
+
+.combo-num { font-family:'Cinzel',serif; font-size:1.92rem; font-weight:700; color:var(--lens-num); transition:font-size 0.15s; }
+.combo-card.selected .combo-num { font-size:3.36rem; }
+
+.lens-icon circle.ring { fill:none; stroke:var(--lens-navy); }
+.lens-icon circle.dot-off { fill:none; stroke:var(--lens-off); }
+.lens-icon circle.dot-on { fill:var(--lens-lit); stroke:var(--lens-lit2); }
+
+/* ── Activation: room tabs ── */
+.activation-topbar { display:flex; justify-content:flex-end; margin-bottom:1.4rem; }
+
+.room-tabs { display:flex; gap:1.4rem; flex-wrap:wrap; margin-bottom:1.4rem; }
+.room-tab-wrap { display:flex; flex-direction:column; align-items:center; gap:0.5rem; }
+
+.room-tab {
+  position:relative; display:flex; align-items:center; gap:0.7rem;
+  font-family:'Barlow',sans-serif; font-size:16px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase;
+  padding:0.8rem 1.1rem; border-radius:10px; border:2.5px solid var(--tab-color, var(--border2)); background:var(--bg3); color:var(--text);
+  cursor:pointer; transition:background 0.15s, color 0.15s;
+}
+.room-tab:hover { background:var(--bg4); }
+.room-tab.active { background:var(--tab-color); color:#0a0c10; box-shadow:0 0 14px rgba(0,0,0,0.35); }
+
+.room-icon { width:20px; height:20px; flex-shrink:0; color:var(--text); }
+.room-tab.active .room-icon { color:#0a0c10; }
+
+.completed-row { display:flex; align-items:center; gap:0.5rem; cursor:pointer; user-select:none; }
+.completed-check {
+  width:24px; height:24px; border-radius:6px; border:2px solid var(--border2); background:var(--bg2);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:border-color .15s, background .15s;
+}
+.completed-check.done { background:var(--gold); border-color:var(--gold); }
+.completed-check svg { width:15px; height:15px; opacity:0; transition:opacity .1s; }
+.completed-check.done svg { opacity:1; }
+.completed-label { font-size:14px; letter-spacing:0.02em; color:var(--text); text-transform:none; }
+
+.room-panel { display:none; }
+.room-panel.active { display:block; }
+
+.room-layout { display:flex; gap:1.6rem; align-items:flex-start; flex-wrap:wrap; }
+.room-tracker-col { flex:1 1 340px; min-width:300px; }
+.room-map-col { flex:1 1 384px; min-width:300px; max-width:504px; }
+
+.room-hint { font-size:17px; font-weight:600; color:var(--text); margin-bottom:1rem; line-height:1.6; }
+
+.panel-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:0.8rem; margin-bottom:1.2rem; max-width:400px; }
+.panel-card {
+  position:relative; display:flex; align-items:center; justify-content:center;
+  height:88px; border-radius:10px; border:2px solid var(--border2); background:var(--bg3);
+  cursor:pointer; user-select:none; transition:opacity 0.15s, border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.panel-card:hover { border-color:var(--sel-blue2); }
+.panel-card .panel-num { font-family:'Cinzel',serif; font-size:1.7rem; font-weight:700; color:var(--lens-num); }
+.panel-card.marked-negative { opacity:0.4; border-color:var(--reset-red); background:var(--bg2); }
+.panel-card.marked-negative .panel-num { color:var(--text); }
+.panel-card.marked-negative::after {
+  content:""; position:absolute; inset:0; border-radius:8px;
+  background:repeating-linear-gradient(135deg, transparent 0 6px, rgba(255,59,59,0.18) 6px 8px);
+  pointer-events:none;
+}
+
+.room-reset-row { display:flex; }
+
+/* ── Footer ── */
+footer { text-align:center; padding:2rem 1.5rem 3rem; font-size:13px; color:var(--text); line-height:1.8; }
+footer a { color:var(--gold2); text-decoration:none; }
+footer a:hover { text-decoration:underline; }
+
+@media (max-width: 640px) {
+  .sections-wrap { padding:2rem 1rem 2.5rem; }
+  .section-body { padding-left:1rem; padding-right:1rem; }
+  .combo-card { width:29%; height:auto; aspect-ratio:1/1; }
+  .combo-grid-row { gap:0.6rem; }
+  .phase-bar { gap:1rem; padding:1rem; }
+  .panel-grid { grid-template-columns:repeat(3, 1fr); max-width:none; }
+  .room-tabs { justify-content:center; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">Vesper's Host</div>
+  <div class="page-sub">Dungeon Guide — Maps, Mechanics &amp; Encounter Trackers</div>
+  <div class="page-note">Expand a section below for that portion of the dungeon — maps, mechanic notes, and interactive tools where useful.</div>
+</div>
+
+<div class="sections-wrap">
+
+  <!-- ═══ EMBARKATION ═══ -->
+  <details class="dungeon-section" id="section-embarkation">
+    <summary>
+      <div class="section-heading">
+        <span class="section-name">Embarkation</span>
+        <span class="section-tag">Entrance · Intro Mechanics</span>
+      </div>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </summary>
+    <div class="section-body">
+      <p class="section-intro">The dungeon's entrance area, teaching the Scanner and Operator Augments and panel mechanics that are the basis for most encounter mechanics.</p>
+      <div class="map-placeholder">
+        Map placeholder<br>
+        <span style="font-size:13px;opacity:0.75;">Image pending — will follow the same Images/ path as the rest of this page</span>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══ ACTIVATION ═══ -->
+  <details class="dungeon-section" id="section-activation">
+    <summary>
+      <div class="section-heading">
+        <span class="section-name">Activation</span>
+        <span class="section-tag">1st Encounter</span>
+      </div>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </summary>
+    <div class="section-body">
+      <p class="section-intro">Killing the Brig in the Main Room unlocks the Heart, Lungs, and Brain side rooms. In any order, enter a room, use the Scanner augment to reveal which panels are not safe to shoot and then use the Operator augment to shoot &amp; activate the safe panels to spawn a bomb. Return to the Main Room, kill the next Brig to unlock a depository, and deposit the bomb. Repeat for all three rooms — the third return is guarded by a Boss Brig.</p>
+      <p class="section-intro bold">Each room has 6 panels. 4 are correct, 2 are wrong. Mark the two wrong panels below — the remaining four are the ones to shoot.</p>
+
+      <div class="activation-topbar">
+        <button class="btn-red" id="encounterResetBtn">Reset Entire Encounter</button>
+      </div>
+
+      <div class="room-tabs" id="roomTabs"></div>
+      <div id="roomPanels"></div>
+    </div>
+  </details>
+
+  <!-- ═══ INFILTRATION ═══ -->
+  <details class="dungeon-section" id="section-infiltration">
+    <summary>
+      <div class="section-heading">
+        <span class="section-name">Infiltration</span>
+        <span class="section-tag">Traversal</span>
+      </div>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </summary>
+    <div class="section-body">
+      <p class="section-intro">A traversal stretch through the servitor maze — carry the bomb through the operable doors along the marked path to the dunk locations. Instructions and map only, no interactive tracker for this section.</p>
+      <div class="map-frame">
+        <img src="https://meeplesacademy.github.io/MeeplesDestiny/DungeonResources/Vespers_Host/Images/VH-Infiltration_Map_01.png" alt="Infiltration servitor maze map" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="map-fallback">Map image pending<br><span>expected: VH-Infiltration_Map_01.png</span></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══ DISMEMBERMENT ═══ -->
+  <details class="dungeon-section" id="section-dismemberment">
+    <summary>
+      <div class="section-heading">
+        <span class="section-name">Dismemberment</span>
+        <span class="section-tag">2nd Encounter · Raneiks Unified</span>
+      </div>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </summary>
+    <div class="section-body">
+      <p class="section-intro">Fight adds until a Machine Priest spawns and dies, teleporting you upstairs where Raneiks divides into 10 servitors. Two of them light up circles that encode a number 1–9 — note both, then repeat the trip for two more. Once all four numbers are known, shoot the matching panels downstairs to drop the shield and trigger the damage phase.</p>
+
+      <div class="phase-bar">
+        <div class="phase-counter">
+          <span class="phase-counter-label">Damage Phases</span>
+          <span class="phase-counter-value" id="phaseCount">0</span>
+        </div>
+        <button class="btn-blue" id="phaseCompleteBtn" title="Click to reset for the next round.">Damage Phase Complete</button>
+        <button class="btn-red" id="dismembermentResetBtn">Reset Encounter</button>
+      </div>
+
+      <div class="toggle-note">Click a box to highlight it (toggle).</div>
+
+      <div class="combo-grid-row" id="rowTop"></div>
+      <div class="combo-grid-row" id="rowBottom"></div>
+    </div>
+  </details>
+
+  <!-- ═══ ACCELERATION ═══ -->
+  <details class="dungeon-section" id="section-acceleration">
+    <summary>
+      <div class="section-heading">
+        <span class="section-name">Acceleration</span>
+        <span class="section-tag">Traversal</span>
+      </div>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </summary>
+    <div class="section-body">
+      <p class="section-intro">A second traversal stretch. Map and mechanic notes coming soon.</p>
+      <div class="map-placeholder">
+        Map placeholder<br>
+        <span style="font-size:13px;opacity:0.75;">Image pending — will follow the same Images/ path as the rest of this page</span>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══ SHUTDOWN ═══ -->
+  <details class="dungeon-section" id="section-shutdown">
+    <summary>
+      <div class="section-heading">
+        <span class="section-name">Shutdown</span>
+        <span class="section-tag">3rd Encounter · Final Boss</span>
+      </div>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </summary>
+    <div class="section-body">
+      <p class="section-intro">The final boss encounter. Map and mechanic notes coming soon.</p>
+      <div class="map-placeholder">
+        Map placeholder<br>
+        <span style="font-size:13px;opacity:0.75;">Image pending — will follow the same Images/ path as the rest of this page</span>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<footer>
+  MeeplesDestiny · <a href="https://github.com/MeeplesAcademy/MeeplesDestiny" target="_blank" rel="noopener">GitHub</a>
+</footer>
+
+<script>
+/* ══════════════ DISMEMBERMENT TRACKER ══════════════ */
+const LAYOUTS = {
+  1:[1,0,0,0], 2:[0,1,0,0], 3:[1,1,0,0], 4:[0,0,1,0], 5:[1,0,1,0],
+  6:[0,1,1,0], 7:[1,1,1,0], 8:[0,0,0,1], 9:[1,0,0,1]
+};
+const POSITIONS = [ {x:60,y:22}, {x:98,y:60}, {x:60,y:98}, {x:22,y:60} ];
+
+function buildLensSVG(num, size) {
+  const lit = LAYOUTS[num];
+  let dots = '';
+  POSITIONS.forEach((p, i) => {
+    dots += lit[i]
+      ? `<circle class="dot-on" cx="${p.x}" cy="${p.y}" r="12" stroke-width="1.5"/>`
+      : `<circle class="dot-off" cx="${p.x}" cy="${p.y}" r="12" stroke-width="2"/>`;
+  });
+  return `<svg class="lens-icon" width="${size}" height="${size}" viewBox="0 0 120 120" aria-hidden="true">
+    <circle class="ring" cx="60" cy="60" r="52" stroke-width="4"/>
+    ${dots}
+  </svg>`;
+}
+
+function refreshComboCard(card) {
+  const num = card.dataset.num;
+  const selected = card.classList.contains('selected');
+  const iconSize = selected ? 90 : 110;
+  card.innerHTML = buildLensSVG(num, iconSize) + `<div class="combo-num">${num}</div>`;
+}
+
+function makeComboCard(num) {
+  const card = document.createElement('div');
+  card.className = 'combo-card';
+  card.dataset.num = num;
+  card.setAttribute('role', 'checkbox');
+  card.setAttribute('aria-checked', 'false');
+  card.tabIndex = 0;
+  refreshComboCard(card);
+  const toggle = () => {
+    const selected = card.classList.toggle('selected');
+    card.setAttribute('aria-checked', String(selected));
+    refreshComboCard(card);
+  };
+  card.addEventListener('click', toggle);
+  card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  return card;
+}
+
+const rowTop = document.getElementById('rowTop');
+const rowBottom = document.getElementById('rowBottom');
+[1,2,3,4,5].forEach(n => rowTop.appendChild(makeComboCard(n)));
+[6,7,8,9].forEach(n => rowBottom.appendChild(makeComboCard(n)));
+
+let phaseCount = 0;
+const phaseCountEl = document.getElementById('phaseCount');
+
+function clearDismembermentSelections() {
+  document.querySelectorAll('#rowTop .combo-card.selected, #rowBottom .combo-card.selected').forEach(c => {
+    c.classList.remove('selected');
+    c.setAttribute('aria-checked', 'false');
+    refreshComboCard(c);
+  });
+}
+
+document.getElementById('phaseCompleteBtn').addEventListener('click', () => {
+  clearDismembermentSelections();
+  phaseCount += 1;
+  phaseCountEl.textContent = phaseCount;
+});
+
+document.getElementById('dismembermentResetBtn').addEventListener('click', () => {
+  clearDismembermentSelections();
+  phaseCount = 0;
+  phaseCountEl.textContent = phaseCount;
+});
+
+/* ══════════════ ACTIVATION ROOM TRACKERS ══════════════ */
+const ROOM_ICONS = {
+  heart: `<svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.1 2 4.5 5.6 4.5c2 0 3.4 1.1 4.4 2.6C11 5.6 12.4 4.5 14.4 4.5 18 4.5 19.6 8.1 22 11.7 19.5 16.4 12 21 12 21z"/></svg>`,
+  lungs: `<svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v7"/><path d="M12 10c-1.5-2-4-2.5-5.5-1.5C4 10 4 14 5 17c.7 2 2 3 3.5 2.5C10 19 11 17 11 15v-2"/><path d="M12 10c1.5-2 4-2.5 5.5-1.5C20 10 20 14 19 17c-.7 2-2 3-3.5 2.5C14 19 13 17 13 15v-2"/></svg>`,
+  brain: `<svg class="room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5a3 3 0 0 0-3 3v.3A3 3 0 0 0 4.5 10.5a3 3 0 0 0 0 5 3 3 0 0 0 2.2 2.9c.3 1.4 1.5 2.6 3 2.6"/><path d="M9 4.5c0-.8.7-1.5 1.5-1.5S12 3.7 12 4.5v14c0 1.1-.9 2-2 2"/><path d="M15 4.5a3 3 0 0 1 3 3v.3a3 3 0 0 1 1.5 2.7 3 3 0 0 1 0 5 3 3 0 0 1-2.2 2.9c-.3 1.4-1.5 2.6-3 2.6"/><path d="M15 4.5c0-.8-.7-1.5-1.5-1.5S12 3.7 12 4.5"/></svg>`
+};
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#0a0c10" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg>`;
+
+const ROOMS = [
+  { id:'heart', label:'Heart', mapFile:'VH-Activation_Heart_Room_Map.jpg', color:'#e0524f' },
+  { id:'lungs', label:'Lungs', mapFile:'VH-Activation_Lungs_Room_Map.jpg', color:'#4fa8e0' },
+  { id:'brain', label:'Brain', mapFile:'VH-Activation_Brain_Room_Map.jpg', color:'#f0c419' }
+];
+const IMG_BASE = 'https://meeplesacademy.github.io/MeeplesDestiny/DungeonResources/Vespers_Host/Images/';
+
+const roomTabsEl = document.getElementById('roomTabs');
+const roomPanelsEl = document.getElementById('roomPanels');
+
+ROOMS.forEach((room, idx) => {
+  // Tab wrapper (completed checkbox sits above the tab so it can't be hit by mistake while switching rooms)
+  const wrap = document.createElement('div');
+  wrap.className = 'room-tab-wrap';
+
+  const completedRow = document.createElement('label');
+  completedRow.className = 'completed-row';
+  const completedCheck = document.createElement('span');
+  completedCheck.className = 'completed-check';
+  completedCheck.dataset.room = room.id;
+  completedCheck.setAttribute('role', 'checkbox');
+  completedCheck.setAttribute('aria-checked', 'false');
+  completedCheck.title = 'Mark room completed';
+  completedCheck.innerHTML = CHECK_SVG;
+  const completedLabel = document.createElement('span');
+  completedLabel.className = 'completed-label';
+  completedLabel.textContent = 'Completed';
+  completedRow.appendChild(completedCheck);
+  completedRow.appendChild(completedLabel);
+  completedRow.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const done = completedCheck.classList.toggle('done');
+    completedCheck.setAttribute('aria-checked', String(done));
+  });
+  wrap.appendChild(completedRow);
+
+  const tab = document.createElement('button');
+  tab.className = 'room-tab' + (idx === 0 ? ' active' : '');
+  tab.dataset.room = room.id;
+  tab.type = 'button';
+  tab.style.setProperty('--tab-color', room.color);
+  tab.innerHTML = `${ROOM_ICONS[room.id]}<span>${room.label}</span>`;
+
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.room-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.room-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('roomPanel-' + room.id).classList.add('active');
+  });
+  wrap.appendChild(tab);
+  roomTabsEl.appendChild(wrap);
+
+  // Panel
+  const panel = document.createElement('div');
+  panel.className = 'room-panel' + (idx === 0 ? ' active' : '');
+  panel.id = 'roomPanel-' + room.id;
+
+  const layout = document.createElement('div');
+  layout.className = 'room-layout';
+
+  const trackerCol = document.createElement('div');
+  trackerCol.className = 'room-tracker-col';
+  trackerCol.innerHTML = `<p class="room-hint">Mark the two inactive panels — the rest are the ones to shoot.</p>`;
+
+  const grid = document.createElement('div');
+  grid.className = 'panel-grid';
+  for (let n = 1; n <= 6; n++) {
+    const card = document.createElement('div');
+    card.className = 'panel-card';
+    card.dataset.num = n;
+    card.setAttribute('role', 'checkbox');
+    card.setAttribute('aria-checked', 'false');
+    card.tabIndex = 0;
+    card.innerHTML = `<span class="panel-num">${n}</span>`;
+    const toggle = () => {
+      const marked = card.classList.toggle('marked-negative');
+      card.setAttribute('aria-checked', String(marked));
+    };
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    grid.appendChild(card);
+  }
+  trackerCol.appendChild(grid);
+
+  const resetRow = document.createElement('div');
+  resetRow.className = 'room-reset-row';
+  const roomResetBtn = document.createElement('button');
+  roomResetBtn.className = 'btn-red';
+  roomResetBtn.textContent = 'Reset Room';
+  roomResetBtn.addEventListener('click', () => {
+    grid.querySelectorAll('.panel-card.marked-negative').forEach(c => {
+      c.classList.remove('marked-negative');
+      c.setAttribute('aria-checked', 'false');
+    });
+    completedCheck.classList.remove('done');
+    completedCheck.setAttribute('aria-checked', 'false');
+  });
+  resetRow.appendChild(roomResetBtn);
+  trackerCol.appendChild(resetRow);
+
+  const mapCol = document.createElement('div');
+  mapCol.className = 'room-map-col';
+  mapCol.innerHTML = `
+    <div class="map-frame">
+      <img src="${IMG_BASE}${room.mapFile}" alt="${room.label} room map" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="map-fallback">Map image pending<br><span>expected: ${room.mapFile}</span></div>
+    </div>`;
+
+  layout.appendChild(trackerCol);
+  layout.appendChild(mapCol);
+  panel.appendChild(layout);
+  roomPanelsEl.appendChild(panel);
+});
+
+document.getElementById('encounterResetBtn').addEventListener('click', () => {
+  document.querySelectorAll('.panel-card.marked-negative').forEach(c => {
+    c.classList.remove('marked-negative');
+    c.setAttribute('aria-checked', 'false');
+  });
+  document.querySelectorAll('.completed-check.done').forEach(c => {
+    c.classList.remove('done');
+    c.setAttribute('aria-checked', 'false');
+  });
+});
+</script>
+</body>
+</html>
