@@ -92,7 +92,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .rad-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; border-radius:3px; padding:3px 9px; width:fit-content; }
 .rad-badge.raid { color:var(--raid-accent); background:rgba(169,127,208,0.1); border:1px solid rgba(169,127,208,0.25); }
 .rad-badge.dungeon { color:var(--dungeon-accent); background:rgba(212,180,90,0.1); border:1px solid rgba(212,180,90,0.25); }
-.rad-card-title { font-family:'Cinzel',serif; font-size:18px; font-weight:700; letter-spacing:0.02em; color:var(--text); line-height:1.25; }
+.rad-card-title { font-family:'Cinzel',serif; font-size:22px; font-weight:900; letter-spacing:0.01em; color:var(--text); line-height:1.2; }
 .rad-card.locked .rad-card-title { color:var(--gold2); }
 .rad-card-pairnote { display:flex; flex-direction:column; gap:2px; margin-top:10px; padding-top:10px; position:relative; }
 .rad-card-pairnote::before { content:''; position:absolute; top:0; left:0; width:100%; height:1px; background:linear-gradient(90deg, rgba(179,201,168,0.65) 0%, rgba(179,201,168,0.15) 65%, transparent 100%); }
@@ -195,6 +195,49 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .cal-event.dungeon { background:transparent; color:var(--dungeon-accent); border-top:1.5px solid var(--dungeon-accent); border-bottom:1.5px solid var(--dungeon-accent); }
 .cal-event.seg-start { border-left:1.5px solid currentColor; border-top-left-radius:5px; border-bottom-left-radius:5px; margin-left:3px; }
 .cal-event.cont-end { border-right:1.5px solid currentColor; border-top-right-radius:5px; border-bottom-right-radius:5px; margin-right:3px; }
+
+/* ── Lost Sectors / rotating activities ── */
+.wip-note { text-align:center; font-family:'Barlow Condensed',sans-serif; font-size:16px; color:var(--muted2); padding:2.5rem 1rem; letter-spacing:0.02em; }
+.ac-this-week { background:var(--bg2); border:2px solid var(--gold); border-radius:12px; padding:1.5rem 1.75rem; margin-bottom:1.75rem; display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:10px; }
+.ac-this-week-label { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold2); width:100%; margin-bottom:6px; }
+.ac-this-week-name { font-family:'Cinzel',serif; font-size:24px; font-weight:900; color:var(--text); }
+.ac-this-week-location { font-family:'Barlow',sans-serif; font-size:16px; color:var(--text2); font-style:italic; }
+.ls-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; }
+.ls-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+.ls-card-banner { position:relative; height:110px; background:var(--bg3); overflow:hidden; }
+.ls-card-banner img { width:100%; height:100%; object-fit:cover; display:block; }
+.ls-card-body { padding:1rem 1.1rem 1.1rem; display:flex; flex-direction:column; gap:8px; flex:1; }
+.ls-destination { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold2); opacity:0.85; margin-bottom:7px; }
+.ls-name { font-family:'Cinzel',serif; font-size:22px; font-weight:900; color:var(--text); line-height:1.2; }
+.ls-name.unsolved { color:var(--muted2); font-family:'Barlow Condensed',sans-serif; font-style:italic; font-size:16px; }
+.ls-armor-block { margin-top:auto; padding:12px 13px; background:var(--bg3); border:1px solid var(--border2); border-radius:7px; cursor:pointer; transition:border-color 0.2s, background 0.2s; }
+.ls-armor-block:hover { border-color:var(--gold); background:var(--bg4); }
+.ls-armor-label { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); margin-bottom:5px; }
+.ls-armor-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.ls-armor-name { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:600; letter-spacing:0.04em; color:#7B82CB; }
+.ls-expand-hint { font-size:16px; font-weight:500; letter-spacing:0.01em; color:var(--muted2); font-style:italic; white-space:nowrap; }
+.ls-tomorrow { font-family:'Barlow',sans-serif; font-size:16px; font-weight:500; font-style:italic; color:var(--muted2); }
+.ls-tomorrow strong { color:var(--gold2); font-weight:600; font-style:normal; }
+
+.ls-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(4,5,8,0.82); z-index:1000; align-items:center; justify-content:center; padding:2rem; }
+.ls-modal-backdrop.open { display:flex; }
+.ls-modal { background:var(--bg2); border:1px solid var(--border2); border-radius:14px; max-width:560px; width:100%; max-height:85vh; overflow-y:auto; padding:2rem 2.25rem 2.25rem; position:relative; }
+.ls-modal-close { position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%; border:1px solid var(--border2); background:var(--bg3); color:var(--text2); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.ls-modal-close:hover { border-color:var(--gold); color:var(--gold2); }
+.ls-modal-setname { font-family:'Cinzel',serif; font-size:26px; font-weight:700; color:var(--gold2); margin-bottom:1.5rem; }
+.ls-modal-perk { margin-bottom:1.5rem; }
+.ls-modal-perk:last-child { margin-bottom:0; }
+.ls-modal-perk-label { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); margin-bottom:4px; }
+.ls-modal-perk-name { font-family:'Cinzel',serif; font-size:19px; font-weight:700; color:var(--text); margin-bottom:6px; }
+.ls-modal-perk-desc { font-size:16px; line-height:1.55; color:var(--text2); }
+
+@media (max-width:980px) {
+  .ls-grid { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:640px) {
+  .ls-grid { grid-template-columns:1fr; }
+  .ls-modal { padding:1.5rem 1.5rem 1.75rem; }
+}
 
 /* ── Footer ── */
 .page-footer { position:relative; z-index:1; text-align:center; padding:2.5rem 1.5rem 3.5rem; color:var(--muted); font-size:13px; }
@@ -311,6 +354,46 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
   </div>
 </section>
 
+<!-- ═══════════════ LOST SECTORS / EXOTIC MISSIONS / ASCENDANT CHALLENGES ═══════════════ -->
+<section class="section" id="rotating-activities-section">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-btn-lostsectors" data-tab="lostsectors">Lost Sectors</button>
+    <button class="tab-btn" id="tab-btn-exoticmissions" data-tab="exoticmissions">Exotic Missions</button>
+    <button class="tab-btn" id="tab-btn-ascendant" data-tab="ascendant">Ascendant Challenges</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-panel-lostsectors" data-panel="lostsectors">
+    <p class="section-note">Here are the active Expert &amp; Master Lost Sectors today. These are the best way to farm high tier destination armor sets.</p>
+    <!-- TODO: link to the Armor Set Bonuses page belongs somewhere in this panel — placement TBD once the card layout is finalized -->
+    <div class="ls-grid" id="ls-grid"></div>
+  </div>
+
+  <div class="tab-panel" id="tab-panel-exoticmissions" data-panel="exoticmissions">
+    <div class="wip-note">🚧 Work In Progress — Exotic Mission rotation tracking is coming soon.</div>
+  </div>
+
+  <div class="tab-panel" id="tab-panel-ascendant" data-panel="ascendant">
+    <p class="section-note">Ascendant Challenges rotate weekly in the Dreaming City on the same Tuesday reset as everything else. Here's this week's challenge and what's coming up.</p>
+    <div class="ac-this-week" id="ac-this-week"></div>
+    <div class="rotation-table-wrap">
+      <table class="rotation-table">
+        <thead>
+          <tr><th>Reset Date (Tuesday)</th><th>Ascendant Challenge</th><th>Location</th></tr>
+        </thead>
+        <tbody id="ac-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Armor set popup modal -->
+<div class="ls-modal-backdrop" id="ls-modal-backdrop">
+  <div class="ls-modal" id="ls-modal" role="dialog" aria-modal="true">
+    <button class="ls-modal-close" id="ls-modal-close" aria-label="Close">✕</button>
+    <div id="ls-modal-content"></div>
+  </div>
+</div>
+
 <footer class="page-footer"></footer>
 
 <script>
@@ -398,14 +481,18 @@ function fixedPartnersFor(name, list, offset) {
   return [p1, p2];
 }
 
-function cardHTML(name, type, locked) {
+function cardHTML(name, type, locked, currentPartner) {
   const badgeLabel = type === 'raid' ? 'Raid' : 'Dungeon';
   let pairNote = '';
   if (!locked) {
     const list = type === 'raid' ? RAID_LIST : DUNGEON_LIST;
     const offset = type === 'raid' ? RAID_OFFSET : DUNGEON_OFFSET;
-    const partners = fixedPartnersFor(name, list, offset);
+    let partners = fixedPartnersFor(name, list, offset);
     if (partners) {
+      // The item actually paired with `name` THIS week (if known) always shows first.
+      if (currentPartner && partners[1] === currentPartner) {
+        partners = [partners[1], partners[0]];
+      }
       pairNote = `<div class="rad-card-pairnote"><div class="pn-label">⇄ Always Featured With Either ⇄</div><div class="pn-item">${partners[0]}</div><div class="pn-or">OR</div><div class="pn-item">${partners[1]}</div></div>`;
     }
   }
@@ -433,8 +520,8 @@ document.getElementById('fw-today-date').textContent = now.toLocaleDateString('e
 
 const [curRaidA, curRaidB] = pairForReset(currentReset, RAID_LIST, RAID_ANCHOR_LEAD, RAID_OFFSET);
 const [curDunA, curDunB] = pairForReset(currentReset, DUNGEON_LIST, DUNGEON_ANCHOR_LEAD, DUNGEON_OFFSET);
-document.getElementById('fw-raid-slot').innerHTML = cardHTML(curRaidA, 'raid', false) + cardHTML(curRaidB, 'raid', false);
-document.getElementById('fw-dungeon-slot').innerHTML = cardHTML(curDunA, 'dungeon', false) + cardHTML(curDunB, 'dungeon', false);
+document.getElementById('fw-raid-slot').innerHTML = cardHTML(curRaidA, 'raid', false, curRaidB) + cardHTML(curRaidB, 'raid', false, curRaidA);
+document.getElementById('fw-dungeon-slot').innerHTML = cardHTML(curDunA, 'dungeon', false, curDunB) + cardHTML(curDunB, 'dungeon', false, curDunA);
 document.getElementById('fw-raid-locked-slot').innerHTML = cardHTML(ALWAYS_RAID, 'raid', true);
 document.getElementById('fw-dungeon-locked-slot').innerHTML = cardHTML(ALWAYS_DUNGEON, 'dungeon', true);
 
@@ -754,18 +841,211 @@ renderLookup('dungeon');
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const target = btn.dataset.tab;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === target));
+    const scope = btn.closest('section') || document;
+    scope.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    scope.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === target));
   });
 });
 
 document.querySelectorAll('.subtab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const target = btn.dataset.subtab;
-    document.querySelectorAll('.subtab-btn').forEach(b => b.classList.toggle('active', b === btn));
-    document.querySelectorAll('.subtab-panel').forEach(p => p.classList.toggle('active', p.dataset.subpanel === target));
+    const scope = btn.closest('section') || document;
+    scope.querySelectorAll('.subtab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    scope.querySelectorAll('.subtab-panel').forEach(p => p.classList.toggle('active', p.dataset.subpanel === target));
   });
 });
+
+/* ══════════════════ LOST SECTORS ══════════════════
+   Confirmed via manual daily observation starting 2026-08-09 (see project notes).
+   Each destination's cycle is the CONFIRMED order of Expert/Master rotation, advancing
+   one step per day. EDZ has no confirmed cycle yet — shown as "Rotation TBD" until solved.
+   Nessus is a locked single Lost Sector (degenerate 1-item "cycle"), confirmed by 3
+   consecutive identical daily observations. */
+const LS_DAY_MS = 24 * 60 * 60 * 1000;
+const LS_ANCHOR = Date.UTC(2026, 7, 9, 17, 0, 0); // Aug 9, 2026 daily reset — day index 0
+
+function daysSinceLSAnchor(ts) {
+  return Math.floor((ts - LS_ANCHOR) / LS_DAY_MS);
+}
+
+const LOST_SECTORS = {
+  "EDZ":            { cycle: null, armorSet: "Wildwood" },
+  "Cosmodrome":      { cycle: ["Veles Labyrinth", "Exodus Garden 2A"], armorSet: "Seventh Seraph" },
+  "Nessus":          { cycle: ["The Conflux"], armorSet: "Exodus Down" },
+  "Moon":            { cycle: ["K1 Logistics", "K1 Communion", "K1 Revelation", "K1 Crew Quarters"], armorSet: "Dreambane" },
+  "Dreaming City":   { cycle: ["Aphelion's Rest", "Bay of Drowned Wishes", "Chamber of Starlight"], armorSet: "Reverie Dawn" },
+  "Europa":          { cycle: ["Concealed Void", "Bunker E15", "Perdition"], armorSet: "Crystocrene" },
+  "Throne World":    { cycle: ["Metamorphosis", "Sepulchur", "Extraction"], armorSet: "Veritas" },
+  "Neomuna":         { cycle: ["Thrilladrome", "Hydroponics Delta", "Gilded Precept"], armorSet: "Thunderhead" },
+  "Pale Heart":      { cycle: ["The Broken Deep", "The Blooming Deep", "The Forgotten Deep"], armorSet: "First Ascent" },
+};
+
+// Pulled from the Armor Set Bonuses page dataset (destination-sourced sets only).
+const ARMOR_SET_DATA = {
+  "Wildwood": {
+    p2name: "Watchtower", p2desc: "Precision final blows while aiming down sights grant damage resistance until you stop aiming down sights.",
+    p4name: "Field Expertise", p4desc: "Precision final blows with any weapon grant a stacking bonus to reload speed, target acquisition, and weapon damage against non-boss combatants for a short duration. Weapon final blows with non-precision direct hits end this effect early."
+  },
+  "Seventh Seraph": {
+    p2name: "Rasputin's Wrath", p2desc: "Final blows with area-of-effect damage, Solar abilities, Seventh Seraph weapons, or IKELOS weapons grant Warmind Charges. Each stack of Warmind Charge increases your Weapons and Grenade stats.",
+    p4name: "Rasputin's Reprisal", p4desc: "While you have Warmind Charges, defeating powerful combatants, destroying a construct, or destroying a Tangle releases a Solar detonation that damages combatants and heals allies."
+  },
+  "Exodus Down": {
+    p2name: "Emergency Electromagnet", p2desc: "When your shields become broken, collect all nearby Orbs of Power and ammo bricks.",
+    p4name: "Repurposed Charge", p4desc: "Whenever you gain, lose, or spend an Armor Charge, heal and gain damage reduction for a short time. This effect scales with the amount of Armor Charge gained, lost, or spent."
+  },
+  "Dreambane": {
+    p2name: "Nightmarish Power", p2desc: "Final blows to a challenging combatant or higher-ranked target grant Unstable Essence. When you have Unstable Essence, you receive grenade and melee stat bonuses.",
+    p4name: "Nightmarish Resilience", p4desc: "When you have Unstable Essence, rapid weapon damage or final blows heal you and begin health regeneration."
+  },
+  "Reverie Dawn": {
+    p2name: "A Wish for Protection", p2desc: "Taking significant damage in a short time generates a Protective Wish that makes it harder for combatants to hit you, and grants increased reload speed and flinch resistance.",
+    p4name: "A Wish Fulfilled", p4desc: "When the Protective Wish expires, it cures you. Rapid final blows prematurely end the Protective Wish."
+  },
+  "Crystocrene": {
+    p2name: "Resupply", p2desc: "After being out of combat for a moderate duration, your next final blow grants additional ammo progress and creates an Orb of Power.",
+    p4name: "From the Storm", p4desc: "After being out of combat for a moderate duration, slowly gain Frost Armor until you reenter combat."
+  },
+  "Veritas": {
+    p2name: "Lucent Transmutation", p2desc: "Performing a finisher on a combatant, or landing successive powered melee final blows, generates an Elemental pickup based on your Light subclass.",
+    p4name: "Lucent Tithes", p4desc: "Performing a finisher on powerful combatants heals you and generates loyal Void moths."
+  },
+  "Thunderhead": {
+    p2name: "License to Thrill", p2desc: "Activating your grenade or the Nanotech Tracer Missiles Origin Trait provides stacking resistance to incoming damage at point-blank range.",
+    p4name: "Lethal Weave", p4desc: "Defeating an unraveled combatant grants grenade ability energy. If you have max grenade energy, you are granted Special ammo meter progress instead."
+  },
+  "First Ascent": {
+    p2name: "Stack 'Em Up", p2desc: "Defeating targets with unique elemental damage grants a stacking bonus to Transcendence energy gains while Transcendence is inactive.",
+    p4name: "Burn 'Em Down", p4desc: "While Transcendence is active, using your grenade ability consumes all stacks of Stack 'Em Up to grant an escalating amount of grenade energy."
+  },
+};
+
+function getActiveLS(destName, dayOffset) {
+  const d = LOST_SECTORS[destName];
+  if (!d.cycle) return null;
+  const dayIdx = daysSinceLSAnchor(now.getTime()) + dayOffset;
+  const idx = mod(dayIdx, d.cycle.length);
+  return d.cycle[idx];
+}
+
+function lsCardHTML(destName) {
+  const d = LOST_SECTORS[destName];
+  const today = getActiveLS(destName, 0);
+  const tomorrow = getActiveLS(destName, 1);
+
+  const nameHTML = today
+    ? `<div class="ls-name">${today}</div>`
+    : `<div class="ls-name unsolved">Rotation TBD — check in-game</div>`;
+
+  const tomorrowHTML = tomorrow
+    ? `Tomorrow: <strong>${tomorrow}</strong>`
+    : `Tomorrow: <strong>Rotation TBD</strong>`;
+
+  return `
+    <div class="ls-card">
+      <div class="ls-card-banner"><div class="banner-placeholder"><span class="banner-placeholder-text">${destName}</span></div></div>
+      <div class="ls-card-body">
+        <div class="ls-destination">${destName}</div>
+        ${nameHTML}
+        <div class="ls-tomorrow">${tomorrowHTML}</div>
+        <div class="ls-armor-block" data-armor-set="${d.armorSet}">
+          <div class="ls-armor-label">Armor Set</div>
+          <div class="ls-armor-row">
+            <span class="ls-armor-name">${d.armorSet}</span>
+            <span class="ls-expand-hint">tap to view details</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+const lsGrid = document.getElementById('ls-grid');
+if (lsGrid) {
+  lsGrid.innerHTML = Object.keys(LOST_SECTORS).map(lsCardHTML).join('');
+}
+
+/* ── Armor set popup modal ── */
+const lsModalBackdrop = document.getElementById('ls-modal-backdrop');
+const lsModalContent = document.getElementById('ls-modal-content');
+const lsModalClose = document.getElementById('ls-modal-close');
+
+function openArmorModal(setName) {
+  const armor = ARMOR_SET_DATA[setName];
+  if (!armor) return;
+  lsModalContent.innerHTML = `
+    <div class="ls-modal-setname">${setName}</div>
+    <div class="ls-modal-perk">
+      <div class="ls-modal-perk-label">2-Piece Perk</div>
+      <div class="ls-modal-perk-name">${armor.p2name}</div>
+      <div class="ls-modal-perk-desc">${armor.p2desc}</div>
+    </div>
+    <div class="ls-modal-perk">
+      <div class="ls-modal-perk-label">4-Piece Perk</div>
+      <div class="ls-modal-perk-name">${armor.p4name}</div>
+      <div class="ls-modal-perk-desc">${armor.p4desc}</div>
+    </div>`;
+  lsModalBackdrop.classList.add('open');
+}
+function closeArmorModal() {
+  lsModalBackdrop.classList.remove('open');
+}
+
+if (lsGrid) {
+  lsGrid.addEventListener('click', e => {
+    const block = e.target.closest('.ls-armor-block');
+    if (block) openArmorModal(block.dataset.armorSet);
+  });
+}
+if (lsModalClose) lsModalClose.addEventListener('click', closeArmorModal);
+if (lsModalBackdrop) lsModalBackdrop.addEventListener('click', e => { if (e.target === lsModalBackdrop) closeArmorModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeArmorModal(); });
+
+/* ══════════════════ ASCENDANT CHALLENGES ══════════════════
+   Confirmed full 6-week cycle (Dreaming City), anchored Aug 11, 2026 = index 0.
+   Same Tuesday 17:00 UTC reset grid as raids/dungeons/lost sectors, so currentReset
+   lines up directly — no separate anchor-alignment math needed. */
+const ASCENDANT_LIST = [
+  { name: "Ouroborea", location: "Aphelion's Rest Lost Sector" },
+  { name: "Forfeit Shrine", location: "Gardens of Esila" },
+  { name: "Shattered Ruins", location: "Spine of Keres" },
+  { name: "Keep of Honed Edges", location: "Harbinger's Seclude" },
+  { name: "Agonarch Abyss", location: "Bay of Drowned Wishes Lost Sector" },
+  { name: "Cimmerian Garrison", location: "Chamber of Starlight Lost Sector" },
+];
+const ASCENDANT_ANCHOR_RESET = Date.UTC(2026, 7, 11, 17, 0, 0); // Aug 11, 2026 reset — index 0
+
+function getAscendantChallenge(resetTs) {
+  const weeksSinceAnchor = Math.round((resetTs - ASCENDANT_ANCHOR_RESET) / WEEK_MS);
+  const idx = mod(weeksSinceAnchor, ASCENDANT_LIST.length);
+  return ASCENDANT_LIST[idx];
+}
+
+const acThisWeekEl = document.getElementById('ac-this-week');
+if (acThisWeekEl) {
+  const thisWeek = getAscendantChallenge(currentReset);
+  acThisWeekEl.innerHTML = `
+    <div class="ac-this-week-label">This Week</div>
+    <div class="ac-this-week-name">${thisWeek.name}</div>
+    <div class="ac-this-week-location">in ${thisWeek.location}</div>`;
+}
+
+const acTableBody = document.getElementById('ac-table-body');
+if (acTableBody) {
+  let acRows = '';
+  for (let i = 0; i < FUTURE_WEEKS; i++) {
+    const resetTs = currentReset + i * WEEK_MS;
+    const c = getAscendantChallenge(resetTs);
+    acRows += `
+      <tr class="${i === 0 ? 'is-current-week' : ''}">
+        <td class="rt-date">${fmtDate(resetTs)}${i === 0 ? '<span class="current-week-tag">This Week</span>' : ''}</td>
+        <td class="rt-pair"><span class="item">${c.name}</span></td>
+        <td class="rt-pair">${c.location}</td>
+      </tr>`;
+  }
+  acTableBody.innerHTML = acRows;
+}
+
 </script>
 
 <!-- GoatCounter: silent visit tracking, no visible counter on the page -->
