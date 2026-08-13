@@ -210,29 +210,33 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .ls-card-banner { position:relative; height:110px; background:var(--bg3); overflow:hidden; }
 .ls-card-banner img { width:100%; height:100%; object-fit:cover; display:block; }
 .ls-card-body { padding:1.1rem 1.2rem 1.2rem; display:flex; gap:1.25rem; flex:1; }
-.ls-core { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.ls-core { flex:1; min-width:0; display:flex; flex-direction:column; gap:11px; }
 .ls-destination { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold2); opacity:0.85; margin-bottom:2px; }
 .ls-name { font-family:'Cinzel',serif; font-size:22px; font-weight:900; color:var(--text); line-height:1.2; }
 .ls-name.unsolved { color:var(--muted2); font-family:'Barlow Condensed',sans-serif; font-style:italic; font-size:16px; }
-.ls-armor-block { margin-top:4px; padding:12px 13px; background:var(--bg3); border:1px solid var(--border2); border-radius:7px; cursor:pointer; transition:border-color 0.2s, background 0.2s; }
+.ls-armor-block { margin-top:18px; padding:12px 13px; background:var(--bg3); border:1px solid var(--border2); border-radius:7px; cursor:pointer; transition:border-color 0.2s, background 0.2s; }
 .ls-armor-block:hover { border-color:var(--gold); background:var(--bg4); }
 .ls-armor-label { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); margin-bottom:5px; }
 .ls-armor-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .ls-armor-name { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:600; letter-spacing:0.04em; color:#7B82CB; }
 .ls-expand-hint { font-size:16px; font-weight:500; letter-spacing:0.01em; color:var(--muted2); font-style:italic; white-space:nowrap; }
+.ls-enemy { font-family:'Barlow',sans-serif; font-size:16px; font-weight:500; color:var(--text2); }
+.ls-enemy strong { color:var(--text); font-weight:600; }
 .ls-tomorrow { font-family:'Barlow',sans-serif; font-size:16px; font-weight:500; font-style:italic; color:var(--muted2); }
 .ls-tomorrow strong { color:var(--gold2); font-weight:600; font-style:normal; }
 
 /* Modifiers panel */
-.ls-modifiers { width:165px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; padding-left:1.15rem; border-left:1px solid var(--border); }
+.ls-modifiers { width:215px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; padding-left:1.15rem; border-left:1px solid var(--border); }
 .ls-mod-group { display:flex; flex-direction:column; gap:5px; }
 .ls-mod-label { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted2); }
-.ls-mod-value { display:flex; align-items:center; gap:7px; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:600; color:var(--text2); }
+.ls-mod-value { display:flex; flex-wrap:wrap; align-items:center; gap:7px; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:600; color:var(--text2); }
 .ls-mod-icon { width:17px; height:17px; flex-shrink:0; display:inline-block; background-color:#fff; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center; }
 .ls-mod-icon.champ-barrier { -webkit-mask-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiMwMDAwMDAiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAtMiAzNiAzNiIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogICAgPHRpdGxlPnBpZXJjZTwvdGl0bGU+CiAgICA8cGF0aCBkPSJNMTcuODg4IDQuMzUybDEzLjc2IDIzLjg0aC0yNy41NTJsMi41OTItNC40NDhoMTYuNjA4YzAuMjg4IDAgMC40NDgtMC4zMiAwLjMyLTAuNTc2bC04LjMyLTE0LjM2OHpNMTIuNDggMTMuNjY0bDIuOTc2IDUuMTg0aC01Ljk1MnoiPjwvcGF0aD4KPC9zdmc+'); mask-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiMwMDAwMDAiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAtMiAzNiAzNiIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogICAgPHRpdGxlPnBpZXJjZTwvdGl0bGU+CiAgICA8cGF0aCBkPSJNMTcuODg4IDQuMzUybDEzLjc2IDIzLjg0aC0yNy41NTJsMi41OTItNC40NDhoMTYuNjA4YzAuMjg4IDAgMC40NDgtMC4zMiAwLjMyLTAuNTc2bC04LjMyLTE0LjM2OHpNMTIuNDggMTMuNjY0bDIuOTc2IDUuMTg0aC01Ljk1MnoiPjwvcGF0aD4KPC9zdmc+'); }
 .ls-mod-icon.champ-overload { -webkit-mask-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiMwMDAwMDAiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8dGl0bGU+b3ZlcmxvYWQ8L3RpdGxlPgogICAgPHBhdGggZD0iTTQuMDk2IDE2LjI4OGMwLTQuMTI4IDIuMDgwLTcuNzQ0IDUuMjQ4LTkuODg4IDAuMTkyLTAuMDk2IDAuNDE2LTAuMDY0IDAuNTQ0IDAuMTI4bDYuMTQ0IDkuNzZoLTcuODcybDcuNTIgMTEuOTA0Yy02LjQzMi0wLjE5Mi0xMS41ODQtNS40NC0xMS41ODQtMTEuOTA0ek0xNi4zODQgNC4zODRjNi40MzIgMC4xOTIgMTEuNTUyIDUuNDQgMTEuNTUyIDExLjkwNCAwIDQuMDk2LTIuMDgwIDcuNzEyLTUuMjE2IDkuODU2LTAuMTkyIDAuMTI4LTAuNDE2IDAuMDY0LTAuNTQ0LTAuMTI4bC02LjE0NC05LjcyOGg3Ljg3MnoiPjwvcGF0aD4KPC9zdmc+'); mask-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiMwMDAwMDAiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8dGl0bGU+b3ZlcmxvYWQ8L3RpdGxlPgogICAgPHBhdGggZD0iTTQuMDk2IDE2LjI4OGMwLTQuMTI4IDIuMDgwLTcuNzQ0IDUuMjQ4LTkuODg4IDAuMTkyLTAuMDk2IDAuNDE2LTAuMDY0IDAuNTQ0IDAuMTI4bDYuMTQ0IDkuNzZoLTcuODcybDcuNTIgMTEuOTA0Yy02LjQzMi0wLjE5Mi0xMS41ODQtNS40NC0xMS41ODQtMTEuOTA0ek0xNi4zODQgNC4zODRjNi40MzIgMC4xOTIgMTEuNTUyIDUuNDQgMTEuNTUyIDExLjkwNCAwIDQuMDk2LTIuMDgwIDcuNzEyLTUuMjE2IDkuODU2LTAuMTkyIDAuMTI4LTAuNDE2IDAuMDY0LTAuNTQ0LTAuMTI4bC02LjE0NC05LjcyOGg3Ljg3MnoiPjwvcGF0aD4KPC9zdmc+'); }
 .ls-mod-icon.champ-unstoppable { -webkit-mask-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiMwMDAwMDAiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8dGl0bGU+c3RhZ2dlcjwvdGl0bGU+CiAgICA8cGF0aCBkPSJNMjcuNzc2IDI2LjE3NmMwIDEuMDI0LTAuODMyIDEuODU2LTEuODU2IDEuODU2aC04LjYwOGwxMC40NjQtMTAuNDY0djguNjA4ek0yMi4zMDQgNC4zODRoNS40NzJ2NS40NGwtMTguMjA4IDE4LjIwOGgtNS40NzJ2LTUuNDcyek00LjA5NiA2LjI0YzAtMS4wMjQgMC44MzItMS44NTYgMS44ODgtMS44NTZoOC42MDhsLTEwLjQ5NiAxMC40NjR2LTguNjA4eiI+PC9wYXRoPgo8L3N2Zz4='); mask-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiMwMDAwMDAiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8dGl0bGU+c3RhZ2dlcjwvdGl0bGU+CiAgICA8cGF0aCBkPSJNMjcuNzc2IDI2LjE3NmMwIDEuMDI0LTAuODMyIDEuODU2LTEuODU2IDEuODU2aC04LjYwOGwxMC40NjQtMTAuNDY0djguNjA4ek0yMi4zMDQgNC4zODRoNS40NzJ2NS40NGwtMTguMjA4IDE4LjIwOGgtNS40NzJ2LTUuNDcyek00LjA5NiA2LjI0YzAtMS4wMjQgMC44MzItMS44NTYgMS44ODgtMS44NTZoOC42MDhsLTEwLjQ5NiAxMC40NjR2LTguNjA4eiI+PC9wYXRoPgo8L3N2Zz4='); }
-.ls-mod-elem-icon { width:17px; height:17px; flex-shrink:0; object-fit:contain; }
+.ls-mod-elem-icon { width:17px; height:17px; flex-shrink:0; display:inline-block; background-color:currentColor; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center; }
+.ls-mod-elem { display:inline-flex; align-items:center; gap:6px; }
+.ls-mod-pipe { color:var(--muted); font-weight:400; }
 .ls-mod-tbd { font-style:italic; color:var(--muted); font-weight:400; font-size:16px; font-family:'Barlow',sans-serif; }
 
 /* Jump To pills */
@@ -241,13 +245,13 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .ls-jump-pill:hover { border-color:var(--gold); color:var(--gold2); background:var(--bg3); }
 
 /* Element colors — matches Armor Set Bonuses page palette exactly */
-.ls-mod-value.elem-arc { color:var(--arc); }
-.ls-mod-value.elem-solar { color:var(--solar); }
-.ls-mod-value.elem-void { color:var(--void); }
-.ls-mod-value.elem-stasis { color:var(--stasis); }
-.ls-mod-value.elem-strand { color:var(--strand); }
-.ls-mod-value.elem-prismatic { color:var(--prismatic); }
-.ls-mod-value.elem-kinetic { color:var(--kinetic); }
+.ls-mod-elem.elem-arc { color:var(--arc); }
+.ls-mod-elem.elem-solar { color:var(--solar); }
+.ls-mod-elem.elem-void { color:var(--void); }
+.ls-mod-elem.elem-stasis { color:var(--stasis); }
+.ls-mod-elem.elem-strand { color:var(--strand); }
+.ls-mod-elem.elem-prismatic { color:var(--prismatic); }
+.ls-mod-elem.elem-kinetic { color:var(--kinetic); }
 
 .ls-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(4,5,8,0.82); z-index:1000; align-items:center; justify-content:center; padding:2rem; }
 .ls-modal-backdrop.open { display:flex; }
@@ -916,21 +920,21 @@ const LOST_SECTORS = {
 // Modifiers are keyed by the SPECIFIC Lost Sector, not the destination — since destinations
 // with more than one Lost Sector in their pool can see different modifiers depending on
 // which one is active. Champions/Shields/Threat are locked per LS (confirmed). Modifiers
-// are believed static per LS but not yet confirmed. Overcharged weapon is suspected to
-// rotate — pattern unknown, so today's (8/12) observed value is intentionally NOT shown
-// here yet (would go stale). Surge is suspected to be a GLOBAL daily value rather than
-// per-LS (every destination showed the same Arc/Stasis pair on 8/12) — also not yet shown
-// pending more days of data. Both fall back to "TBD" in the card until confirmed.
+// and Enemy Type are believed static per LS but not yet fully confirmed. Overcharged weapon
+// is suspected to rotate — pattern unknown, so today's (8/12) observed value is intentionally
+// NOT shown here yet (would go stale). Surge is suspected to be a GLOBAL daily value rather
+// than per-LS (every destination showed the same Arc/Stasis pair on 8/12) — also not yet
+// shown pending more days of data. Both fall back to "TBD" in the card until confirmed.
 const LS_MODIFIERS = {
-  "Aphelion's Rest":     { champions: ["Overload", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Epitaph"] },
-  "Concealed Void":      { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Arach-NO!"] },
-  "Excavation Site XII": { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"] },
-  "Exodus Garden 2A":    { champions: ["Barrier", "Overload"], shields: ["Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Scorched Earth"] },
-  "K1 Crew Quarters":    { champions: ["Barrier", "Overload"], shields: ["Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Hot Knife"] },
-  "Metamorphosis":       { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Scorched Earth"] },
-  "The Broken Deep":     { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], surge: [], threat: "Strand", weapon: null, modifiers: ["Epitaph", "Chaff"] },
-  "The Conflux":         { champions: ["Barrier", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"] },
-  "Thrilladrome":        { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Shocker"] },
+  "Aphelion's Rest":     { champions: ["Overload", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken"] },
+  "Concealed Void":      { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Arach-NO!"], enemy: ["Fallen"] },
+  "Excavation Site XII": { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Fallen/Cabal?"] },
+  "Exodus Garden 2A":    { champions: ["Barrier", "Overload"], shields: ["Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Fallen"] },
+  "K1 Crew Quarters":    { champions: ["Barrier", "Overload"], shields: ["Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Hot Knife"], enemy: ["Fallen"] },
+  "Metamorphosis":       { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Scorn"] },
+  "The Broken Deep":     { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], surge: [], threat: "Strand", weapon: null, modifiers: ["Epitaph", "Chaff"], enemy: ["Taken", "Dread"] },
+  "The Conflux":         { champions: ["Barrier", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "Thrilladrome":        { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Shocker"], enemy: ["Vex"] },
 };
 
 // Pulled from the Armor Set Bonuses page dataset (destination-sourced sets only).
@@ -981,24 +985,31 @@ function getActiveLS(destName, dayOffset) {
   return d.cycle[idx];
 }
 
-const ELEMENT_ICON_BASE = 'https://meeplesacademy.github.io/MeeplesDestiny/ArmorSetBonuses/images/DamageTypes/';
+const ELEMENT_ICON_BASE = 'https://meeplesacademy.github.io/MeeplesDestiny/SharedAssets/DamageTypes/';
 const CHAMPION_ICON_CLASS = { "Barrier": "champ-barrier", "Overload": "champ-overload", "Unstoppable": "champ-unstoppable" };
 const ELEMENT_COLOR_CLASS = { "Arc": "elem-arc", "Solar": "elem-solar", "Void": "elem-void", "Stasis": "elem-stasis", "Strand": "elem-strand", "Prismatic": "elem-prismatic", "Kinetic": "elem-kinetic" };
 
 // Shared renderer for any element list (Shields, Surge, or single-item Threat) — each
 // element gets its own icon+label line, colored to match the element (same palette as the
 // Armor Set Bonuses page), and gracefully hides the icon if it fails to load.
+// Shared renderer for any element list (Shields, Surge, or single-item Threat) — all
+// elements render on ONE line, separated by pipes. Icons are mask-tinted (same technique
+// as the Champion icons) so they always exactly match their text color, regardless of the
+// source PNG's own coloring.
 function elementsBlockHTML(elements) {
   if (!elements || !elements.length) return `<div class="ls-mod-tbd">TBD</div>`;
-  return elements.map(el => {
+  const parts = elements.map(el => {
     const colorClass = ELEMENT_COLOR_CLASS[el] || '';
-    return `<div class="ls-mod-value ${colorClass}"><img class="ls-mod-elem-icon" src="${ELEMENT_ICON_BASE}${el}.png" alt="${el}" onerror="this.style.display='none'">${el}</div>`;
-  }).join('');
+    const iconUrl = `${ELEMENT_ICON_BASE}${el}.png`;
+    return `<span class="ls-mod-elem ${colorClass}"><span class="ls-mod-elem-icon" style="-webkit-mask-image:url('${iconUrl}');mask-image:url('${iconUrl}');"></span>${el}</span>`;
+  });
+  return `<div class="ls-mod-value">${parts.join('<span class="ls-mod-pipe">|</span>')}</div>`;
 }
 
 function championsBlockHTML(champions) {
   if (!champions || !champions.length) return `<div class="ls-mod-tbd">TBD</div>`;
-  return champions.map(c => `<div class="ls-mod-value"><span class="ls-mod-icon ${CHAMPION_ICON_CLASS[c] || ''}"></span>${c}</div>`).join('');
+  const parts = champions.map(c => `<span class="ls-mod-elem"><span class="ls-mod-icon ${CHAMPION_ICON_CLASS[c] || ''}"></span>${c}</span>`);
+  return `<div class="ls-mod-value">${parts.join('<span class="ls-mod-pipe">|</span>')}</div>`;
 }
 
 function textBlockHTML(value) {
@@ -1016,6 +1027,10 @@ function lsCardHTML(destName) {
   const nameHTML = today
     ? `<div class="ls-name">${today}</div>`
     : `<div class="ls-name unsolved">Rotation TBD — check in-game</div>`;
+
+  const enemyHTML = (mods && mods.enemy && mods.enemy.length)
+    ? `<div class="ls-enemy">Enemy: <strong>${mods.enemy.join(', ')}</strong></div>`
+    : `<div class="ls-enemy">Enemy: <strong>TBD</strong></div>`;
 
   const tomorrowHTML = tomorrow
     ? `Tomorrow: <strong>${tomorrow}</strong>`
@@ -1056,6 +1071,7 @@ function lsCardHTML(destName) {
         <div class="ls-core">
           <div class="ls-destination">${destName}</div>
           ${nameHTML}
+          ${enemyHTML}
           <div class="ls-tomorrow">${tomorrowHTML}</div>
           <div class="ls-armor-block" data-armor-set="${d.armorSet}">
             <div class="ls-armor-label">Armor Set</div>
