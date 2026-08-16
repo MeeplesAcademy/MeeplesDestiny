@@ -246,6 +246,9 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .ls-mod-elem { display:inline-flex; align-items:center; gap:6px; }
 .ls-mod-pipe { color:var(--muted); font-weight:400; }
 .ls-mod-tbd { font-style:italic; color:var(--muted); font-weight:400; font-size:16px; font-family:'Barlow',sans-serif; }
+.ls-modifier-tag { border-bottom:1px dotted var(--muted2); cursor:help; }
+.ls-tooltip { display:none; position:fixed; max-width:240px; background:var(--bg4); border:1px solid var(--border2); border-radius:8px; padding:10px 12px; font-family:'Barlow',sans-serif; font-size:16px; font-weight:400; color:var(--text2); line-height:1.45; z-index:2000; box-shadow:0 6px 20px rgba(0,0,0,0.5); pointer-events:none; }
+.ls-tooltip.visible { display:block; }
 
 /* Jump To pills */
 .ls-jump-pills { display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin-bottom:1.75rem; }
@@ -1052,6 +1055,28 @@ function textBlockHTML(value) {
   return `<div class="ls-mod-value">${items.join(', ')}</div>`;
 }
 
+const MODIFIER_DESCRIPTIONS = {
+  "Scorched Earth": "Enemies throw grenades more often.",
+  "Arach-NO!": "When defeated, Fallen Vandals spawns a web mine at their feet.",
+  "Fire Pit": "When defeated, Acolytes spawn fire pools that cause damage.",
+  "Epitaph": "Taken combatants generate blight geysers when defeated.",
+  "Hot Knife": "Shanks have Solar shields.",
+  "Raider Shield": "Scorn Raiders now have Void shields.",
+  "Shocker": "When defeated, Goblins spawn Arc pools that cause damage over time.",
+  "Pestilence": "When defeated, Psions will spawn Void grenades at their feet.",
+  "Empath": "Enhanced radar. Take increased damage from melee.",
+};
+
+function modifiersBlockHTML(modifiers) {
+  if (!modifiers || !modifiers.length) return `<div class="ls-mod-tbd">TBD</div>`;
+  const parts = modifiers.map(m =>
+    MODIFIER_DESCRIPTIONS.hasOwnProperty(m)
+      ? `<span class="ls-modifier-tag" data-modifier="${m}">${m}</span>`
+      : m
+  );
+  return `<div class="ls-mod-value">${parts.join(', ')}</div>`;
+}
+
 function lsCardHTML(destName) {
   const d = LOST_SECTORS[destName];
   const today = getActiveLS(destName, 0);
@@ -1091,7 +1116,7 @@ function lsCardHTML(destName) {
           </div>
           <div class="ls-mod-group">
             <div class="ls-mod-label">Modifiers</div>
-            ${textBlockHTML(mods && mods.modifiers)}
+            ${modifiersBlockHTML(mods && mods.modifiers)}
           </div>
         </div>`;
 
@@ -1155,6 +1180,41 @@ const LS_DEST_NAMES_SORTED = Object.keys(LOST_SECTORS).sort((a, b) => a.localeCo
 const lsGrid = document.getElementById('ls-grid');
 if (lsGrid) {
   lsGrid.innerHTML = LS_DEST_NAMES_SORTED.map(lsCardHTML).join('');
+}
+
+/* Modifier hover tooltips — a single shared element appended to <body> and positioned via
+   getBoundingClientRect, rather than a CSS-only absolute tooltip, since the .ls-card has
+   overflow:hidden (for the banner's rounded corners) which would otherwise clip it. */
+const lsTooltip = document.createElement('div');
+lsTooltip.className = 'ls-tooltip';
+document.body.appendChild(lsTooltip);
+
+function positionLsTooltip(tag) {
+  const rect = tag.getBoundingClientRect();
+  const tw = lsTooltip.offsetWidth;
+  const th = lsTooltip.offsetHeight;
+  let top = rect.top - th - 8;
+  if (top < 8) top = rect.bottom + 8;
+  let left = rect.left + rect.width / 2 - tw / 2;
+  if (left < 8) left = 8;
+  if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+  lsTooltip.style.top = top + 'px';
+  lsTooltip.style.left = left + 'px';
+}
+
+if (lsGrid) {
+  lsGrid.addEventListener('mouseover', e => {
+    const tag = e.target.closest('.ls-modifier-tag');
+    if (!tag) return;
+    const desc = MODIFIER_DESCRIPTIONS[tag.dataset.modifier];
+    if (!desc) return;
+    lsTooltip.textContent = desc;
+    lsTooltip.classList.add('visible');
+    positionLsTooltip(tag);
+  });
+  lsGrid.addEventListener('mouseout', e => {
+    if (e.target.closest('.ls-modifier-tag')) lsTooltip.classList.remove('visible');
+  });
 }
 
 const lsJumpPills = document.getElementById('ls-jump-pills');
