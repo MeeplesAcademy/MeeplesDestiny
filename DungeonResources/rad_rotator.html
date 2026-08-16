@@ -29,6 +29,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .page-header::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:120px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
 .eyebrow { font-family:'Barlow Condensed',sans-serif; font-size:28px; font-weight:600; letter-spacing:0.35em; text-transform:uppercase; color:var(--gold); margin-bottom:0.5rem; opacity:0.8; }
 .page-title { font-family:'Cinzel',serif; font-size:clamp(2rem,5vw,4rem); font-weight:900; letter-spacing:0.06em; text-transform:uppercase; background:linear-gradient(180deg,var(--gold3) 0%,var(--gold) 60%,#8a6a20 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; margin-bottom:0.75rem; }
+.page-subnote { font-family:'Barlow',sans-serif; font-size:20px; font-weight:400; color:var(--text2); }
 .page-sub { font-size:clamp(1rem,2.2vw,1.3rem); color:var(--muted2); letter-spacing:0.04em; font-weight:400; max-width:900px; margin:0 auto; line-height:1.5; }
 
 /* ── Sections ── */
@@ -89,6 +90,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .rad-card:hover .rad-card-banner img { transform:scale(1.04); }
 .banner-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:repeating-linear-gradient(45deg,var(--bg3) 0px,var(--bg3) 10px,var(--bg4) 10px,var(--bg4) 20px); }
 .banner-placeholder-text { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:0 10px; text-align:center; }
+.ls-card-banner .banner-placeholder-text { font-size:19px; letter-spacing:0.12em; color:var(--text2); }
 .rad-card-body { padding:1rem 1.1rem 1.1rem; flex:1; display:flex; flex-direction:column; gap:6px; }
 .rad-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; border-radius:3px; padding:3px 9px; width:fit-content; }
 .rad-badge.raid { color:var(--raid-accent); background:rgba(169,127,208,0.1); border:1px solid rgba(169,127,208,0.25); }
@@ -211,7 +213,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .ls-card-banner img { width:100%; height:100%; object-fit:cover; display:block; }
 .ls-card-body { padding:1.1rem 1.2rem 1.2rem; display:flex; gap:1.25rem; flex:1; }
 .ls-core { flex:1; min-width:0; display:flex; flex-direction:column; gap:11px; }
-.ls-destination { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold2); opacity:0.85; margin-bottom:2px; }
+.ls-destination { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold2); opacity:0.85; margin-bottom:2px; }
 .ls-name { font-family:'Cinzel',serif; font-size:22px; font-weight:900; color:var(--text); line-height:1.2; }
 .ls-name.unsolved { color:var(--muted2); font-family:'Barlow Condensed',sans-serif; font-style:italic; font-size:16px; }
 .ls-armor-block { margin-top:18px; padding:12px 13px; background:var(--bg3); border:1px solid var(--border2); border-radius:7px; cursor:pointer; transition:border-color 0.2s, background 0.2s; }
@@ -222,8 +224,14 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .ls-expand-hint { font-size:16px; font-weight:500; letter-spacing:0.01em; color:var(--muted2); font-style:italic; white-space:nowrap; }
 .ls-enemy { font-family:'Barlow',sans-serif; font-size:16px; font-weight:500; color:var(--text2); }
 .ls-enemy strong { color:var(--text); font-weight:600; }
-.ls-tomorrow { font-family:'Barlow',sans-serif; font-size:16px; font-weight:500; font-style:italic; color:var(--muted2); }
-.ls-tomorrow strong { color:var(--gold2); font-weight:600; font-style:normal; }
+.ls-next4 { display:flex; flex-direction:column; gap:4px; }
+.ls-next4-label { font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold2); margin-bottom:2px; }
+.ls-next4-row { display:flex; align-items:baseline; gap:10px; font-family:'Barlow',sans-serif; font-size:16px; }
+.ls-next4-date { color:var(--muted2); font-weight:500; flex-shrink:0; }
+.ls-next4-name { color:var(--text); font-weight:600; }
+.ls-next4-star { color:var(--gold2); font-weight:700; margin-left:2px; }
+.ls-next4-footnote { font-size:16px; font-style:italic; color:var(--muted2); margin-top:2px; }
+.ls-special-note { font-size:16px; font-style:italic; color:var(--muted2); margin-top:2px; }
 
 /* Modifiers panel */
 .ls-modifiers { width:215px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; padding-left:1.15rem; border-left:1px solid var(--border); }
@@ -241,7 +249,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 
 /* Jump To pills */
 .ls-jump-pills { display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin-bottom:1.75rem; }
-.ls-jump-pill { background:var(--bg2); border:1px solid var(--border2); border-radius:20px; padding:7px 16px; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.04em; color:var(--text2); cursor:pointer; transition:all 0.15s; text-decoration:none; }
+.ls-jump-pill { background:var(--bg2); border:1.5px solid rgba(200,168,75,0.65); border-radius:20px; padding:7px 16px; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.04em; color:var(--text2); cursor:pointer; transition:all 0.15s; text-decoration:none; }
 .ls-jump-pill:hover { border-color:var(--gold); color:var(--gold2); background:var(--bg3); }
 
 /* Element colors — matches Armor Set Bonuses page palette exactly */
@@ -298,6 +306,7 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 <header class="page-header">
   <div class="eyebrow">Destiny 2</div>
   <h1 class="page-title">Raid &amp; Dungeon Rotations</h1>
+  <p class="page-subnote">Lost Sector rotations and more below.</p>
 </header>
 
 <!-- ═══════════════ FEATURED THIS WEEK / FUTURE ROTATIONS / LOOK UP / SEARCH (ALL TABS) ═══════════════ -->
@@ -906,35 +915,52 @@ function daysSinceLSAnchor(ts) {
 }
 
 const LOST_SECTORS = {
-  "EDZ":            { cycle: null, armorSet: "Wildwood" },
+  "EDZ":            { cycle: ["Skydock IV", "The Quarry", "Scavenger's Den", "Excavation Site XII"], armorSet: "Wildwood" },
   "Cosmodrome":      { cycle: ["Veles Labyrinth", "Exodus Garden 2A"], armorSet: "Seventh Seraph" },
-  "Nessus":          { cycle: ["The Conflux"], armorSet: "Exodus Down" },
+  "Nessus":          { cycle: ["The Conflux"], armorSet: "Exodus Down", specialNote: "The Conflux is the only LS on Nessus with Expert/Master versions." },
   "Moon":            { cycle: ["K1 Logistics", "K1 Communion", "K1 Revelation", "K1 Crew Quarters"], armorSet: "Dreambane" },
   "Dreaming City":   { cycle: ["Aphelion's Rest", "Bay of Drowned Wishes", "Chamber of Starlight"], armorSet: "Reverie Dawn" },
   "Europa":          { cycle: ["Concealed Void", "Bunker E15", "Perdition"], armorSet: "Crystocrene" },
-  "Throne World":    { cycle: ["Metamorphosis", "Sepulchur", "Extraction"], armorSet: "Veritas" },
+  "Throne World":    { cycle: ["Metamorphosis", "Sepulcher", "Extraction"], armorSet: "Veritas" },
   "Neomuna":         { cycle: ["Thrilladrome", "Hydroponics Delta", "Gilded Precept"], armorSet: "Thunderhead" },
   "Pale Heart":      { cycle: ["The Broken Deep", "The Blooming Deep", "The Forgotten Deep"], armorSet: "First Ascent" },
 };
 
 // Modifiers are keyed by the SPECIFIC Lost Sector, not the destination — since destinations
 // with more than one Lost Sector in their pool can see different modifiers depending on
-// which one is active. Champions/Shields/Threat are locked per LS (confirmed). Modifiers
-// and Enemy Type are believed static per LS but not yet fully confirmed. Overcharged weapon
-// is suspected to rotate — pattern unknown, so today's (8/12) observed value is intentionally
-// NOT shown here yet (would go stale). Surge is suspected to be a GLOBAL daily value rather
-// than per-LS (every destination showed the same Arc/Stasis pair on 8/12) — also not yet
-// shown pending more days of data. Both fall back to "TBD" in the card until confirmed.
+// which one is active. As of 8/15, Champions/Shields/Threat/Modifiers/Enemy Type are
+// CONFIRMED complete and static for every Lost Sector in every destination's rotation.
+// Overcharged weapon is still being tracked (suspected to rotate, pattern not yet known).
+// Surge is still being tracked (suspected to be a GLOBAL daily/weekly value rather than
+// per-LS — every destination has shown the same pair on the same days so far). Both stay
+// "TBD" in the card until confirmed with enough data.
 const LS_MODIFIERS = {
-  "Aphelion's Rest":     { champions: ["Overload", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken"] },
-  "Concealed Void":      { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Arach-NO!"], enemy: ["Fallen"] },
-  "Excavation Site XII": { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Fallen/Cabal?"] },
-  "Exodus Garden 2A":    { champions: ["Barrier", "Overload"], shields: ["Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Fallen"] },
-  "K1 Crew Quarters":    { champions: ["Barrier", "Overload"], shields: ["Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Hot Knife"], enemy: ["Fallen"] },
-  "Metamorphosis":       { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Scorn"] },
-  "The Broken Deep":     { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], surge: [], threat: "Strand", weapon: null, modifiers: ["Epitaph", "Chaff"], enemy: ["Taken", "Dread"] },
-  "The Conflux":         { champions: ["Barrier", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
-  "Thrilladrome":        { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Shocker"], enemy: ["Vex"] },
+  "Exodus Garden 2A":     { champions: ["Barrier", "Overload"], shields: ["Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Fallen"] },
+  "Veles Labyrinth":      { champions: ["Barrier", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Fire Pit"], enemy: ["Hive"] },
+  "Aphelion's Rest":      { champions: ["Overload", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken"] },
+  "Bay of Drowned Wishes":{ champions: ["Overload", "Unstoppable"], shields: ["Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Raider Shield"], enemy: ["Scorn"] },
+  "Chamber of Starlight": { champions: ["Overload", "Unstoppable"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken"] },
+  "Excavation Site XII":  { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "Skydock IV":           { champions: ["Barrier", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Pestilence"], enemy: ["Cabal"] },
+  "The Quarry":           { champions: ["Barrier", "Unstoppable"], shields: ["Solar", "Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "Scavenger's Den":      { champions: ["Barrier", "Overload"], shields: ["Arc"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Fallen"] },
+  "Concealed Void":       { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Arach-NO!"], enemy: ["Fallen"] },
+  "Bunker E15":           { champions: ["Barrier", "Overload"], shields: ["Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Shocker"], enemy: ["Vex"] },
+  "Perdition":            { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Shocker"], enemy: ["Vex"] },
+  "K1 Crew Quarters":     { champions: ["Barrier", "Overload"], shields: ["Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Hot Knife"], enemy: ["Fallen"] },
+  "K1 Logistics":         { champions: ["Barrier", "Overload"], shields: ["Arc", "Solar"], surge: [], threat: "Void", weapon: null, modifiers: ["Hot Knife"], enemy: ["Fallen"] },
+  "K1 Communion":         { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Arach-NO!"], enemy: ["Fallen"] },
+  "K1 Revelation":        { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Void", weapon: null, modifiers: ["Fire Pit"], enemy: ["Hive"] },
+  "Thrilladrome":         { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Shocker"], enemy: ["Vex"] },
+  "Hydroponics Delta":    { champions: ["Barrier", "Unstoppable"], shields: ["None"], surge: [], threat: "Void", weapon: null, modifiers: ["Empath"], enemy: ["Vex"] },
+  "Gilded Precept":       { champions: ["Barrier", "Unstoppable"], shields: ["Solar", "Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "The Conflux":          { champions: ["Barrier", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "The Broken Deep":      { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], surge: [], threat: "Strand", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken", "Dread"] },
+  "The Blooming Deep":    { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken", "Dread"] },
+  "The Forgotten Deep":   { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Arc", weapon: null, modifiers: ["Fire Pit"], enemy: ["Hive"] },
+  "Metamorphosis":        { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Scorn"] },
+  "Sepulcher":            { champions: ["Barrier", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Solar", weapon: null, modifiers: ["Fire Pit"], enemy: ["Hive"] },
+  "Extraction":           { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Raider Shield"], enemy: ["Scorn"] },
 };
 
 // Pulled from the Armor Set Bonuses page dataset (destination-sourced sets only).
@@ -985,6 +1011,11 @@ function getActiveLS(destName, dayOffset) {
   return d.cycle[idx];
 }
 
+function lsDateForOffset(dayOffset) {
+  const todayIdx = daysSinceLSAnchor(now.getTime());
+  return LS_ANCHOR + (todayIdx + dayOffset) * LS_DAY_MS;
+}
+
 const ELEMENT_ICON_BASE = 'https://meeplesacademy.github.io/MeeplesDestiny/SharedAssets/DamageTypes/';
 const CHAMPION_ICON_CLASS = { "Barrier": "champ-barrier", "Overload": "champ-overload", "Unstoppable": "champ-unstoppable" };
 const ELEMENT_COLOR_CLASS = { "Arc": "elem-arc", "Solar": "elem-solar", "Void": "elem-void", "Stasis": "elem-stasis", "Strand": "elem-strand", "Prismatic": "elem-prismatic", "Kinetic": "elem-kinetic" };
@@ -998,6 +1029,9 @@ const ELEMENT_COLOR_CLASS = { "Arc": "elem-arc", "Solar": "elem-solar", "Void": 
 // source PNG's own coloring.
 function elementsBlockHTML(elements) {
   if (!elements || !elements.length) return `<div class="ls-mod-tbd">TBD</div>`;
+  if (elements.length === 1 && elements[0] === "None") {
+    return `<div class="ls-mod-value" style="color:var(--muted2);">None</div>`;
+  }
   const parts = elements.map(el => {
     const colorClass = ELEMENT_COLOR_CLASS[el] || '';
     const iconUrl = `${ELEMENT_ICON_BASE}${el}.png`;
@@ -1021,7 +1055,6 @@ function textBlockHTML(value) {
 function lsCardHTML(destName) {
   const d = LOST_SECTORS[destName];
   const today = getActiveLS(destName, 0);
-  const tomorrow = getActiveLS(destName, 1);
   const mods = today ? LS_MODIFIERS[today] : null;
 
   const nameHTML = today
@@ -1032,9 +1065,7 @@ function lsCardHTML(destName) {
     ? `<div class="ls-enemy">Enemy: <strong>${mods.enemy.join(', ')}</strong></div>`
     : `<div class="ls-enemy">Enemy: <strong>TBD</strong></div>`;
 
-  const tomorrowHTML = tomorrow
-    ? `Tomorrow: <strong>${tomorrow}</strong>`
-    : `Tomorrow: <strong>Rotation TBD</strong>`;
+  const next4HTML = buildNext4HTML(destName);
 
   const modifiersHTML = `
         <div class="ls-modifiers">
@@ -1072,7 +1103,7 @@ function lsCardHTML(destName) {
           <div class="ls-destination">${destName}</div>
           ${nameHTML}
           ${enemyHTML}
-          <div class="ls-tomorrow">${tomorrowHTML}</div>
+          ${next4HTML}
           <div class="ls-armor-block" data-armor-set="${d.armorSet}">
             <div class="ls-armor-label">Armor Set</div>
             <div class="ls-armor-row">
@@ -1086,18 +1117,49 @@ function lsCardHTML(destName) {
     </div>`;
 }
 
+// Builds the "Next 4 Rotations" list — always exactly 4 upcoming calendar days, whatever
+// that destination's actual cycle length is. Shorter cycles (e.g. Nessus's locked single
+// sector, Cosmodrome's 2-item alternation) will naturally show repeats within those 4 days,
+// which is correct and informative, not a bug. Any date landing on a Tuesday reset gets an
+// asterisk plus a shared footnote, since modifiers can change at reset.
+function buildNext4HTML(destName) {
+  const d = LOST_SECTORS[destName];
+  if (!d.cycle) {
+    return `<div class="ls-next4"><div class="ls-next4-label">Next 4 Rotations</div><div class="ls-mod-tbd">TBD</div></div>`;
+  }
+  let hasTuesday = false;
+  const rows = [];
+  for (let i = 1; i <= 4; i++) {
+    const ts = lsDateForOffset(i);
+    const sectorName = getActiveLS(destName, i);
+    const isTuesday = new Date(ts).getUTCDay() === 2;
+    if (isTuesday) hasTuesday = true;
+    rows.push(`<div class="ls-next4-row"><span class="ls-next4-date">${fmtDate(ts)}</span><span class="ls-next4-name">${sectorName}${isTuesday ? '<span class="ls-next4-star">*</span>' : ''}</span></div>`);
+  }
+  let html = `<div class="ls-next4"><div class="ls-next4-label">Next 4 Rotations</div>${rows.join('')}</div>`;
+  if (hasTuesday) {
+    html += `<div class="ls-next4-footnote">*Some modifiers subject to change at reset.</div>`;
+  }
+  if (d.specialNote) {
+    html += `<div class="ls-special-note">${d.specialNote}</div>`;
+  }
+  return html;
+}
+
 function lsSlug(destName) {
   return destName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+const LS_DEST_NAMES_SORTED = Object.keys(LOST_SECTORS).sort((a, b) => a.localeCompare(b));
+
 const lsGrid = document.getElementById('ls-grid');
 if (lsGrid) {
-  lsGrid.innerHTML = Object.keys(LOST_SECTORS).map(lsCardHTML).join('');
+  lsGrid.innerHTML = LS_DEST_NAMES_SORTED.map(lsCardHTML).join('');
 }
 
 const lsJumpPills = document.getElementById('ls-jump-pills');
 if (lsJumpPills) {
-  lsJumpPills.innerHTML = Object.keys(LOST_SECTORS).map(destName =>
+  lsJumpPills.innerHTML = LS_DEST_NAMES_SORTED.map(destName =>
     `<button class="ls-jump-pill" data-target="ls-card-${lsSlug(destName)}">${destName}</button>`
   ).join('');
   lsJumpPills.addEventListener('click', e => {
