@@ -251,9 +251,13 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
 .ls-tooltip.visible { display:block; }
 
 /* Jump To pills */
-.ls-jump-pills { display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin-bottom:1.75rem; }
-.ls-jump-pill { background:var(--bg2); border:1.5px solid rgba(200,168,75,0.65); border-radius:20px; padding:7px 16px; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.04em; color:var(--text2); cursor:pointer; transition:all 0.15s; text-decoration:none; }
-.ls-jump-pill:hover { border-color:var(--gold); color:var(--gold2); background:var(--bg3); }
+.ls-jump-intro { text-align:center; font-family:'Barlow',sans-serif; font-size:19px; color:var(--text2); margin-bottom:1rem; }
+.ls-jump-boxes { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-bottom:1.75rem; }
+.ls-jump-box { display:flex; flex-direction:column; align-items:center; gap:5px; background:var(--bg2); border:1.5px solid rgba(200,168,75,0.65); border-radius:10px; padding:11px 18px; cursor:pointer; transition:all 0.15s; min-width:150px; }
+.ls-jump-box:hover { border-color:var(--gold); background:var(--bg3); }
+.ls-jump-box-dest { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--gold2); }
+.ls-jump-box-today { font-family:'Barlow',sans-serif; font-size:16px; font-weight:600; color:var(--text); text-align:center; line-height:1.3; }
+.ls-jump-box-today-label { color:var(--muted2); font-weight:400; }
 
 /* Element colors — matches Armor Set Bonuses page palette exactly */
 .ls-mod-elem.elem-arc { color:var(--arc); }
@@ -412,7 +416,8 @@ body::before { content:''; position:fixed; inset:0; background:radial-gradient(e
   <div class="tab-panel active" id="tab-panel-lostsectors" data-panel="lostsectors">
     <p class="section-note">Here are the active Expert &amp; Master Lost Sectors today. These are the best way to farm high tier destination armor sets.</p>
     <!-- TODO: link to the Armor Set Bonuses page belongs somewhere in this panel — placement TBD once the card layout is finalized -->
-    <div class="ls-jump-pills" id="ls-jump-pills"></div>
+    <p class="ls-jump-intro">Click a Destination for more details.</p>
+    <div class="ls-jump-boxes" id="ls-jump-boxes"></div>
     <div class="ls-grid" id="ls-grid"></div>
   </div>
 
@@ -931,40 +936,58 @@ const LOST_SECTORS = {
 
 // Modifiers are keyed by the SPECIFIC Lost Sector, not the destination — since destinations
 // with more than one Lost Sector in their pool can see different modifiers depending on
-// which one is active. As of 8/15, Champions/Shields/Threat/Modifiers/Enemy Type are
-// CONFIRMED complete and static for every Lost Sector in every destination's rotation.
-// Overcharged weapon is still being tracked (suspected to rotate, pattern not yet known).
-// Surge is still being tracked (suspected to be a GLOBAL daily/weekly value rather than
-// per-LS — every destination has shown the same pair on the same days so far). Both stay
-// "TBD" in the card until confirmed with enough data.
+// which one is active. As of 8/18, Champions/Shields/Threat/Modifiers/Enemy Type/Overcharged
+// Weapon are all CONFIRMED complete and static for every Lost Sector in every destination's
+// rotation (weapon confirmed via a full week of repeat observations showing no change).
+// Surge is NOT per-LS — see SURGE_CYCLE below, it's a shared global weekly value.
 const LS_MODIFIERS = {
-  "Exodus Garden 2A":     { champions: ["Barrier", "Overload"], shields: ["Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Fallen"] },
-  "Veles Labyrinth":      { champions: ["Barrier", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Fire Pit"], enemy: ["Hive"] },
-  "Aphelion's Rest":      { champions: ["Overload", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken"] },
-  "Bay of Drowned Wishes":{ champions: ["Overload", "Unstoppable"], shields: ["Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Raider Shield"], enemy: ["Scorn"] },
-  "Chamber of Starlight": { champions: ["Overload", "Unstoppable"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken"] },
-  "Excavation Site XII":  { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
-  "Skydock IV":           { champions: ["Barrier", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Pestilence"], enemy: ["Cabal"] },
-  "The Quarry":           { champions: ["Barrier", "Unstoppable"], shields: ["Solar", "Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
-  "Scavenger's Den":      { champions: ["Barrier", "Overload"], shields: ["Arc"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Fallen"] },
-  "Concealed Void":       { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Arach-NO!"], enemy: ["Fallen"] },
-  "Bunker E15":           { champions: ["Barrier", "Overload"], shields: ["Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Shocker"], enemy: ["Vex"] },
-  "Perdition":            { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Shocker"], enemy: ["Vex"] },
-  "K1 Crew Quarters":     { champions: ["Barrier", "Overload"], shields: ["Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Hot Knife"], enemy: ["Fallen"] },
-  "K1 Logistics":         { champions: ["Barrier", "Overload"], shields: ["Arc", "Solar"], surge: [], threat: "Void", weapon: null, modifiers: ["Hot Knife"], enemy: ["Fallen"] },
-  "K1 Communion":         { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Arach-NO!"], enemy: ["Fallen"] },
-  "K1 Revelation":        { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Void", weapon: null, modifiers: ["Fire Pit"], enemy: ["Hive"] },
-  "Thrilladrome":         { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], surge: [], threat: "Void", weapon: null, modifiers: ["Shocker"], enemy: ["Vex"] },
-  "Hydroponics Delta":    { champions: ["Barrier", "Unstoppable"], shields: ["None"], surge: [], threat: "Void", weapon: null, modifiers: ["Empath"], enemy: ["Vex"] },
-  "Gilded Precept":       { champions: ["Barrier", "Unstoppable"], shields: ["Solar", "Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
-  "The Conflux":          { champions: ["Barrier", "Unstoppable"], shields: ["Void"], surge: [], threat: "Solar", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
-  "The Broken Deep":      { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], surge: [], threat: "Strand", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken", "Dread"] },
-  "The Blooming Deep":    { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Epitaph"], enemy: ["Taken", "Dread"] },
-  "The Forgotten Deep":   { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], surge: [], threat: "Arc", weapon: null, modifiers: ["Fire Pit"], enemy: ["Hive"] },
-  "Metamorphosis":        { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Arc", weapon: null, modifiers: ["Scorched Earth"], enemy: ["Scorn"] },
-  "Sepulcher":            { champions: ["Barrier", "Unstoppable"], shields: ["Arc", "Solar"], surge: [], threat: "Solar", weapon: null, modifiers: ["Fire Pit"], enemy: ["Hive"] },
-  "Extraction":           { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Void"], surge: [], threat: "Arc", weapon: null, modifiers: ["Raider Shield"], enemy: ["Scorn"] },
+  "Exodus Garden 2A":     { champions: ["Barrier", "Overload"], shields: ["Void"], threat: "Void", weapon: "Linear Fusion Rifle", modifiers: ["Scorched Earth"], enemy: ["Fallen"] },
+  "Veles Labyrinth":      { champions: ["Barrier", "Unstoppable"], shields: ["Arc", "Solar"], threat: "Arc", weapon: "Shotgun", modifiers: ["Fire Pit"], enemy: ["Hive"] },
+  "Aphelion's Rest":      { champions: ["Overload", "Unstoppable"], shields: ["Void"], threat: "Solar", weapon: "Shotgun", modifiers: ["Epitaph"], enemy: ["Taken"] },
+  "Bay of Drowned Wishes":{ champions: ["Overload", "Unstoppable"], shields: ["Void"], threat: "Arc", weapon: "Sniper Rifle", modifiers: ["Raider Shield"], enemy: ["Scorn"] },
+  "Chamber of Starlight": { champions: ["Overload", "Unstoppable"], shields: ["Solar", "Void"], threat: "Solar", weapon: "Sword", modifiers: ["Epitaph"], enemy: ["Taken"] },
+  "Excavation Site XII":  { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], threat: "Solar", weapon: "Sword", modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "Skydock IV":           { champions: ["Barrier", "Unstoppable"], shields: ["Void"], threat: "Solar", weapon: "Shotgun", modifiers: ["Pestilence"], enemy: ["Cabal"] },
+  "The Quarry":           { champions: ["Barrier", "Unstoppable"], shields: ["Solar", "Void"], threat: "Void", weapon: "Grenade Launcher", modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "Scavenger's Den":      { champions: ["Barrier", "Overload"], shields: ["Arc"], threat: "Solar", weapon: "Fusion Rifle", modifiers: ["Scorched Earth"], enemy: ["Fallen"] },
+  "Concealed Void":       { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], threat: "Solar", weapon: "Trace Rifle", modifiers: ["Arach-NO!"], enemy: ["Fallen"] },
+  "Bunker E15":           { champions: ["Barrier", "Overload"], shields: ["Void"], threat: "Void", weapon: "Grenade Launcher", modifiers: ["Shocker"], enemy: ["Vex"] },
+  "Perdition":            { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], threat: "Arc", weapon: "Fusion Rifle", modifiers: ["Shocker"], enemy: ["Vex"] },
+  "K1 Crew Quarters":     { champions: ["Barrier", "Overload"], shields: ["Solar"], threat: "Arc", weapon: "Glaive", modifiers: ["Hot Knife"], enemy: ["Fallen"] },
+  "K1 Logistics":         { champions: ["Barrier", "Overload"], shields: ["Arc", "Solar"], threat: "Void", weapon: "Sniper Rifle", modifiers: ["Hot Knife"], enemy: ["Fallen"] },
+  "K1 Communion":         { champions: ["Barrier", "Overload"], shields: ["Solar", "Void"], threat: "Solar", weapon: "Linear Fusion Rifle", modifiers: ["Arach-NO!"], enemy: ["Fallen"] },
+  "K1 Revelation":        { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], threat: "Void", weapon: "Machine Gun", modifiers: ["Fire Pit"], enemy: ["Hive"] },
+  "Thrilladrome":         { champions: ["Barrier", "Overload"], shields: ["Arc", "Void"], threat: "Void", weapon: "Grenade Launcher", modifiers: ["Shocker"], enemy: ["Vex"] },
+  "Hydroponics Delta":    { champions: ["Barrier", "Unstoppable"], shields: ["None"], threat: "Void", weapon: "Rocket Launcher", modifiers: ["Empath"], enemy: ["Vex"] },
+  "Gilded Precept":       { champions: ["Barrier", "Unstoppable"], shields: ["Solar", "Void"], threat: "Arc", weapon: "Glaive", modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "The Conflux":          { champions: ["Barrier", "Unstoppable"], shields: ["Void"], threat: "Solar", weapon: "Trace Rifle", modifiers: ["Scorched Earth"], enemy: ["Cabal"] },
+  "The Broken Deep":      { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], threat: "Strand", weapon: "Rocket Launcher", modifiers: ["Epitaph"], enemy: ["Taken", "Dread"] },
+  "The Blooming Deep":    { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar", "Void"], threat: "Arc", weapon: "Machine Gun", modifiers: ["Epitaph"], enemy: ["Taken", "Dread"] },
+  "The Forgotten Deep":   { champions: ["Barrier", "Unstoppable"], shields: ["Arc"], threat: "Arc", weapon: "Grenade Launcher", modifiers: ["Fire Pit"], enemy: ["Hive"] },
+  "Metamorphosis":        { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Solar"], threat: "Arc", weapon: "Machine Gun", modifiers: ["Scorched Earth"], enemy: ["Scorn"] },
+  "Sepulcher":            { champions: ["Barrier", "Unstoppable"], shields: ["Arc", "Solar"], threat: "Solar", weapon: "Fusion Rifle", modifiers: ["Fire Pit"], enemy: ["Hive"] },
+  "Extraction":           { champions: ["Overload", "Unstoppable"], shields: ["Arc", "Void"], threat: "Arc", weapon: "Glaive", modifiers: ["Raider Shield"], enemy: ["Scorn"] },
 };
+
+// Surge is a shared GLOBAL weekly value (confirmed identical across every Lost Sector each
+// week), not per-LS. Confirmed: week of 8/11 = Arc+Stasis, week of 8/18 = Solar+Strand.
+// Beyond that, this is Rich's working hypothesis (one Light + one Darkness element, alternating
+// so the Darkness element never repeats back-to-back, full cycle length 6) — not yet fully
+// confirmed. Treat as the working dataset per his direction; update only if real data conflicts.
+const SURGE_CYCLE = [
+  ["Arc", "Stasis"],
+  ["Solar", "Strand"],
+  ["Void", "Stasis"],
+  ["Arc", "Strand"],
+  ["Solar", "Stasis"],
+  ["Void", "Strand"],
+];
+const SURGE_ANCHOR_RESET = Date.UTC(2026, 7, 11, 17, 0, 0); // week of Aug 11, 2026 = index 0
+
+function getCurrentSurge() {
+  const weeksSinceAnchor = Math.round((currentReset - SURGE_ANCHOR_RESET) / WEEK_MS);
+  return SURGE_CYCLE[mod(weeksSinceAnchor, SURGE_CYCLE.length)];
+}
 
 // Pulled from the Armor Set Bonuses page dataset (destination-sourced sets only).
 const ARMOR_SET_DATA = {
@@ -1104,7 +1127,7 @@ function lsCardHTML(destName) {
           </div>
           <div class="ls-mod-group">
             <div class="ls-mod-label">Surge</div>
-            ${elementsBlockHTML(mods && mods.surge)}
+            ${elementsBlockHTML(getCurrentSurge())}
           </div>
           <div class="ls-mod-group">
             <div class="ls-mod-label">Threat</div>
@@ -1217,15 +1240,19 @@ if (lsGrid) {
   });
 }
 
-const lsJumpPills = document.getElementById('ls-jump-pills');
-if (lsJumpPills) {
-  lsJumpPills.innerHTML = LS_DEST_NAMES_SORTED.map(destName =>
-    `<button class="ls-jump-pill" data-target="ls-card-${lsSlug(destName)}">${destName}</button>`
-  ).join('');
-  lsJumpPills.addEventListener('click', e => {
-    const pill = e.target.closest('.ls-jump-pill');
-    if (!pill) return;
-    const target = document.getElementById(pill.dataset.target);
+const lsJumpBoxes = document.getElementById('ls-jump-boxes');
+if (lsJumpBoxes) {
+  lsJumpBoxes.innerHTML = LS_DEST_NAMES_SORTED.map(destName => {
+    const today = getActiveLS(destName, 0) || 'Rotation TBD';
+    return `<button class="ls-jump-box" data-target="ls-card-${lsSlug(destName)}">
+      <span class="ls-jump-box-dest">${destName}</span>
+      <span class="ls-jump-box-today"><span class="ls-jump-box-today-label">Today:</span> ${today}</span>
+    </button>`;
+  }).join('');
+  lsJumpBoxes.addEventListener('click', e => {
+    const box = e.target.closest('.ls-jump-box');
+    if (!box) return;
+    const target = document.getElementById(box.dataset.target);
     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
