@@ -144,6 +144,12 @@
     color:var(--text);
   }
   .refresh-btn:hover{ background:#f1f4ee; }
+  .last-refreshed{
+    font-size:11px;
+    color:var(--text-mute);
+    font-style:italic;
+    margin:4px 0 8px;
+  }
   .refresh-btn.refresh-btn-lg{
     font-size:13px;
     padding:6px 16px;
@@ -206,6 +212,10 @@
   .cal-cell.empty{
     border:none;
     background:transparent;
+  }
+  .cal-cell.is-today{
+    border:3px solid var(--accent);
+    padding:4px;
   }
   .cal-daynum{
     font-size:13px;
@@ -458,6 +468,10 @@
     border-radius:4px;
     padding:10px 12px;
     font-size:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
   }
   .cmp-cell.is-home{
     background: color-mix(in srgb, var(--tc1) 16%, var(--panel));
@@ -467,12 +481,24 @@
     background: var(--panel);
     border-left-color: var(--tc2, var(--tc1));
   }
+  .cmp-cell-main{ min-width:0; }
   .cmp-cell .cmp-opp{ font-weight:bold; }
   .cmp-cell .cmp-meta{
     display:block;
     font-size:13px;
     color:var(--text-mute);
     margin-top:3px;
+  }
+  .cmp-cell-score{
+    flex-shrink:0;
+    text-align:right;
+    font-size:14px;
+  }
+  .cmp-cell-record{
+    font-size:13px;
+    font-weight:bold;
+    color:var(--text-mute);
+    margin-top:2px;
   }
   .cmp-cell.bye{
     color:var(--text-mute);
@@ -545,6 +571,12 @@
     font-weight:normal;
     color:var(--text-mute);
     font-size:12px;
+  }
+  .game-card-record{
+    font-size:14px;
+    font-weight:bold;
+    color:var(--text-mute);
+    margin-top:2px;
   }
 
   @media (max-width:640px){
@@ -1302,7 +1334,20 @@ function renderSecondaryNav(){
   if (state.primary !== "nfl") nav.appendChild(makeStandingsBtn());
 }
 
-function gameCardHTML(g, team){
+function cumulativeRecordThrough(games, game){
+  let w = 0, l = 0, t = 0;
+  for (const gm of games){
+    if (gm.status === "final"){
+      if (gm.score.team > gm.score.opp) w++;
+      else if (gm.score.team < gm.score.opp) l++;
+      else t++;
+    }
+    if (gm === game) break;
+  }
+  return t > 0 ? `${w}-${l}-${t}` : `${w}-${l}`;
+}
+
+function gameCardHTML(g, team, allGames){
   if (g.status === "bye"){
     return `
       <div class="game-card" style="--tc1:#c9ccc4; opacity:.65; cursor:default;">
@@ -1316,7 +1361,11 @@ function gameCardHTML(g, team){
   let scoreHTML;
   if (g.status === "final"){
     const win = g.score.team > g.score.opp;
-    scoreHTML = `<div class="score">${g.score.team}-${g.score.opp} <span class="wl-tag" style="color:${win ? '#2f7a2f' : '#a33'}">${win ? "W" : "L"}</span></div>`;
+    const record = allGames ? cumulativeRecordThrough(allGames, g) : "";
+    scoreHTML = `<div class="score">
+      <div>${g.score.team}-${g.score.opp} <span class="wl-tag" style="color:${win ? '#2f7a2f' : '#a33'}">${win ? "W" : "L"}</span></div>
+      ${record ? `<div class="game-card-record">${record}</div>` : ""}
+    </div>`;
   } else {
     scoreHTML = `<div class="score scheduled">Scheduled</div>`;
   }
@@ -1421,7 +1470,7 @@ function renderMonthGroupedSchedule(teamKey, team, games){
         </button>
         <div class="month-body" style="display:${collapsed ? "none" : "block"}">
           <div class="game-list">
-            ${grp.games.map(g => gameCardHTML(g, team)).join("")}
+            ${grp.games.map(g => gameCardHTML(g, team, games)).join("")}
           </div>
         </div>
       </div>`;
@@ -1441,7 +1490,7 @@ function renderTeamSchedule(sportKey, teamKey){
   const logo = LOGOS[teamKey] ? `<img class="header-logo" src="${LOGOS[teamKey]}" alt="${team.name} logo">` : "";
   const scheduleBody = LONG_SEASON_TEAMS.includes(teamKey)
     ? renderMonthGroupedSchedule(teamKey, team, games)
-    : `<div class="game-list">${games.map(g => gameCardHTML(g, team)).join("")}</div>`;
+    : `<div class="game-list">${games.map(g => gameCardHTML(g, team, games)).join("")}</div>`;
   return `
     <div class="schedule-narrow">
       <h2 class="section-title header-with-logo">${logo}<span>${team.name} — Full Schedule</span></h2>
@@ -1453,14 +1502,30 @@ function renderTeamSchedule(sportKey, teamKey){
 // Row-highlight colors picked for the Dashboard cards, reused here for Standings.
 // Live NFL standings — same defensive pattern as the Big Ten/MLB fetches:
 // hit ESPN's public standings endpoint, match by team name, fail gracefully.
-const ESPN_NFL_STANDINGS_URL = "https://site.api.espn.com/apis/v2/sports/football/nfl/standings";
+const ESPN_NFL_STANDINGS_URL = "https://site.api.espn.com/apis/v2/sports/football/nfl/standings?type=0&level=3";
 let nflStandingsFetchState = "idle"; // idle | loading | done | failed
-let NFL_LIVE_RECORDS = {}; // team full name -> { w, l, t }
+let NFL_LIVE_RECORDS = {}; // team full name -> { w, l, t, pct, pf, pa }
+
+// ESPN's displayName doesn't always match our shorthand — "LA Rams" vs
+// "Los Angeles Rams", etc. — so check known aliases before giving up on a team.
+const NFL_STANDINGS_ALIASES = {
+  "LA Rams": ["LA Rams", "Los Angeles Rams"],
+  "LA Chargers": ["LA Chargers", "Los Angeles Chargers"]
+};
 
 function findStatValue(stats, ...names){
   const stat = stats.find(s => names.some(n => (s.name || "").toLowerCase() === n.toLowerCase()
     || (s.abbreviation || "").toLowerCase() === n.toLowerCase()));
   return stat ? (stat.displayValue ?? stat.value) : null;
+}
+
+// Tracks when each Refresh button was last actually clicked (regardless of
+// success/failure), so the person can tell the click registered even if
+// nothing visibly changed on screen.
+let REFRESH_TIMES = {};
+function refreshTimeLabel(key){
+  if (!REFRESH_TIMES[key]) return "";
+  return `Last refreshed ${REFRESH_TIMES[key].toLocaleTimeString()}`;
 }
 
 async function fetchNFLStandings(forceRerender){
@@ -1482,14 +1547,20 @@ async function fetchNFLStandings(forceRerender){
     entries.forEach(entry => {
       const displayName = entry?.team?.displayName || entry?.team?.location || entry?.team?.name;
       if (!displayName) return;
-      const teamName = namesByLength.find(n => displayName.includes(n));
+      const teamName = namesByLength.find(n => {
+        const aliases = NFL_STANDINGS_ALIASES[n] || [n];
+        return aliases.some(a => displayName.includes(a));
+      });
       if (!teamName) return;
       const stats = entry.stats || [];
       const w = findStatValue(stats, "wins");
       const l = findStatValue(stats, "losses");
       const t = findStatValue(stats, "ties");
+      const pct = findStatValue(stats, "winpercent", "pct");
+      const pf = findStatValue(stats, "pointsfor", "pf");
+      const pa = findStatValue(stats, "pointsagainst", "pa");
       if (w == null || l == null) return;
-      NFL_LIVE_RECORDS[teamName] = { w, l, t: t ?? "0" };
+      NFL_LIVE_RECORDS[teamName] = { w, l, t: t ?? "0", pct: pct ?? "—", pf: pf ?? "—", pa: pa ?? "—" };
       matched++;
     });
     if (matched === 0) throw new Error("Fetched NFL standings but couldn't match any team names");
@@ -1498,6 +1569,7 @@ async function fetchNFLStandings(forceRerender){
     nflStandingsFetchState = "failed";
     console.warn("NFL standings live fetch failed — showing placeholder data instead.", err);
   }
+  REFRESH_TIMES.nfl = new Date();
   if (forceRerender) renderAll();
 }
 
@@ -1517,14 +1589,33 @@ function nflStandingsRow(teamName, myList){
   const w = live ? live.w : "—";
   const l = live ? live.l : "—";
   const t = live ? live.t : "—";
+  const pct = live ? live.pct : "—";
+  const pf = live ? live.pf : "—";
+  const pa = live ? live.pa : "—";
   return `<tr class="${shaded ? "my-team" : ""}"${styleAttr}>
     <td>${teamName}</td>
-    <td>${w}</td><td>${l}</td><td>${t}</td>
+    <td>${w}</td><td>${l}</td><td>${t}</td><td>${pct}</td><td>${pf}</td><td>${pa}</td>
   </tr>`;
 }
 
+// Sort a division's teams by actual live record (wins desc, then losses asc)
+// so standings reflect who's actually leading, not a fixed alphabetical list.
+// Teams with no live data yet sink to the bottom rather than distorting order.
+function sortNFLDivision(teamNames){
+  return [...teamNames].sort((a, b) => {
+    const ra = NFL_LIVE_RECORDS[a], rb = NFL_LIVE_RECORDS[b];
+    if (!ra && !rb) return 0;
+    if (!ra) return 1;
+    if (!rb) return -1;
+    const wa = parseInt(ra.w, 10) || 0, wb = parseInt(rb.w, 10) || 0;
+    if (wb !== wa) return wb - wa;
+    const la = parseInt(ra.l, 10) || 0, lb = parseInt(rb.l, 10) || 0;
+    return la - lb;
+  });
+}
+
 // Live NHL standings — same defensive pattern as the NFL/Big Ten/MLB fetches.
-const ESPN_NHL_STANDINGS_URL = "https://site.api.espn.com/apis/v2/sports/hockey/nhl/standings";
+const ESPN_NHL_STANDINGS_URL = "https://site.api.espn.com/apis/v2/sports/hockey/nhl/standings?type=0&level=3";
 let nhlStandingsFetchState = "idle"; // idle | loading | done | failed
 let NHL_LIVE_RECORDS = {}; // team full name -> { w, l, ot }
 
@@ -1563,6 +1654,7 @@ async function fetchNHLStandings(forceRerender){
     nhlStandingsFetchState = "failed";
     console.warn("NHL standings live fetch failed — showing placeholder data instead.", err);
   }
+  REFRESH_TIMES.nhl = new Date();
   if (forceRerender) renderAll();
 }
 
@@ -1721,6 +1813,7 @@ async function fetchBigTenStandings(forceRerender){
     bigTenFetchState = "failed";
     console.warn("Big Ten live standings fetch failed — showing last-known data instead.", err);
   }
+  REFRESH_TIMES.bigten = new Date();
   if (forceRerender) renderAll();
 }
 
@@ -1845,6 +1938,7 @@ async function fetchApPoll(forceRerender){
     apPollFetchState = "failed";
     console.warn("AP poll live fetch failed — showing last-known data instead.", err);
   }
+  REFRESH_TIMES.appoll = new Date();
   if (forceRerender) renderAll();
 }
 
@@ -1922,6 +2016,7 @@ function switchCfbMainPoll(which){
 function cfbMainPollColumn(){
   const active = state.cfbMainPollTab || "ap";
   const refreshAction = active === "b1g" ? "fetchBigTenStandings(true)" : "fetchApPoll(true)";
+  const lastRefresh = refreshTimeLabel(active === "b1g" ? "bigten" : "appoll");
   const body = active === "ap" ? apPollCompactTable()
     : active === "cfp" ? cfpPollCompactTable()
     : bigTenCompactTable();
@@ -1934,10 +2029,12 @@ function cfbMainPollColumn(){
       </div>
       <button class="refresh-btn refresh-btn-lg" onclick="${refreshAction}">Refresh</button>
     </div>
+    ${lastRefresh ? `<div class="last-refreshed">${lastRefresh}</div>` : ""}
     ${body}`;
 }
 
 function cfpPollColumn(){
+  const lastRefresh = refreshTimeLabel("appoll");
   const table = CFP_POLL.length
     ? `<table class="standings">
         <tr><th>Rk</th><th>Team</th><th>Rec</th><th>Trend</th></tr>
@@ -1952,18 +2049,22 @@ function cfpPollColumn(){
   return `
     <div class="col-heading heading-with-btn"><span>College Football Playoff</span><button class="refresh-btn refresh-btn-lg" onclick="fetchApPoll(true)">Refresh now</button></div>
     ${CFP_POLL.length ? `<div class="note">${apPollStatusNote()}</div>` : ""}
+    ${lastRefresh ? `<div class="last-refreshed">${lastRefresh}</div>` : ""}
     ${table}`;
 }
 
 function renderCFBStandings(){
   if (bigTenFetchState === "idle") fetchBigTenStandings(true);
   if (apPollFetchState === "idle") fetchApPoll(true);
+  const apRefresh = refreshTimeLabel("appoll");
+  const bigTenRefresh = refreshTimeLabel("bigten");
   return `
     <h2 class="section-title">CFB Standings</h2>
     <div class="standings-3col">
       <div>
         <div class="col-heading heading-with-btn"><span>AP Top 25</span><button class="refresh-btn refresh-btn-lg" onclick="fetchApPoll(true)">Refresh now</button></div>
         <div class="note">${apPollStatusNote()}</div>
+        ${apRefresh ? `<div class="last-refreshed">${apRefresh}</div>` : ""}
         ${apPollTable()}
       </div>
       <div>
@@ -1972,6 +2073,7 @@ function renderCFBStandings(){
       <div>
         <div class="col-heading heading-with-btn"><span>Big Ten Conference Standings</span><button class="refresh-btn refresh-btn-lg" onclick="fetchBigTenStandings(true)">Refresh now</button></div>
         <div class="note">Sorted by conference wins, then overall wins. ${bigTenFetchStatusNote()}</div>
+        ${bigTenRefresh ? `<div class="last-refreshed">${bigTenRefresh}</div>` : ""}
         ${bigTenTable()}
       </div>
     </div>`;
@@ -1990,33 +2092,40 @@ function renderCFBMain(){
       <div>
         <div class="col-heading header-with-logo"><img class="header-logo" src="${LOGOS.usc}" alt="USC Trojans logo"><span>USC Trojans</span></div>
         <div class="game-list">
-          ${(SCHEDULES.usc || []).map(g => gameCardHTML(g, TEAMS.cfb.teams.usc)).join("")}
+          ${(SCHEDULES.usc || []).map(g => gameCardHTML(g, TEAMS.cfb.teams.usc, SCHEDULES.usc)).join("")}
         </div>
       </div>
       <div>
         <div class="col-heading header-with-logo"><img class="header-logo" src="${LOGOS.uw}" alt="Washington Huskies logo"><span>Washington Huskies</span></div>
         <div class="game-list">
-          ${(SCHEDULES.uw || []).map(g => gameCardHTML(g, TEAMS.cfb.teams.uw)).join("")}
+          ${(SCHEDULES.uw || []).map(g => gameCardHTML(g, TEAMS.cfb.teams.uw, SCHEDULES.uw)).join("")}
         </div>
       </div>
     </div>`;
 }
 
-function cmpCellHTML(g, team){
+function cmpCellHTML(g, team, allGames){
   if (!g) return `<div class="cmp-cell bye">—</div>`;
   if (g.status === "bye") return `<div class="cmp-cell bye">Bye</div>`;
   const homeAwayClass = g.home ? "is-home" : "is-away";
-  const thirdLine = g.status === "final"
-    ? (() => {
-        const win = g.score.team > g.score.opp;
-        return `<span class="cmp-meta" style="font-weight:bold; color:${win ? "#2f7a2f" : "#a33"};">Final: ${g.score.team}-${g.score.opp} (${win ? "W" : "L"})</span>`;
-      })()
-    : `<span class="cmp-meta">${g.tv || "TV TBA"}</span>`;
+  let scoreBlock = "";
+  if (g.status === "final"){
+    const win = g.score.team > g.score.opp;
+    const record = allGames ? cumulativeRecordThrough(allGames, g) : "";
+    scoreBlock = `
+      <div class="cmp-cell-score">
+        <div style="font-weight:bold; color:${win ? "#2f7a2f" : "#a33"};">${g.score.team}-${g.score.opp} (${win ? "W" : "L"})</div>
+        ${record ? `<div class="cmp-cell-record">${record}</div>` : ""}
+      </div>`;
+  }
   return `
     <div class="cmp-cell ${homeAwayClass}" style="--tc1:${team.c1}; --tc2:${team.c2}">
-      <span class="cmp-opp">${g.home ? "vs" : "@"} ${g.opp}</span>
-      <span class="cmp-meta">${fmtDate(g.date)} · ${g.home ? "Home" : "Away"}</span>
-      ${thirdLine}
+      <div class="cmp-cell-main">
+        <span class="cmp-opp">${g.home ? "vs" : "@"} ${g.opp}</span>
+        <span class="cmp-meta">${fmtDate(g.date)} · ${g.home ? "Home" : "Away"}</span>
+        <span class="cmp-meta">${g.tv || "TV TBA"}</span>
+      </div>
+      ${scoreBlock}
     </div>`;
 }
 
@@ -2029,7 +2138,7 @@ function renderNFLCompare(){
     rows += `<div class="cmp-week">Wk ${i + 1}</div>`;
     teamKeys.forEach(k => {
       const g = (SCHEDULES[k] || [])[i];
-      rows += cmpCellHTML(g, TEAMS.nfl.teams[k]);
+      rows += cmpCellHTML(g, TEAMS.nfl.teams[k], SCHEDULES[k]);
     });
   }
   return `
@@ -2044,17 +2153,19 @@ function renderNFLCompare(){
 
 function renderNFLStandings(){
   if (nflStandingsFetchState === "idle") fetchNFLStandings(true);
+  const lastRefresh = refreshTimeLabel("nfl");
   let html = `<h2 class="section-title">NFL Standings</h2>
     <div class="note">${nflStandingsStatusNote()}
-    <button class="refresh-btn refresh-btn-lg" onclick="fetchNFLStandings(true)">Refresh now</button></div>
+    <button class="refresh-btn refresh-btn-lg" onclick="fetchNFLStandings(true)">Refresh now</button>
+    ${lastRefresh ? `<span class="last-refreshed">${lastRefresh}</span>` : ""}</div>
     <div class="nfl-standings-wrap">`;
   NFL_CONF_ORDER.forEach(conf => {
     html += `<div class="standings-row" style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px;">`;
     NFL_DIV_ORDER.forEach(div => {
       html += `<table class="standings">
         <caption>${conf} ${div}</caption>
-        <tr><th>Team</th><th>W</th><th>L</th><th>T</th></tr>
-        ${NFL_STANDINGS[conf][div].map(t => nflStandingsRow(t, MY_TEAMS_NFL)).join("")}
+        <tr><th>Team</th><th>W</th><th>L</th><th>T</th><th>PCT</th><th>PF</th><th>PA</th></tr>
+        ${sortNFLDivision(NFL_STANDINGS[conf][div]).map(t => nflStandingsRow(t, MY_TEAMS_NFL)).join("")}
       </table>`;
     });
     html += `</div>`;
@@ -2072,9 +2183,11 @@ const NHL_DISPLAY_ORDER = [
 
 function renderNHLStandings(){
   if (nhlStandingsFetchState === "idle") fetchNHLStandings(true);
+  const lastRefresh = refreshTimeLabel("nhl");
   let html = `<h2 class="section-title">NHL Standings</h2>
     <div class="note">${nhlStandingsStatusNote()}
-    <button class="refresh-btn refresh-btn-lg" onclick="fetchNHLStandings(true)">Refresh now</button></div>
+    <button class="refresh-btn refresh-btn-lg" onclick="fetchNHLStandings(true)">Refresh now</button>
+    ${lastRefresh ? `<span class="last-refreshed">${lastRefresh}</span>` : ""}</div>
     <div class="standings-groups">`;
   NHL_DISPLAY_ORDER.forEach(([conf, div]) => {
     html += `<table class="standings">
@@ -2088,9 +2201,21 @@ function renderNHLStandings(){
 }
 
 // Local (not UTC) YYYY-MM-DD for "today" — avoids an early-morning PT vs UTC date mismatch.
+// Every "today" check in this file — upcoming-game filtering, past-game
+// formatting, the calendar's default month, all of it — uses this fixed
+// zone (Pacific for this file) rather than the viewer's own browser
+// timezone, since every date/time on the page is labeled in that zone.
+const CALENDAR_TIMEZONE = "America/Los_Angeles";
+function todayISOInZone(timeZone){
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone, year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(new Date());
+  const y = parts.find(p => p.type === "year").value;
+  const m = parts.find(p => p.type === "month").value;
+  const d = parts.find(p => p.type === "day").value;
+  return `${y}-${m}-${d}`;
+}
+
 function todayISO(){
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return todayISOInZone(CALENDAR_TIMEZONE);
 }
 
 function nextGames(teamKey, count){
@@ -2260,7 +2385,7 @@ function dashboardRecentCardHTML(sportKey, teamKey, team, game){
   const tileColor = team.dashColor || team.c1;
   const win = game.score.team > game.score.opp;
   const resultColor = win ? "#2f7a2f" : "#a33";
-  const recordLabel = primaryTeamRecordLabel(sportKey, teamKey, team);
+  const recordLabel = cumulativeRecordThrough(SCHEDULES[teamKey] || [], game);
   return `
     <div class="dash-tile ${team.tier}" style="--tc1:${tileColor}" onclick="goToTeam('${sportKey}','${teamKey}')">
       <div class="tile-top">
@@ -2286,6 +2411,8 @@ function renderDashboard(){
     html += `<div class="dash-col"><h3 class="dash-col-link" onclick="goToSport('${sportKey}')">${sport.label}</h3><div class="dash-col-tiles">`;
     if (game){
       html += dashboardRecentCardHTML(sportKey, primaryKey, team, game);
+    } else if (liveScoresFetchState === "idle" || liveScoresFetchState === "loading"){
+      html += `<div class="dash-tile"><div class="tile-game-bold">Checking for a final score…</div></div>`;
     } else {
       html += `<div class="dash-tile"><div class="tile-game-bold">No games played yet</div></div>`;
     }
@@ -2386,9 +2513,10 @@ function calendarEntryHTML(entry){
   if (game.status === "final"){
     const win = game.score.team > game.score.opp;
     const resultColor = win ? "#2f7a2f" : "#a33";
+    const record = cumulativeRecordThrough(SCHEDULES[teamKey] || [], game);
     return `<div class="cal-entry" style="--tc:${color}">
       <div class="cal-entry-matchup">${matchupLine}</div>
-      <div class="cal-entry-meta" style="font-weight:bold; color:${resultColor};">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})</div>
+      <div class="cal-entry-meta" style="font-weight:bold; color:${resultColor};">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})${record ? ` · ${record}` : ""}</div>
     </div>`;
   }
   if (game.date < todayISO()){
@@ -2418,9 +2546,9 @@ const SEASON_MONTHS = [
 // Clamp "today" into the season range: before Sept 2026 -> first month, after April
 // 2027 -> last month, otherwise whichever month actually contains today.
 function currentSeasonMonthIndex(){
-  const now = new Date();
-  const key = now.getFullYear() * 100 + now.getMonth();
-  let idx = SEASON_MONTHS.findIndex(([y, m]) => y === now.getFullYear() && m === now.getMonth());
+  const [y, m] = todayISO().split("-").map(Number);
+  const key = y * 100 + (m - 1);
+  let idx = SEASON_MONTHS.findIndex(([sy, sm]) => sy === y && sm === (m - 1));
   if (idx !== -1) return idx;
   const [firstY, firstM] = SEASON_MONTHS[0];
   const [lastY, lastM] = SEASON_MONTHS[SEASON_MONTHS.length - 1];
@@ -2472,13 +2600,15 @@ function renderMonthSection(year, month){
   const monthLabel = new Date(year, month, 1).toLocaleDateString("en-US", { month:"long", year:"numeric" });
   const totalDays = daysInMonth(year, month);
   const startWeekday = firstWeekdayOfMonth(year, month);
+  const todayStr = todayISO();
 
   let cells = "";
   for (let i = 0; i < startWeekday; i++) cells += `<div class="cal-cell empty"></div>`;
   for (let d = 1; d <= totalDays; d++){
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     const entries = collectGamesForDate(dateStr);
-    cells += `<div class="cal-cell">
+    const isToday = dateStr === todayStr;
+    cells += `<div class="cal-cell${isToday ? " is-today" : ""}">
       <div class="cal-daynum">${d}</div>
       ${entries.map(calendarEntryHTML).join("")}
     </div>`;
