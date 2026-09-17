@@ -216,16 +216,31 @@
     border:3px solid var(--accent);
     padding:4px;
   }
+
+  /* ---- Dashboard "This Week" strip (8 days: Sun through next Sun) ---- */
+  .week-grid{
+    display:grid;
+    grid-template-columns:repeat(8, 1fr);
+    gap:8px;
+    margin-bottom:12px;
+  }
+  @media (max-width:900px){
+    .week-grid{ grid-template-columns:repeat(4, 1fr); }
+  }
+  @media (max-width:520px){
+    .week-grid{ grid-template-columns:repeat(2, 1fr); }
+  }
   .cal-daynum{
     font-size:13px;
+    font-weight:bold;
     color:var(--text-mute);
     margin-bottom:4px;
   }
   .cal-entry{
-    border-left:3px solid var(--tc);
-    background:color-mix(in srgb, var(--tc) 16%, var(--panel));
-    border-radius:2px;
-    padding:3px 6px;
+    background:var(--tc);
+    color:var(--tc-text);
+    border-radius:4px;
+    padding:5px 7px;
     font-size:12px;
     line-height:1.35;
     margin-bottom:3px;
@@ -233,7 +248,7 @@
   .cal-entry-team{ font-weight:bold; }
   .cal-entry-meta{
     display:block;
-    color:var(--text-mute);
+    opacity:.85;
     font-size:11px;
     margin-top:1px;
   }
@@ -293,6 +308,38 @@
     flex-direction:column;
     gap:10px;
   }
+  .dash-col-standings{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .dash-col-standings table.standings{
+    font-size:11px;
+  }
+  .dash-col-standings table.standings th,
+  .dash-col-standings table.standings td{
+    padding:4px 5px;
+  }
+  .dash-standings-block{ margin-bottom:4px; }
+  .dash-standings-label{
+    font-size:11px;
+    font-weight:bold;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    color:var(--text-mute);
+    margin-bottom:4px;
+  }
+  .dash-standings-link{
+    font-size:12px;
+    font-weight:bold;
+    color:var(--accent);
+    cursor:pointer;
+    text-align:center;
+    padding:6px;
+    border:1px solid var(--border);
+    border-radius:4px;
+  }
+  .dash-standings-link:hover{ background:#f1f4ee; }
   .dash-tile{
     background: color-mix(in srgb, var(--tc1) 12%, var(--panel));
     border:1px solid var(--border);
@@ -317,13 +364,14 @@
     letter-spacing:.5px;
     white-space:nowrap;
   }
-  .dash-tile .team-name{
+  .dash-tile-full .team-name{
     font-weight:bold;
-    font-size:14px;
+    font-size:18px;
     margin:2px 0 8px;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    min-width:0;
   }
   .tile-top{
     display:flex;
@@ -333,10 +381,65 @@
     min-width:0;
   }
   .tile-top .team-name{ margin:0; }
-  .tile-top > div{ min-width:0; }
+  .tile-record{
+    margin-left:auto;
+    flex-shrink:0;
+    font-size:15px;
+    font-weight:bold;
+    color:var(--text);
+  }
+
+  /* ---- Favorite Teams dashboard cards (full schedule) ---- */
+  .dash-tile-full{
+    background: color-mix(in srgb, var(--tc1) 8%, var(--panel));
+    border:1px solid var(--border);
+    border-left:5px solid var(--tc1);
+    border-radius:4px;
+    padding:12px 16px;
+    margin-bottom:14px;
+  }
+  .dash-tile-full .tile-top{ cursor:pointer; margin-bottom:6px; }
+  .dash-tile-full.secondary{ opacity:.94; }
+  .tile-full-schedule{
+    display:flex;
+    flex-direction:column;
+  }
+  .tile-sched-row{
+    display:grid;
+    grid-template-columns: 82px 52px 1fr 108px;
+    gap:7px;
+    align-items:center;
+    font-size:12px;
+    padding:5px 2px;
+    border-top:1px solid color-mix(in srgb, var(--tc1) 12%, var(--border));
+  }
+  .tile-sched-row:first-child{ border-top:none; }
+  .tile-sched-row.bye{
+    display:flex;
+    gap:8px;
+    color:var(--text-mute);
+    font-style:italic;
+  }
+  .tile-sched-row.bold{
+    font-weight:bold;
+    background: color-mix(in srgb, var(--tc1) 18%, var(--panel));
+    border-radius:3px;
+    padding:7px 8px;
+    margin:2px -6px;
+    border-top:none;
+  }
+  .tsc-result{
+    display:flex;
+    justify-content:flex-end;
+    align-items:baseline;
+    gap:8px;
+  }
+  .tsc-score, .tsc-record{ text-align:right; white-space:nowrap; }
+  .tsc-time{ color:var(--text-mute); }
+  .tile-sched-row.bold .tsc-time{ color:inherit; }
   .tile-logo{
-    width:32px;
-    height:32px;
+    width:44px;
+    height:44px;
     object-fit:contain;
     flex-shrink:0;
   }
@@ -1228,7 +1331,7 @@ const MY_TEAMS_MLB = ["Seattle Mariners"];
    STATE + RENDERING
 ========================================================= */
 
-let state = { primary:"dashboard", secondary:null, calYear:2026, calMonth:8, cfbMainPollTab:"ap" }; // calMonth 8 = September (0-indexed)
+let state = { primary:"dashboard", secondary:null, calYear:2026, calMonth:8, cfbMainPollTab:"ap", dashSportTab:{cfb:"teams", nfl:"teams", nhl:"teams", mlb:"teams"} }; // calMonth 8 = September (0-indexed)
 
 const PRIMARY_TABS = [
   {key:"dashboard", label:"Dashboard"},
@@ -1523,6 +1626,24 @@ function refreshTimeLabel(key){
   return `Last refreshed ${REFRESH_TIMES[key].toLocaleTimeString()}`;
 }
 
+// Walks the response to find each division's own entries list, keeping the
+// division boundary intact — ESPN returns teams within a division already in
+// real tiebreak-resolved order (matching their live standings page), and that
+// order is exactly what gets lost by flattening everything into one array.
+function extractNFLLeafGroups(data){
+  if (data?.standings?.entries) return [data.standings.entries];
+  const groups = [];
+  (data?.children || []).forEach(c => {
+    if (c?.standings?.entries?.length) groups.push(c.standings.entries);
+    else if (c?.children?.length){
+      c.children.forEach(cc => {
+        if (cc?.standings?.entries?.length) groups.push(cc.standings.entries);
+      });
+    }
+  });
+  return groups;
+}
+
 async function fetchNFLStandings(forceRerender){
   nflStandingsFetchState = "loading";
   try {
@@ -1530,33 +1651,37 @@ async function fetchNFLStandings(forceRerender){
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
 
-    let entries = data?.standings?.entries
-      || data?.children?.[0]?.standings?.entries
-      || (data?.children || []).flatMap(c => (c?.standings?.entries) || (c?.children || []).flatMap(cc => cc?.standings?.entries || []));
-    if (!entries || !entries.length) throw new Error("Unexpected response shape from ESPN NFL standings API");
+    const leafGroups = extractNFLLeafGroups(data);
+    if (!leafGroups.length) throw new Error("Unexpected response shape from ESPN NFL standings API");
 
     const allTeamNames = NFL_CONF_ORDER.flatMap(conf => NFL_DIV_ORDER.flatMap(div => NFL_STANDINGS[conf][div]));
     const namesByLength = [...allTeamNames].sort((a, b) => b.length - a.length);
 
     let matched = 0;
-    entries.forEach(entry => {
-      const displayName = entry?.team?.displayName || entry?.team?.location || entry?.team?.name;
-      if (!displayName) return;
-      const teamName = namesByLength.find(n => {
-        const aliases = NFL_STANDINGS_ALIASES[n] || [n];
-        return aliases.some(a => displayName.includes(a));
+    leafGroups.forEach(groupEntries => {
+      groupEntries.forEach((entry, idxInGroup) => {
+        const displayName = entry?.team?.displayName || entry?.team?.location || entry?.team?.name;
+        if (!displayName) return;
+        const teamName = namesByLength.find(n => {
+          const aliases = NFL_STANDINGS_ALIASES[n] || [n];
+          return aliases.some(a => displayName.includes(a));
+        });
+        if (!teamName) return;
+        const stats = entry.stats || [];
+        const w = findStatValue(stats, "wins");
+        const l = findStatValue(stats, "losses");
+        const t = findStatValue(stats, "ties");
+        const pct = findStatValue(stats, "winpercent", "pct");
+        const pf = findStatValue(stats, "pointsfor", "pf");
+        const pa = findStatValue(stats, "pointsagainst", "pa");
+        if (w == null || l == null) return;
+        // espnRank preserves ESPN's own within-division order — this is what
+        // actually reflects real tiebreakers (head-to-head, division record,
+        // point differential, etc.), which we have no way to compute ourselves
+        // without full game-by-game data for every team in the league.
+        NFL_LIVE_RECORDS[teamName] = { w, l, t: t ?? "0", pct: pct ?? "—", pf: pf ?? "—", pa: pa ?? "—", espnRank: idxInGroup };
+        matched++;
       });
-      if (!teamName) return;
-      const stats = entry.stats || [];
-      const w = findStatValue(stats, "wins");
-      const l = findStatValue(stats, "losses");
-      const t = findStatValue(stats, "ties");
-      const pct = findStatValue(stats, "winpercent", "pct");
-      const pf = findStatValue(stats, "pointsfor", "pf");
-      const pa = findStatValue(stats, "pointsagainst", "pa");
-      if (w == null || l == null) return;
-      NFL_LIVE_RECORDS[teamName] = { w, l, t: t ?? "0", pct: pct ?? "—", pf: pf ?? "—", pa: pa ?? "—" };
-      matched++;
     });
     if (matched === 0) throw new Error("Fetched NFL standings but couldn't match any team names");
     nflStandingsFetchState = "done";
@@ -1593,10 +1718,16 @@ function nflStandingsRow(teamName, myList){
   </tr>`;
 }
 
-// Sort a division's teams by actual live record (wins desc, then losses asc)
-// so standings reflect who's actually leading, not a fixed alphabetical list.
-// Teams with no live data yet sink to the bottom rather than distorting order.
+// Prefer ESPN's own within-division order (espnRank) — that already reflects
+// real NFL tiebreakers (head-to-head, division record, point differential,
+// etc.), which we have no way to compute ourselves from just win/loss totals.
+// Only falls back to a wins-desc/losses-asc guess when live rank data isn't
+// available for every team in the division yet (e.g. before the first fetch).
 function sortNFLDivision(teamNames){
+  const allRanked = teamNames.every(n => NFL_LIVE_RECORDS[n] && NFL_LIVE_RECORDS[n].espnRank != null);
+  if (allRanked){
+    return [...teamNames].sort((a, b) => NFL_LIVE_RECORDS[a].espnRank - NFL_LIVE_RECORDS[b].espnRank);
+  }
   return [...teamNames].sort((a, b) => {
     const ra = NFL_LIVE_RECORDS[a], rb = NFL_LIVE_RECORDS[b];
     if (!ra && !rb) return 0;
@@ -2297,8 +2428,21 @@ function renderMLBStandings(){
 // zone (Eastern for this file) rather than the viewer's own browser
 // timezone, since every date/time on the page is labeled in that zone.
 const CALENDAR_TIMEZONE = "America/New_York";
+const ZONE_ABBR = "ET";
 function todayISOInZone(timeZone){
   const parts = new Intl.DateTimeFormat("en-US", { timeZone, year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(new Date());
+  const y = parts.find(p => p.type === "year").value;
+  const m = parts.find(p => p.type === "month").value;
+  const d = parts.find(p => p.type === "day").value;
+  return `${y}-${m}-${d}`;
+}
+
+// Same conversion as todayISOInZone, but for an arbitrary timestamp (e.g. an
+// ESPN event's UTC kickoff time) rather than always "right now" — this is
+// what determines a game's real start date in this file's zone, regardless
+// of what UTC calendar day it rolls over onto.
+function eventDateInZone(isoDateStr, timeZone){
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone, year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(new Date(isoDateStr));
   const y = parts.find(p => p.type === "year").value;
   const m = parts.find(p => p.type === "month").value;
   const d = parts.find(p => p.type === "day").value;
@@ -2348,45 +2492,122 @@ function extractEspnScore(competitor){
   return Number.isFinite(n) ? n : null;
 }
 
+// Formats an ESPN event's UTC timestamp into this file's fixed display zone
+// (matches the "H:MMam/pm ZONE" convention used throughout the schedules).
+function formatEventTime(isoDateStr, timeZone, zoneAbbr){
+  const d = new Date(isoDateStr);
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone, hour:"numeric", minute:"2-digit", hour12:true }).formatToParts(d);
+  const hour = parts.find(p => p.type === "hour").value;
+  const minute = parts.find(p => p.type === "minute").value;
+  const dayPeriod = parts.find(p => p.type === "dayPeriod").value.toLowerCase();
+  return `${hour}:${minute}${dayPeriod} ${zoneAbbr}`;
+}
+
+function extractBroadcastName(comp){
+  const b = comp.broadcasts?.[0];
+  if (b){
+    if (b.name) return b.name;
+    if (Array.isArray(b.names) && b.names.length) return b.names[0];
+    if (b.shortName) return b.shortName;
+    if (b.callLetters) return b.callLetters;
+  }
+  const gb = comp.geoBroadcasts?.[0];
+  if (gb) return gb.media?.shortName || gb.media?.name || null;
+  return null;
+}
+
+// Whether ESPN has actually assigned a broadcast for this game yet. Networks
+// and kickoff times are announced together in practice — an empty broadcasts
+// array means the game is still genuinely TBD, and ESPN's date field for it
+// is not a real kickoff time (often just a placeholder), so it must not be
+// trusted for a time update.
+function hasRealBroadcastInfo(comp){
+  return !!(comp.broadcasts?.length || comp.geoBroadcasts?.length);
+}
+
 async function fetchLiveScoresForTeam(teamKey){
   const meta = TEAM_ESPN_META[teamKey];
   const games = SCHEDULES[teamKey];
   if (!meta || !games) return;
-  const url = `https://site.api.espn.com/apis/site/v2/sports/${meta.sport}/${meta.league}/teams/${meta.id}/schedule?season=2026`;
+  // seasontype=2 asks ESPN for regular season only — preseason exhibition games
+  // (common in Sept for NHL/NFL) must never be treated as real results.
+  const url = `https://site.api.espn.com/apis/site/v2/sports/${meta.sport}/${meta.league}/teams/${meta.id}/schedule?season=2026&seasontype=2`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${teamKey}`);
   const data = await res.json();
   const events = data?.events || [];
 
+  // Hard safety net: never trust a fetched date outside the range our own
+  // schedule data actually covers. ESPN's live endpoint has been observed
+  // returning an entirely different season's games for some leagues/teams
+  // (e.g. NHL) regardless of the season parameter requested — this rejects
+  // that outright rather than trying to guess why it happened.
+  const scheduleDates = games.map(g => g.date).filter(Boolean).sort();
+  const minDate = scheduleDates[0];
+  const maxDate = scheduleDates[scheduleDates.length - 1];
+
   events.forEach(ev => {
     const comp = ev.competitions?.[0];
     if (!comp) return;
-    const isFinal = comp.status?.type?.completed || comp.status?.type?.state === "post";
-    if (!isFinal) return;
 
-    const evDate = (ev.date || "").slice(0, 10);
-    // ESPN dates are UTC — a late ET kickoff can land on the next UTC calendar day,
-    // so try the exact date first, then one day earlier, before giving up.
-    let match = games.find(g => g.date === evDate);
-    if (!match){
-      const d = new Date(evDate + "T00:00:00Z");
-      d.setUTCDate(d.getUTCDate() - 1);
-      const prevDay = d.toISOString().slice(0, 10);
-      match = games.find(g => g.date === prevDay);
-    }
-    if (!match || match.status === "final") return;
+    // Belt-and-suspenders: even with seasontype=2 requested, only trust an
+    // event confirmed as regular season (type 2) when that field is present.
+    // A missing field is not treated as a red flag — only an explicit
+    // non-regular-season value skips the event.
+    const seasonTypeVal = ev.season?.type ?? ev.seasonType?.type ?? ev.seasonType;
+    if (seasonTypeVal != null && Number(seasonTypeVal) !== 2) return;
+
+    // ESPN's date is UTC, which can land on the calendar day AFTER a late
+    // local kickoff (e.g. an 8pm ET Saturday game is already Sunday in UTC).
+    // A game's listed date must always be the day it STARTED, in this file's
+    // zone — never a later day just because it ran past midnight there.
+    const evDateInZone = ev.date ? eventDateInZone(ev.date, CALENDAR_TIMEZONE) : null;
+    if (!evDateInZone || evDateInZone < minDate || evDateInZone > maxDate) return;
+    let match = games.find(g => g.date === evDateInZone);
 
     const teamIdUpper = String(meta.id).toUpperCase();
     const own = comp.competitors?.find(c =>
       String(c.id) === String(meta.id) || (c.team?.abbreviation || "").toUpperCase() === teamIdUpper
     );
     const opp = comp.competitors?.find(c => c !== own);
+    const oppName = opp?.team?.displayName || opp?.team?.location || opp?.team?.name;
+
+    // Date-based match failed — most likely a flex-scheduled date/time change.
+    // Fall back to matching by opponent identity among games not yet final.
+    if (!match && oppName){
+      match = games.find(g => g.status !== "final" && (oppName.includes(g.opp) || g.opp.includes(oppName)));
+    }
+    if (!match || match.status === "final") return;
+
+    // Update home/away.
+    if (own?.homeAway) match.home = (own.homeAway === "home");
+
+    // Only touch TV/time/date when ESPN has actually assigned a broadcast —
+    // otherwise leave everything as-is rather than risk overwriting a correct
+    // manually-entered value (like "BTN"/"CBS") with a guess, or writing in a
+    // placeholder kickoff time for a game that's genuinely still TBD.
+    if (hasRealBroadcastInfo(comp)){
+      if (evDateInZone && match.date !== evDateInZone) match.date = evDateInZone;
+      const network = extractBroadcastName(comp);
+      const timeStr = ev.date ? formatEventTime(ev.date, CALENDAR_TIMEZONE, ZONE_ABBR) : null;
+      // If we can't pull a fresh network name even though broadcast info
+      // exists, keep whatever network was already there rather than
+      // defaulting to a generic "TV TBA" that could clobber a known value.
+      const existingNetwork = parseGameTV(match.tv).network;
+      const finalNetwork = network || (existingNetwork && !existingNetwork.toUpperCase().includes("TBA") ? existingNetwork : null);
+      if (finalNetwork && timeStr) match.tv = `${finalNetwork} ${timeStr}`;
+      else if (timeStr) match.tv = `TV TBA ${timeStr}`;
+      else if (finalNetwork) match.tv = finalNetwork;
+    }
+
+    // Update score/status if the game is confirmed complete.
+    const isFinal = comp.status?.type?.completed || comp.status?.type?.state === "post";
+    if (!isFinal) return;
     const ownScore = extractEspnScore(own);
     const oppScore = extractEspnScore(opp);
     // Only commit to "final" once we actually have two real numbers — a
     // half-parsed score is worse than leaving the game as still "scheduled".
     if (ownScore == null || oppScore == null) return;
-
     match.status = "final";
     match.score = { team: ownScore, opp: oppScore };
   });
@@ -2447,30 +2668,252 @@ function dashboardCardHTML(sportKey, teamKey, team, game){
     </div>`;
 }
 
-function renderDashboard(){
-  let html = `<h2 class="section-title" style="font-size:20px;">Favorite Teams - Next 3 Games</h2><div class="dash-columns">`;
-  DASHBOARD_COLUMNS.forEach(sportKey => {
-    const sport = TEAMS[sportKey];
-    let cards = [];
-    sport.order.forEach(teamKey => {
-      const team = sport.teams[teamKey];
-      nextGames(teamKey, 3).forEach(game => cards.push({ teamKey, team, game }));
-    });
-    cards.sort((a, b) => gameSortValue(a.game) - gameSortValue(b.game));
+function scheduleRowHTML(game, allGames, bold){
+  const oppDisp = MASCOT_MAP[game.opp] || game.opp;
+  const oppText = `${game.home ? "vs" : "@"} ${oppDisp}`;
+  const dateText = fmtDate(game.date);
 
-    html += `<div class="dash-col"><h3 class="dash-col-link" onclick="goToSport('${sportKey}')">${sport.label}</h3><div class="dash-col-tiles">`;
-    if (cards.length){
-      cards.forEach(({ teamKey, team, game }) => {
-        html += dashboardCardHTML(sportKey, teamKey, team, game);
-      });
-    } else {
-      html += `<div class="dash-tile"><div class="tile-game-bold">No games loaded</div></div>`;
+  let timeText, scoreHtml = "", recordText = "";
+  if (game.status === "final"){
+    timeText = "Final";
+    const win = game.score.team > game.score.opp;
+    const resultColor = win ? "#2f7a2f" : "#a33";
+    scoreHtml = `<span style="color:${resultColor}">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})</span>`;
+    recordText = allGames ? cumulativeRecordThrough(allGames, game) : "";
+  } else {
+    const { time } = parseGameTV(game.tv);
+    timeText = time || "TBA";
+  }
+
+  const rowClass = bold ? "tile-sched-row bold" : "tile-sched-row";
+  return `<div class="${rowClass}">
+    <span class="tsc-date">${dateText}</span>
+    <span class="tsc-time">${timeText}</span>
+    <span class="tsc-opp">${oppText}</span>
+    <span class="tsc-result">
+      <span class="tsc-score">${scoreHtml}</span>
+      <span class="tsc-record">${recordText}</span>
+    </span>
+  </div>`;
+}
+
+function mostRecentFinalGame(teamKey){
+  const games = (SCHEDULES[teamKey] || []).filter(g => g.status === "final");
+  return games.length ? games[games.length - 1] : null;
+}
+
+// Full season, in order — every completed game shows its score (not bold),
+// the very next upcoming game is bolded, everything after that is plain.
+function fullScheduleCardBody(teamKey, games){
+  const todayStr = todayISO();
+  const nextGameRef = games.find(g => g.status === "scheduled" && g.date >= todayStr) || null;
+  if (!games.length) return `<div class="tile-sched-row">No games loaded</div>`;
+  return games.map(g => {
+    if (g.status === "bye"){
+      return `<div class="tile-sched-row bye"><span class="tsc-date">${fmtDate(g.date)}</span><span class="tsc-bye">Bye Week</span></div>`;
     }
-    html += `</div></div>`;
-  });
-  html += `</div>`;
+    return scheduleRowHTML(g, games, g === nextGameRef);
+  }).join("");
+}
+
+// NHL primary team: last 5 completed + next 5 upcoming, immediate next game bolded.
+function nhlWindowCardBody(teamKey, games){
+  const finalGames = games.filter(g => g.status === "final");
+  const upcoming = games.filter(g => g.status === "scheduled");
+  const last5 = finalGames.slice(-5);
+  const next5 = upcoming.slice(0, 5);
+  const nextGameRef = next5[0] || null;
+  if (!last5.length && !next5.length) return `<div class="tile-sched-row">No games loaded</div>`;
+  let html = "";
+  last5.forEach(g => { html += scheduleRowHTML(g, games, false); });
+  next5.forEach(g => { html += scheduleRowHTML(g, games, g === nextGameRef); });
   return html;
 }
+
+// Secondary team, any sport: most recent result (not bold, matches how primary
+// teams treat completed games) and the next game (bolded).
+function secondaryCardBody(teamKey, games){
+  const mostRecent = mostRecentFinalGame(teamKey);
+  const next = nextGames(teamKey, 1)[0];
+  let html = "";
+  if (mostRecent) html += scheduleRowHTML(mostRecent, games, false);
+  if (next) html += scheduleRowHTML(next, games, true);
+  if (!mostRecent && !next) html += `<div class="tile-sched-row">No games loaded</div>`;
+  return html;
+}
+
+function favoriteTeamCardHTML(sportKey, teamKey, team){
+  const games = SCHEDULES[teamKey] || [];
+  const logo = LOGOS[teamKey] ? `<img class="tile-logo" src="${LOGOS[teamKey]}" alt="${team.name} logo">` : "";
+  const tileColor = team.dashColor || team.c1;
+  const recent = mostRecentFinalGame(teamKey);
+  const recordLabel = recent ? cumulativeRecordThrough(games, recent) : "";
+
+  let body;
+  if (team.tier === "primary" && (sportKey === "cfb" || sportKey === "nfl")){
+    body = fullScheduleCardBody(teamKey, games);
+  } else if (team.tier === "primary" && sportKey === "nhl"){
+    body = nhlWindowCardBody(teamKey, games);
+  } else {
+    body = secondaryCardBody(teamKey, games);
+  }
+
+  return `
+    <div class="dash-tile-full ${team.tier}" style="--tc1:${tileColor}">
+      <div class="tile-top" onclick="goToTeam('${sportKey}','${teamKey}')">
+        ${logo}
+        <div class="team-name">${team.name}</div>
+        ${recordLabel ? `<div class="tile-record">${recordLabel}</div>` : ""}
+      </div>
+      <div class="tile-full-schedule">
+        ${body}
+      </div>
+    </div>`;
+}
+
+// Most recent Sunday (today, if today is Sunday) through the following Sunday — 8 days inclusive.
+function thisWeekRange(){
+  const todayStr = todayISO();
+  const [y, m, d] = todayStr.split("-").map(Number);
+  const today = new Date(Date.UTC(y, m - 1, d));
+  const dow = today.getUTCDay(); // 0 = Sunday
+  const sunday = new Date(today);
+  sunday.setUTCDate(today.getUTCDate() - dow);
+  const days = [];
+  for (let i = 0; i <= 7; i++){
+    const dd = new Date(sunday);
+    dd.setUTCDate(sunday.getUTCDate() + i);
+    days.push(dd.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+function renderThisWeekSection(){
+  const days = thisWeekRange();
+  const todayStr = todayISO();
+  const cells = days.map(dateStr => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const dUTC = new Date(Date.UTC(y, m - 1, d));
+    const dowLabel = dUTC.toLocaleDateString("en-US", { weekday:"short", timeZone:"UTC" });
+    const entries = collectGamesForDate(dateStr);
+    const isToday = dateStr === todayStr;
+    return `<div class="cal-cell week-cell${isToday ? " is-today" : ""}">
+      <div class="cal-dow" style="padding:0 0 4px;">${dowLabel}</div>
+      <div class="cal-daynum">${d}</div>
+      ${entries.map(calendarEntryHTML).join("")}
+    </div>`;
+  }).join("");
+
+  return `
+    <h2 class="section-title" style="font-size:20px;">This Week</h2>
+    <div class="week-grid">${cells}</div>`;
+}
+
+function switchDashSportTab(sportKey, which){
+  state.dashSportTab[sportKey] = which;
+  renderAll();
+}
+
+function dashSportTabButtons(sportKey){
+  const active = state.dashSportTab[sportKey] || "teams";
+  return `<div class="poll-tab-group" style="margin:8px 0 12px;">
+    <button class="poll-tab-btn ${active === "teams" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','teams')">Teams</button>
+    <button class="poll-tab-btn ${active === "standings" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','standings')">Standings</button>
+  </div>`;
+}
+
+function dashStandingsLink(sportKey, label){
+  return `<div class="dash-standings-link" onclick="goToSport('${sportKey}'); state.secondary='standings'; renderAll();">${label} →</div>`;
+}
+
+// CFB: the full AP/CFP/Big Ten picture, stacked (not tabbed) so nothing is
+// hidden — same compact tables already built for the CFB Main page's widget.
+function dashCfbStandingsTab(){
+  if (bigTenFetchState === "idle") fetchBigTenStandings(true);
+  if (apPollFetchState === "idle") fetchApPoll(true);
+  return `
+    ${cfbMainPollColumn()}
+    ${dashStandingsLink("cfb", "Full CFB Standings")}`;
+}
+
+// NFL: just the divisions our tracked teams actually play in, read from
+// each team's own conf/div rather than hardcoded, same table/row rendering
+// as the full NFL Standings page.
+function dashNflStandingsTab(){
+  if (nflStandingsFetchState === "idle") fetchNFLStandings(true);
+  const seen = new Set();
+  const divs = TEAMS.nfl.order.map(k => TEAMS.nfl.teams[k]).filter(t => {
+    const key = t.conf + t.div;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  let html = divs.map(t => `
+    <table class="standings">
+      <caption>${t.conf} ${t.div}</caption>
+      <tr><th>Team</th><th>W</th><th>L</th><th>T</th><th>PCT</th><th>PF</th><th>PA</th></tr>
+      ${sortNFLDivision(NFL_STANDINGS[t.conf][t.div]).map(name => nflStandingsRow(name, MY_TEAMS_NFL)).join("")}
+    </table>`).join("");
+  html += dashStandingsLink("nfl", "Full NFL Standings");
+  return html;
+}
+
+// NHL: Hurricanes' actual division (Eastern Metropolitan) — Matthew only
+// tracks the one NHL team, so no second division needed here.
+function dashNhlStandingsTab(){
+  if (nhlStandingsFetchState === "idle") fetchNHLStandings(true);
+  let html = `<table class="standings">
+    <caption>Eastern Metropolitan</caption>
+    <tr><th>Team</th><th>W</th><th>L</th><th>OT</th></tr>
+    ${NHL_STANDINGS.Eastern.Metropolitan.map(name => nhlStandingsRow(name, MY_TEAMS_NHL)).join("")}
+  </table>`;
+  html += dashStandingsLink("nhl", "Full NHL Standings");
+  return html;
+}
+
+// MLB: Mariners' actual division (AL West) — Matthew only tracks the one
+// MLB team, so no second division needed here.
+function dashMlbStandingsTab(){
+  if (mlbFetchState === "idle") fetchMLBStandings(true);
+  let html = `<table class="standings">
+    <caption>American League West</caption>
+    <tr><th>Team</th><th>W</th><th>L</th><th>PCT</th></tr>
+    ${MLB_STANDINGS.American.West.map(mlbStandingsRow).join("")}
+  </table>`;
+  html += dashStandingsLink("mlb", "Full MLB Standings");
+  return html;
+}
+
+function renderDashboard(){
+  let html = renderThisWeekSection();
+
+  html += `<h2 class="section-title" style="font-size:20px; margin-top:24px;">Favorite Teams</h2><div class="dash-columns">`;
+  DASHBOARD_COLUMNS.forEach(sportKey => {
+    const sport = TEAMS[sportKey];
+    const active = state.dashSportTab[sportKey] || "teams";
+    html += `<div class="dash-col"><h3 class="dash-col-link" onclick="goToSport('${sportKey}')">${sport.label}</h3>`;
+    html += dashSportTabButtons(sportKey);
+    if (active === "teams"){
+      html += `<div class="dash-col-tiles">`;
+      sport.order.forEach(teamKey => {
+        html += favoriteTeamCardHTML(sportKey, teamKey, sport.teams[teamKey]);
+      });
+      html += `</div>`;
+    } else {
+      html += `<div class="dash-col-standings">`;
+      if (sportKey === "cfb") html += dashCfbStandingsTab();
+      else if (sportKey === "nfl") html += dashNflStandingsTab();
+      else if (sportKey === "nhl") html += dashNhlStandingsTab();
+      else if (sportKey === "mlb") html += dashMlbStandingsTab();
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  return html;
+}
+
 
 function goToTeam(sportKey, teamKey){
   state.primary = sportKey;
@@ -2486,6 +2929,26 @@ function calendarColorFor(sportKey, teamKey){
   if (sportKey === "cfb") return "var(--uw-1)";
   const team = TEAMS[sportKey].teams[teamKey];
   return team.dashColor || team.c1;
+}
+
+// Mirrors the actual hex values behind each team's calendar color var, since a
+// CSS var reference alone can't be used to compute contrast — this decides
+// whether an entry's text should be white or dark against its solid fill.
+const TEAM_COLOR_HEX = {
+  uw:"#4b2e83", den:"#fb4f14", sea:"#69be28", atl:"#a71930",
+  car:"#0085ca", hur:"#ce1126", sea_m:"#005c5c"
+};
+
+function relativeLuminance(hex){
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function calendarTextColorFor(teamKey){
+  const hex = TEAM_COLOR_HEX[teamKey];
+  if (!hex) return "#ffffff";
+  return relativeLuminance(hex) > 140 ? "#1c1f1c" : "#ffffff";
 }
 
 // Splits a stored tv string like "ESPN+ 7:00pm ET" or "TV TBA 1:05pm ET · note"
@@ -2534,29 +2997,30 @@ function collectGamesForDate(dateStr){
 function calendarEntryHTML(entry){
   const { sportKey, teamKey, game } = entry;
   const color = calendarColorFor(sportKey, teamKey);
+  const textColor = calendarTextColorFor(teamKey);
+  const styleAttr = `style="--tc:${color}; --tc-text:${textColor};"`;
   const teamDisp = DISPLAY_NAME[teamKey];
   const oppDisp = MASCOT_MAP[game.opp] || game.opp;
   const matchupLine = `<span class="cal-entry-team">${teamDisp}</span> ${game.home ? "vs" : "@"} ${oppDisp}`;
 
   if (game.status === "final"){
     const win = game.score.team > game.score.opp;
-    const resultColor = win ? "#2f7a2f" : "#a33";
     const record = cumulativeRecordThrough(SCHEDULES[teamKey] || [], game);
-    return `<div class="cal-entry" style="--tc:${color}">
+    return `<div class="cal-entry" ${styleAttr}>
       <div class="cal-entry-matchup">${matchupLine}</div>
-      <div class="cal-entry-meta" style="font-weight:bold; color:${resultColor};">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})${record ? ` · ${record}` : ""}</div>
+      <div class="cal-entry-meta" style="font-weight:bold;">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})${record ? ` · ${record}` : ""}</div>
     </div>`;
   }
   if (game.date < todayISO()){
     // Past but not yet confirmed final (live fetch missed it or hasn't run) — no point
     // showing a stale kickoff time/network for a game that's already happened.
-    return `<div class="cal-entry" style="--tc:${color}">
+    return `<div class="cal-entry" ${styleAttr}>
       <div class="cal-entry-matchup">${matchupLine}</div>
     </div>`;
   }
   const { network, time } = parseGameTV(game.tv);
   const metaLine = time ? `${time} - ${network}` : network;
-  return `<div class="cal-entry" style="--tc:${color}">
+  return `<div class="cal-entry" ${styleAttr}>
     <div class="cal-entry-matchup">${matchupLine}</div>
     <div class="cal-entry-meta">${metaLine}</div>
   </div>`;
