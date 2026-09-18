@@ -1343,13 +1343,11 @@ const MY_TEAMS_CFB = ["USC","Washington"];
    STATE + RENDERING
 ========================================================= */
 
-let state = { primary:"dashboard", secondary:null, calYear:2026, calMonth:8, cfbMainPollTab:"ap", dashSportTab:{cfb:"teams", nfl:"teams", nhl:"teams"} }; // calMonth 8 = September (0-indexed)
+let state = { primary:"dashboard", secondary:null, calYear:2026, calMonth:8, cfbMainPollTab:"ap", dashSportTab:{cfb:"usc", nfl:"sea", nhl:"lak"} }; // calMonth 8 = September (0-indexed)
 
 const PRIMARY_TABS = [
   {key:"dashboard", label:"Dashboard"},
   {key:"calendar", label:"Calendar"},
-  {key:"cfb", label:"CFB"},
-  {key:"nfl", label:"NFL"},
   {key:"nhl", label:"NHL"}
 ];
 
@@ -2344,22 +2342,21 @@ function renderNFLCompare(){
 
 function renderNFLStandings(){
   if (nflStandingsFetchState === "idle") fetchNFLStandings(true);
-  const lastRefresh = refreshTimeLabel("nfl");
-  let html = `<h2 class="section-title">NFL Standings</h2>
-    <div class="note">${nflStandingsStatusNote()}
+  const refreshedText = REFRESH_TIMES.nfl ? `Refreshed from ESPN ${REFRESH_TIMES.nfl.toLocaleTimeString()}` : "";
+  let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span>NFL Standings</span>
     <button class="refresh-btn refresh-btn-lg" onclick="fetchNFLStandings(true)">Refresh now</button>
-    ${lastRefresh ? `<span class="last-refreshed">${lastRefresh}</span>` : ""}</div>
-    <div class="nfl-standings-wrap">`;
+    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+  </h2>
+  <div class="nfl-standings-wrap">`;
   NFL_CONF_ORDER.forEach(conf => {
-    html += `<div class="standings-row" style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px;">`;
     NFL_DIV_ORDER.forEach(div => {
-      html += `<table class="standings">
+      html += `<table class="standings" style="margin-bottom:14px;">
         <caption>${conf} ${div}</caption>
         <tr><th>Team</th><th>W</th><th>L</th><th>T</th><th>PCT</th><th>PF</th><th>PA</th></tr>
         ${sortNFLDivision(NFL_STANDINGS[conf][div]).map(t => nflStandingsRow(t, MY_TEAMS_NFL)).join("")}
       </table>`;
     });
-    html += `</div>`;
   });
   html += `</div>`;
   return html;
@@ -2374,12 +2371,13 @@ const NHL_DISPLAY_ORDER = [
 
 function renderNHLStandings(){
   if (nhlStandingsFetchState === "idle") fetchNHLStandings(true);
-  const lastRefresh = refreshTimeLabel("nhl");
-  let html = `<h2 class="section-title">NHL Standings</h2>
-    <div class="note">${nhlStandingsStatusNote()}
+  const refreshedText = REFRESH_TIMES.nhl ? `Refreshed from ESPN ${REFRESH_TIMES.nhl.toLocaleTimeString()}` : "";
+  let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span>NHL Standings</span>
     <button class="refresh-btn refresh-btn-lg" onclick="fetchNHLStandings(true)">Refresh now</button>
-    ${lastRefresh ? `<span class="last-refreshed">${lastRefresh}</span>` : ""}</div>
-    <div class="standings-groups">`;
+    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+  </h2>
+  <div class="standings-groups">`;
   NHL_DISPLAY_ORDER.forEach(([conf, div]) => {
     html += `<table class="standings">
       <caption>${conf} ${div}</caption>
@@ -2706,18 +2704,21 @@ function favoriteTeamCardHTML(sportKey, teamKey, team){
   const recent = mostRecentFinalGame(teamKey);
   const recordLabel = recent ? cumulativeRecordThrough(games, recent) : "";
 
-  let body;
-  if (team.tier === "primary" && (sportKey === "cfb" || sportKey === "nfl")){
-    body = fullScheduleCardBody(teamKey, games);
-  } else if (team.tier === "primary" && sportKey === "nhl"){
-    body = nhlWindowCardBody(teamKey, games);
-  } else {
-    body = secondaryCardBody(teamKey, games);
-  }
+  // NHL keeps the condensed 5-back/5-ahead window (its schedules are far
+  // longer); every other sport now shows the full season for every team,
+  // primary or secondary — there's no more stacked "everyone at once" view,
+  // so there's no reason to keep the condensed treatment for secondaries.
+  const body = sportKey === "nhl" ? nhlWindowCardBody(teamKey, games) : fullScheduleCardBody(teamKey, games);
+
+  // CFB/NFL no longer have their own standalone pages — the Dashboard pill
+  // *is* the destination now, so the header isn't a link there. NHL still
+  // has its own page, so clicking through to it still makes sense.
+  const headerClick = sportKey === "nhl" ? ` onclick="goToTeam('${sportKey}','${teamKey}')"` : "";
+  const headerStyle = sportKey === "nhl" ? "" : ` style="cursor:default;"`;
 
   return `
-    <div class="dash-tile-full ${team.tier}" style="--tc1:${tileColor}">
-      <div class="tile-top" onclick="goToTeam('${sportKey}','${teamKey}')">
+    <div class="dash-tile-full" style="--tc1:${tileColor}">
+      <div class="tile-top"${headerClick}${headerStyle}>
         ${logo}
         <div class="team-name">${team.name}</div>
         ${recordLabel ? `<div class="tile-record">${recordLabel}</div>` : ""}
@@ -2771,10 +2772,15 @@ function switchDashSportTab(sportKey, which){
   renderAll();
 }
 
+// One pill per team (primary + secondary) plus a Standings pill. The active
+// selection is either a specific team key, or the string "standings".
 function dashSportTabButtons(sportKey){
-  const active = state.dashSportTab[sportKey] || "teams";
-  return `<div class="poll-tab-group" style="margin:8px 0 12px;">
-    <button class="poll-tab-btn ${active === "teams" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','teams')">Teams</button>
+  const active = state.dashSportTab[sportKey];
+  const teamPills = TEAMS[sportKey].order.map(teamKey =>
+    `<button class="poll-tab-btn ${active === teamKey ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','${teamKey}')">${DISPLAY_NAME[teamKey]}</button>`
+  ).join("");
+  return `<div class="poll-tab-group" style="margin:8px 0 12px; flex-wrap:wrap;">
+    ${teamPills}
     <button class="poll-tab-btn ${active === "standings" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','standings')">Standings</button>
   </div>`;
 }
@@ -2788,48 +2794,20 @@ function dashStandingsLink(sportKey, label){
 function dashCfbStandingsTab(){
   if (bigTenFetchState === "idle") fetchBigTenStandings(true);
   if (apPollFetchState === "idle") fetchApPoll(true);
-  return `
-    ${cfbMainPollColumn()}
-    ${dashStandingsLink("cfb", "Full CFB Standings")}`;
+  return cfbMainPollColumn();
 }
 
-// NFL: just the 3 divisions our tracked teams actually play in, read from
-// each team's own conf/div rather than hardcoded, same table/row rendering
-// as the full NFL Standings page.
+// NFL: every division, reusing the exact same full-page render — CFB/NFL no
+// longer have standalone pages, so this Dashboard tab needs to be complete
+// on its own, not just the divisions our own teams happen to play in.
 function dashNflStandingsTab(){
-  if (nflStandingsFetchState === "idle") fetchNFLStandings(true);
-  const seen = new Set();
-  const divs = TEAMS.nfl.order.map(k => TEAMS.nfl.teams[k]).filter(t => {
-    const key = t.conf + t.div;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-  let html = divs.map(t => `
-    <table class="standings">
-      <caption>${t.conf} ${t.div}</caption>
-      <tr><th>Team</th><th>W</th><th>L</th><th>T</th><th>PCT</th><th>PF</th><th>PA</th></tr>
-      ${sortNFLDivision(NFL_STANDINGS[t.conf][t.div]).map(name => nflStandingsRow(name, MY_TEAMS_NFL)).join("")}
-    </table>`).join("");
-  html += dashStandingsLink("nfl", "Full NFL Standings");
-  return html;
+  return renderNFLStandings();
 }
 
-// NHL: Pacific division only for now (Kings/Kraken's division).
+// NHL: every division here too, but NHL still has its own standalone page
+// (its schedules are much longer), so this also links out to it.
 function dashNhlStandingsTab(){
-  if (nhlStandingsFetchState === "idle") fetchNHLStandings(true);
-  let html = `<table class="standings">
-    <caption>Western Pacific</caption>
-    <tr><th>Team</th><th>W</th><th>L</th><th>OT</th></tr>
-    ${NHL_STANDINGS.Western.Pacific.map(name => nhlStandingsRow(name, MY_TEAMS_NHL)).join("")}
-  </table>
-  <table class="standings">
-    <caption>Western Central</caption>
-    <tr><th>Team</th><th>W</th><th>L</th><th>OT</th></tr>
-    ${NHL_STANDINGS.Western.Central.map(name => nhlStandingsRow(name, MY_TEAMS_NHL)).join("")}
-  </table>`;
-  html += dashStandingsLink("nhl", "Full NHL Standings");
-  return html;
+  return renderNHLStandings() + dashStandingsLink("nhl", "Full NHL Standings (team schedules)");
 }
 
 function renderDashboard(){
@@ -2838,20 +2816,19 @@ function renderDashboard(){
   html += `<h2 class="section-title" style="font-size:20px; margin-top:24px;">Favorite Teams</h2><div class="dash-columns">`;
   DASHBOARD_COLUMNS.forEach(sportKey => {
     const sport = TEAMS[sportKey];
-    const active = state.dashSportTab[sportKey] || "teams";
-    html += `<div class="dash-col"><h3 class="dash-col-link" onclick="goToSport('${sportKey}')">${sport.label}</h3>`;
+    const active = state.dashSportTab[sportKey];
+    const headerClick = sportKey === "nhl" ? ` onclick="goToSport('${sportKey}')"` : ` style="cursor:default;"`;
+    html += `<div class="dash-col"><h3 class="dash-col-link"${headerClick}>${sport.label}</h3>`;
     html += dashSportTabButtons(sportKey);
-    if (active === "teams"){
-      html += `<div class="dash-col-tiles">`;
-      sport.order.forEach(teamKey => {
-        html += favoriteTeamCardHTML(sportKey, teamKey, sport.teams[teamKey]);
-      });
-      html += `</div>`;
-    } else {
+    if (active === "standings"){
       html += `<div class="dash-col-standings">`;
       if (sportKey === "cfb") html += dashCfbStandingsTab();
       else if (sportKey === "nfl") html += dashNflStandingsTab();
       else if (sportKey === "nhl") html += dashNhlStandingsTab();
+      html += `</div>`;
+    } else {
+      html += `<div class="dash-col-tiles">`;
+      html += favoriteTeamCardHTML(sportKey, active, sport.teams[active]);
       html += `</div>`;
     }
     html += `</div>`;
