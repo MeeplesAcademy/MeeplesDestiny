@@ -224,6 +224,7 @@
     gap:8px;
     margin-bottom:12px;
   }
+  .week-grid.collapsed{ display:none; }
   @media (max-width:900px){
     .week-grid{ grid-template-columns:repeat(4, 1fr); }
   }
@@ -483,6 +484,52 @@
 
   @media (max-width:760px){
     .dash-columns{ grid-template-columns:1fr; }
+  }
+
+  /* ---- Dashboard mobile nav: sport-tab row (level 2) + team-pill row
+     (level 3), sticky below the primary nav on narrow only. Wide keeps the
+     existing side-by-side columns with their own inline pills untouched. ---- */
+  .dash-sport-row, .dash-team-row{ display:none; }
+  @media (max-width:760px){
+    .dash-sport-row.shown, .dash-team-row.shown{
+      display:flex;
+      flex-wrap:nowrap;
+      gap:8px;
+      padding:8px 28px;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .dash-sport-row.shown::-webkit-scrollbar, .dash-team-row.shown::-webkit-scrollbar{ display:none; }
+    .dash-sport-row.shown{ position:sticky; top:46px; z-index:16; }
+    .dash-team-row.shown{ position:sticky; top:92px; z-index:15; }
+    .dash-sport-row .pill{
+      flex:0 0 auto;
+      white-space:nowrap;
+      font-family:inherit;
+      font-size:12px;
+      font-weight:bold;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:6px 14px;
+      cursor:pointer;
+      color:var(--text-mute);
+    }
+    .dash-sport-row .pill.active{
+      background:var(--accent);
+      color:#fff;
+      border-color:var(--accent);
+    }
+    .dash-team-row .poll-tab-btn{ flex:0 0 auto; white-space:nowrap; }
+    /* True tabs: only the active sport's column exists on screen at all. */
+    .dash-col{ display:none; }
+    .dash-col.active-sport{ display:block; }
+    /* The sticky team-row replaces each column's own inline pill row, so
+       hide the inline copy to avoid showing the same pills twice. */
+    .dash-col-team-pills{ display:none; }
   }
 
   /* ---- 3-column main pages (CFB overview) ---- */
@@ -850,6 +897,8 @@
 
 <nav class="primary" id="primaryNav"></nav>
 <nav class="secondary" id="secondaryNav"></nav>
+<nav class="dash-sport-row" id="dashSportRow"></nav>
+<nav class="dash-team-row" id="dashTeamRow"></nav>
 
 <main id="content"></main>
 
@@ -1353,13 +1402,11 @@ const MY_TEAMS_MLB = ["Seattle Mariners"];
    STATE + RENDERING
 ========================================================= */
 
-let state = { primary:"dashboard", secondary:null, calYear:2026, calMonth:8, cfbMainPollTab:"ap", dashSportTab:{cfb:"teams", nfl:"teams", nhl:"teams", mlb:"teams"} }; // calMonth 8 = September (0-indexed)
+let state = { primary:"dashboard", secondary:null, calYear:2026, calMonth:8, cfbMainPollTab:"ap", dashSportTab:{cfb:"uw", nfl:"den", nhl:"hur", mlb:"sea_m"}, weekCollapsed:false }; // calMonth 8 = September (0-indexed)
 
 const PRIMARY_TABS = [
   {key:"dashboard", label:"Dashboard"},
   {key:"calendar", label:"Calendar"},
-  {key:"cfb", label:"CFB"},
-  {key:"nfl", label:"NFL"},
   {key:"nhl", label:"NHL"},
   {key:"mlb", label:"MLB"}
 ];
@@ -2338,22 +2385,21 @@ function renderNFLCompare(){
 
 function renderNFLStandings(){
   if (nflStandingsFetchState === "idle") fetchNFLStandings(true);
-  const lastRefresh = refreshTimeLabel("nfl");
-  let html = `<h2 class="section-title">NFL Standings</h2>
-    <div class="note">${nflStandingsStatusNote()}
+  const refreshedText = REFRESH_TIMES.nfl ? `Refreshed from ESPN ${REFRESH_TIMES.nfl.toLocaleTimeString()}` : "";
+  let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span>NFL Standings</span>
     <button class="refresh-btn refresh-btn-lg" onclick="fetchNFLStandings(true)">Refresh now</button>
-    ${lastRefresh ? `<span class="last-refreshed">${lastRefresh}</span>` : ""}</div>
-    <div class="nfl-standings-wrap">`;
+    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+  </h2>
+  <div class="nfl-standings-wrap">`;
   NFL_CONF_ORDER.forEach(conf => {
-    html += `<div class="standings-row" style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:18px;">`;
     NFL_DIV_ORDER.forEach(div => {
-      html += `<table class="standings">
+      html += `<table class="standings" style="margin-bottom:14px;">
         <caption>${conf} ${div}</caption>
         <tr><th>Team</th><th>W</th><th>L</th><th>T</th><th>PCT</th><th>PF</th><th>PA</th></tr>
         ${sortNFLDivision(NFL_STANDINGS[conf][div]).map(t => nflStandingsRow(t, MY_TEAMS_NFL)).join("")}
       </table>`;
     });
-    html += `</div>`;
   });
   html += `</div>`;
   return html;
@@ -2368,12 +2414,13 @@ const NHL_DISPLAY_ORDER = [
 
 function renderNHLStandings(){
   if (nhlStandingsFetchState === "idle") fetchNHLStandings(true);
-  const lastRefresh = refreshTimeLabel("nhl");
-  let html = `<h2 class="section-title">NHL Standings</h2>
-    <div class="note">${nhlStandingsStatusNote()}
+  const refreshedText = REFRESH_TIMES.nhl ? `Refreshed from ESPN ${REFRESH_TIMES.nhl.toLocaleTimeString()}` : "";
+  let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span>NHL Standings</span>
     <button class="refresh-btn refresh-btn-lg" onclick="fetchNHLStandings(true)">Refresh now</button>
-    ${lastRefresh ? `<span class="last-refreshed">${lastRefresh}</span>` : ""}</div>
-    <div class="standings-groups">`;
+    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+  </h2>
+  <div class="standings-groups">`;
   NHL_DISPLAY_ORDER.forEach(([conf, div]) => {
     html += `<table class="standings">
       <caption>${conf} ${div}</caption>
@@ -2472,12 +2519,13 @@ function mlbStandingsRow(team){
 
 function renderMLBStandings(){
   if (mlbFetchState === "idle") fetchMLBStandings(true);
-  const lastRefresh = refreshTimeLabel("mlb");
-  let html = `<h2 class="section-title">MLB Standings</h2>
-    <div class="note">${mlbFetchStatusNote()}
+  const refreshedText = REFRESH_TIMES.mlb ? `Refreshed from ESPN ${REFRESH_TIMES.mlb.toLocaleTimeString()}` : "";
+  let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span>MLB Standings</span>
     <button class="refresh-btn refresh-btn-lg" onclick="fetchMLBStandings(true)">Refresh now</button>
-    ${lastRefresh ? `<span class="last-refreshed">${lastRefresh}</span>` : ""}</div>
-    <div class="standings-groups">`;
+    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+  </h2>
+  <div class="standings-groups">`;
   MLB_DISPLAY_ORDER.forEach(([league, div]) => {
     html += `<table class="standings">
       <caption>${league} League ${div}</caption>
@@ -2816,18 +2864,22 @@ function favoriteTeamCardHTML(sportKey, teamKey, team){
   const recent = mostRecentFinalGame(teamKey);
   const recordLabel = recent ? cumulativeRecordThrough(games, recent) : "";
 
-  let body;
-  if (team.tier === "primary" && (sportKey === "cfb" || sportKey === "nfl")){
-    body = fullScheduleCardBody(teamKey, games);
-  } else if (team.tier === "primary" && sportKey === "nhl"){
-    body = nhlWindowCardBody(teamKey, games);
-  } else {
-    body = secondaryCardBody(teamKey, games);
-  }
+  // NHL keeps the condensed 5-back/5-ahead window (its schedule is far
+  // longer); every other sport shows the full season for every team,
+  // primary or secondary — there's no more stacked "everyone at once" view,
+  // so there's no reason to keep a condensed treatment for secondaries.
+  const body = sportKey === "nhl" ? nhlWindowCardBody(teamKey, games) : fullScheduleCardBody(teamKey, games);
+
+  // CFB/NFL no longer have their own standalone pages — the Dashboard pill
+  // *is* the destination now. NHL and MLB still have their own pages (their
+  // schedules are much longer), so clicking through still makes sense there.
+  const hasOwnPage = sportKey === "nhl" || sportKey === "mlb";
+  const headerClick = hasOwnPage ? ` onclick="goToTeam('${sportKey}','${teamKey}')"` : "";
+  const headerStyle = hasOwnPage ? "" : ` style="cursor:default;"`;
 
   return `
-    <div class="dash-tile-full ${team.tier}" style="--tc1:${tileColor}">
-      <div class="tile-top" onclick="goToTeam('${sportKey}','${teamKey}')">
+    <div class="dash-tile-full" style="--tc1:${tileColor}">
+      <div class="tile-top"${headerClick}${headerStyle}>
         ${logo}
         <div class="team-name">${team.name}</div>
         ${recordLabel ? `<div class="tile-record">${recordLabel}</div>` : ""}
@@ -2872,8 +2924,15 @@ function renderThisWeekSection(){
   }).join("");
 
   return `
-    <h2 class="section-title" style="font-size:20px;">This Week</h2>
-    <div class="week-grid">${cells}</div>`;
+    <h2 class="section-title" style="font-size:20px; display:flex; align-items:center; gap:10px;">This Week
+      <button class="refresh-btn" style="margin-left:auto;" onclick="toggleWeekCollapse()">${state.weekCollapsed ? "Show" : "Hide"}</button>
+    </h2>
+    <div class="week-grid${state.weekCollapsed ? " collapsed" : ""}">${cells}</div>`;
+}
+
+function toggleWeekCollapse(){
+  state.weekCollapsed = !state.weekCollapsed;
+  renderAll();
 }
 
 function switchDashSportTab(sportKey, which){
@@ -2881,12 +2940,40 @@ function switchDashSportTab(sportKey, which){
   renderAll();
 }
 
+// Just the pills (teams + Standings) with no wrapper — shared by each
+// column's own inline row (desktop) and the sticky mobile team-row, so
+// there's a single source of truth for this markup.
+function dashTeamPillsHTML(sportKey){
+  const active = state.dashSportTab[sportKey];
+  const teamPills = TEAMS[sportKey].order.map(teamKey => {
+    const color = calendarColorFor(sportKey, teamKey);
+    const textColor = calendarTextColorFor(teamKey);
+    const isActive = active === teamKey;
+    const pillStyle = isActive
+      ? `background:${color}; color:${textColor}; border-color:${color};`
+      : `background:var(--panel); color:${color}; border-color:${color};`;
+    return `<button class="poll-tab-btn" style="${pillStyle}" onclick="switchDashSportTab('${sportKey}','${teamKey}')">${DISPLAY_NAME[teamKey]}</button>`;
+  }).join("");
+  return `${teamPills}<button class="poll-tab-btn ${active === "standings" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','standings')">Standings</button>`;
+}
+
+// One pill per team (primary + secondary), colored with that team's actual
+// calendar color — solid fill + computed contrast text when active, colored
+// outline when not — plus a neutral Standings pill, wrapped for each
+// column's own inline row. On mobile this inline copy is hidden via
+// .dash-col-team-pills — the sticky dash-team-row shows the same pills.
 function dashSportTabButtons(sportKey){
-  const active = state.dashSportTab[sportKey] || "teams";
-  return `<div class="poll-tab-group" style="margin:8px 0 12px;">
-    <button class="poll-tab-btn ${active === "teams" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','teams')">Teams</button>
-    <button class="poll-tab-btn ${active === "standings" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','standings')">Standings</button>
+  return `<div class="poll-tab-group dash-col-team-pills" style="margin:8px 0 12px; flex-wrap:wrap;">
+    ${dashTeamPillsHTML(sportKey)}
   </div>`;
+}
+
+// Mobile-only: switching the sport tab resets that sport back to its
+// primary team rather than remembering the last-viewed team.
+function pickDashSport(sportKey){
+  state.dashActiveSport = sportKey;
+  state.dashSportTab[sportKey] = TEAMS[sportKey].order[0];
+  renderAll();
 }
 
 function dashStandingsLink(sportKey, label){
@@ -2898,57 +2985,26 @@ function dashStandingsLink(sportKey, label){
 function dashCfbStandingsTab(){
   if (bigTenFetchState === "idle") fetchBigTenStandings(true);
   if (apPollFetchState === "idle") fetchApPoll(true);
-  return `
-    ${cfbMainPollColumn()}
-    ${dashStandingsLink("cfb", "Full CFB Standings")}`;
+  return cfbMainPollColumn();
 }
 
-// NFL: just the divisions our tracked teams actually play in, read from
-// each team's own conf/div rather than hardcoded, same table/row rendering
-// as the full NFL Standings page.
+// NFL: every division, reusing the exact same full-page render — CFB/NFL no
+// longer have standalone pages, so this Dashboard tab needs to be complete
+// on its own, not just the divisions Matthew's own teams happen to play in.
 function dashNflStandingsTab(){
-  if (nflStandingsFetchState === "idle") fetchNFLStandings(true);
-  const seen = new Set();
-  const divs = TEAMS.nfl.order.map(k => TEAMS.nfl.teams[k]).filter(t => {
-    const key = t.conf + t.div;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-  let html = divs.map(t => `
-    <table class="standings">
-      <caption>${t.conf} ${t.div}</caption>
-      <tr><th>Team</th><th>W</th><th>L</th><th>T</th><th>PCT</th><th>PF</th><th>PA</th></tr>
-      ${sortNFLDivision(NFL_STANDINGS[t.conf][t.div]).map(name => nflStandingsRow(name, MY_TEAMS_NFL)).join("")}
-    </table>`).join("");
-  html += dashStandingsLink("nfl", "Full NFL Standings");
-  return html;
+  return renderNFLStandings();
 }
 
-// NHL: Hurricanes' actual division (Eastern Metropolitan) — Matthew only
-// tracks the one NHL team, so no second division needed here.
+// NHL: every division, plus a link out — NHL still has its own standalone
+// page (its schedule is much longer).
 function dashNhlStandingsTab(){
-  if (nhlStandingsFetchState === "idle") fetchNHLStandings(true);
-  let html = `<table class="standings">
-    <caption>Eastern Metropolitan</caption>
-    <tr><th>Team</th><th>W</th><th>L</th><th>OT</th></tr>
-    ${NHL_STANDINGS.Eastern.Metropolitan.map(name => nhlStandingsRow(name, MY_TEAMS_NHL)).join("")}
-  </table>`;
-  html += dashStandingsLink("nhl", "Full NHL Standings");
-  return html;
+  return renderNHLStandings() + dashStandingsLink("nhl", "Full NHL Standings (team schedule)");
 }
 
-// MLB: Mariners' actual division (AL West) — Matthew only tracks the one
-// MLB team, so no second division needed here.
+// MLB: every division too, plus a link out — MLB also keeps its own page
+// for the same reason (162 games is even longer than NHL's 84).
 function dashMlbStandingsTab(){
-  if (mlbFetchState === "idle") fetchMLBStandings(true);
-  let html = `<table class="standings">
-    <caption>American League West</caption>
-    <tr><th>Team</th><th>W</th><th>L</th><th>PCT</th></tr>
-    ${MLB_STANDINGS.American.West.map(mlbStandingsRow).join("")}
-  </table>`;
-  html += dashStandingsLink("mlb", "Full MLB Standings");
-  return html;
+  return renderMLBStandings() + dashStandingsLink("mlb", "Full MLB Standings (team schedule)");
 }
 
 function renderDashboard(){
@@ -2957,21 +3013,22 @@ function renderDashboard(){
   html += `<h2 class="section-title" style="font-size:20px; margin-top:24px;">Favorite Teams</h2><div class="dash-columns">`;
   DASHBOARD_COLUMNS.forEach(sportKey => {
     const sport = TEAMS[sportKey];
-    const active = state.dashSportTab[sportKey] || "teams";
-    html += `<div class="dash-col"><h3 class="dash-col-link" onclick="goToSport('${sportKey}')">${sport.label}</h3>`;
+    const active = state.dashSportTab[sportKey];
+    const hasOwnPage = sportKey === "nhl" || sportKey === "mlb";
+    const headerClick = hasOwnPage ? ` onclick="goToSport('${sportKey}')"` : ` style="cursor:default;"`;
+    const activeSportClass = sportKey === state.dashActiveSport ? " active-sport" : "";
+    html += `<div class="dash-col${activeSportClass}"><h3 class="dash-col-link"${headerClick}>${sport.label}</h3>`;
     html += dashSportTabButtons(sportKey);
-    if (active === "teams"){
-      html += `<div class="dash-col-tiles">`;
-      sport.order.forEach(teamKey => {
-        html += favoriteTeamCardHTML(sportKey, teamKey, sport.teams[teamKey]);
-      });
-      html += `</div>`;
-    } else {
+    if (active === "standings"){
       html += `<div class="dash-col-standings">`;
       if (sportKey === "cfb") html += dashCfbStandingsTab();
       else if (sportKey === "nfl") html += dashNflStandingsTab();
       else if (sportKey === "nhl") html += dashNhlStandingsTab();
       else if (sportKey === "mlb") html += dashMlbStandingsTab();
+      html += `</div>`;
+    } else {
+      html += `<div class="dash-col-tiles">`;
+      html += favoriteTeamCardHTML(sportKey, active, sport.teams[active]);
       html += `</div>`;
     }
     html += `</div>`;
@@ -2986,6 +3043,37 @@ function goToTeam(sportKey, teamKey){
   state.primary = sportKey;
   state.secondary = teamKey;
   renderAll();
+}
+
+// Mobile-only sticky level 2: one pill per sport in DASHBOARD_COLUMNS order,
+// abbreviated to its key (CFB/NFL/NHL/MLB) since the full labels don't fit.
+// Empty and hidden outside the Dashboard tab.
+function renderDashSportRow(){
+  const el = document.getElementById("dashSportRow");
+  if (state.primary !== "dashboard"){
+    el.className = "dash-sport-row";
+    el.innerHTML = "";
+    return;
+  }
+  el.className = "dash-sport-row shown";
+  el.innerHTML = DASHBOARD_COLUMNS.map(sportKey => {
+    const active = sportKey === state.dashActiveSport;
+    return `<button class="pill${active ? " active" : ""}" onclick="pickDashSport('${sportKey}')">${sportKey.toUpperCase()}</button>`;
+  }).join("");
+}
+
+// Mobile-only sticky level 3: the active sport's team + Standings pills,
+// reusing dashTeamPillsHTML so this and the (mobile-hidden) inline row in
+// each column never drift out of sync. Empty and hidden outside Dashboard.
+function renderDashTeamRow(){
+  const el = document.getElementById("dashTeamRow");
+  if (state.primary !== "dashboard"){
+    el.className = "dash-team-row";
+    el.innerHTML = "";
+    return;
+  }
+  el.className = "dash-team-row shown";
+  el.innerHTML = dashTeamPillsHTML(state.dashActiveSport);
 }
 
 /* =========================================================
@@ -3270,8 +3358,11 @@ function renderContent(){
 }
 
 function renderAll(){
+  if (!state.dashActiveSport) state.dashActiveSport = DASHBOARD_COLUMNS[0];
   renderPrimaryNav();
   renderSecondaryNav();
+  renderDashSportRow();
+  renderDashTeamRow();
   renderContent();
 }
 

@@ -225,6 +225,7 @@
     gap:8px;
     margin-bottom:12px;
   }
+  .week-grid.collapsed{ display:none; }
   @media (max-width:900px){
     .week-grid{ grid-template-columns:repeat(4, 1fr); }
   }
@@ -484,6 +485,52 @@
 
   @media (max-width:760px){
     .dash-columns{ grid-template-columns:1fr; }
+  }
+
+  /* ---- Dashboard mobile nav: sport-tab row (level 2) + team-pill row
+     (level 3), sticky below the primary nav on narrow only. Wide keeps the
+     existing side-by-side columns with their own inline pills untouched. ---- */
+  .dash-sport-row, .dash-team-row{ display:none; }
+  @media (max-width:760px){
+    .dash-sport-row.shown, .dash-team-row.shown{
+      display:flex;
+      flex-wrap:nowrap;
+      gap:8px;
+      padding:8px 28px;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .dash-sport-row.shown::-webkit-scrollbar, .dash-team-row.shown::-webkit-scrollbar{ display:none; }
+    .dash-sport-row.shown{ position:sticky; top:46px; z-index:16; }
+    .dash-team-row.shown{ position:sticky; top:92px; z-index:15; }
+    .dash-sport-row .pill{
+      flex:0 0 auto;
+      white-space:nowrap;
+      font-family:inherit;
+      font-size:12px;
+      font-weight:bold;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:6px 14px;
+      cursor:pointer;
+      color:var(--text-mute);
+    }
+    .dash-sport-row .pill.active{
+      background:var(--accent);
+      color:#fff;
+      border-color:var(--accent);
+    }
+    .dash-team-row .poll-tab-btn{ flex:0 0 auto; white-space:nowrap; }
+    /* True tabs: only the active sport's column exists on screen at all. */
+    .dash-col{ display:none; }
+    .dash-col.active-sport{ display:block; }
+    /* The sticky team-row replaces each column's own inline pill row, so
+       hide the inline copy to avoid showing the same pills twice. */
+    .dash-col-team-pills{ display:none; }
   }
 
   /* ---- 3-column main pages (CFB overview) ---- */
@@ -851,6 +898,8 @@
 
 <nav class="primary" id="primaryNav"></nav>
 <nav class="secondary" id="secondaryNav"></nav>
+<nav class="dash-sport-row" id="dashSportRow"></nav>
+<nav class="dash-team-row" id="dashTeamRow"></nav>
 
 <main id="content"></main>
 
@@ -1343,7 +1392,7 @@ const MY_TEAMS_CFB = ["USC","Washington"];
    STATE + RENDERING
 ========================================================= */
 
-let state = { primary:"dashboard", secondary:null, calYear:2026, calMonth:8, cfbMainPollTab:"ap", dashSportTab:{cfb:"usc", nfl:"sea", nhl:"lak"} }; // calMonth 8 = September (0-indexed)
+let state = { primary:"dashboard", secondary:null, calYear:2026, calMonth:8, cfbMainPollTab:"ap", dashSportTab:{cfb:"usc", nfl:"sea", nhl:"lak"}, weekCollapsed:false }; // calMonth 8 = September (0-indexed)
 
 const PRIMARY_TABS = [
   {key:"dashboard", label:"Dashboard"},
@@ -2763,8 +2812,15 @@ function renderThisWeekSection(){
   }).join("");
 
   return `
-    <h2 class="section-title" style="font-size:20px;">This Week</h2>
-    <div class="week-grid">${cells}</div>`;
+    <h2 class="section-title" style="font-size:20px; display:flex; align-items:center; gap:10px;">This Week
+      <button class="refresh-btn" style="margin-left:auto;" onclick="toggleWeekCollapse()">${state.weekCollapsed ? "Show" : "Hide"}</button>
+    </h2>
+    <div class="week-grid${state.weekCollapsed ? " collapsed" : ""}">${cells}</div>`;
+}
+
+function toggleWeekCollapse(){
+  state.weekCollapsed = !state.weekCollapsed;
+  renderAll();
 }
 
 function switchDashSportTab(sportKey, which){
@@ -2772,9 +2828,10 @@ function switchDashSportTab(sportKey, which){
   renderAll();
 }
 
-// One pill per team (primary + secondary) plus a Standings pill. The active
-// selection is either a specific team key, or the string "standings".
-function dashSportTabButtons(sportKey){
+// Just the pills (teams + Standings) with no wrapper — shared by each
+// column's own inline row (desktop) and the sticky mobile team-row, so
+// there's a single source of truth for this markup.
+function dashTeamPillsHTML(sportKey){
   const active = state.dashSportTab[sportKey];
   const teamPills = TEAMS[sportKey].order.map(teamKey => {
     const color = calendarColorFor(sportKey, teamKey);
@@ -2785,10 +2842,25 @@ function dashSportTabButtons(sportKey){
       : `background:var(--panel); color:${color}; border-color:${color};`;
     return `<button class="poll-tab-btn" style="${pillStyle}" onclick="switchDashSportTab('${sportKey}','${teamKey}')">${DISPLAY_NAME[teamKey]}</button>`;
   }).join("");
-  return `<div class="poll-tab-group" style="margin:8px 0 12px; flex-wrap:wrap;">
-    ${teamPills}
-    <button class="poll-tab-btn ${active === "standings" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','standings')">Standings</button>
+  return `${teamPills}<button class="poll-tab-btn ${active === "standings" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','standings')">Standings</button>`;
+}
+
+// One pill per team (primary + secondary) plus a Standings pill, wrapped for
+// each column's own inline row. The active selection is either a specific
+// team key, or the string "standings". On mobile this inline copy is hidden
+// via .dash-col-team-pills — the sticky dash-team-row shows the same pills.
+function dashSportTabButtons(sportKey){
+  return `<div class="poll-tab-group dash-col-team-pills" style="margin:8px 0 12px; flex-wrap:wrap;">
+    ${dashTeamPillsHTML(sportKey)}
   </div>`;
+}
+
+// Mobile-only: switching the sport tab resets that sport back to its
+// primary team rather than remembering the last-viewed team.
+function pickDashSport(sportKey){
+  state.dashActiveSport = sportKey;
+  state.dashSportTab[sportKey] = TEAMS[sportKey].order[0];
+  renderAll();
 }
 
 function dashStandingsLink(sportKey, label){
@@ -2824,7 +2896,8 @@ function renderDashboard(){
     const sport = TEAMS[sportKey];
     const active = state.dashSportTab[sportKey];
     const headerClick = sportKey === "nhl" ? ` onclick="goToSport('${sportKey}')"` : ` style="cursor:default;"`;
-    html += `<div class="dash-col"><h3 class="dash-col-link"${headerClick}>${sport.label}</h3>`;
+    const activeSportClass = sportKey === state.dashActiveSport ? " active-sport" : "";
+    html += `<div class="dash-col${activeSportClass}"><h3 class="dash-col-link"${headerClick}>${sport.label}</h3>`;
     html += dashSportTabButtons(sportKey);
     if (active === "standings"){
       html += `<div class="dash-col-standings">`;
@@ -2848,6 +2921,37 @@ function goToTeam(sportKey, teamKey){
   state.primary = sportKey;
   state.secondary = teamKey;
   renderAll();
+}
+
+// Mobile-only sticky level 2: one pill per sport in DASHBOARD_COLUMNS order,
+// abbreviated to its key (CFB/NFL/NHL) since the full labels don't fit.
+// Empty and hidden outside the Dashboard tab.
+function renderDashSportRow(){
+  const el = document.getElementById("dashSportRow");
+  if (state.primary !== "dashboard"){
+    el.className = "dash-sport-row";
+    el.innerHTML = "";
+    return;
+  }
+  el.className = "dash-sport-row shown";
+  el.innerHTML = DASHBOARD_COLUMNS.map(sportKey => {
+    const active = sportKey === state.dashActiveSport;
+    return `<button class="pill${active ? " active" : ""}" onclick="pickDashSport('${sportKey}')">${sportKey.toUpperCase()}</button>`;
+  }).join("");
+}
+
+// Mobile-only sticky level 3: the active sport's team + Standings pills,
+// reusing dashTeamPillsHTML so this and the (mobile-hidden) inline row in
+// each column never drift out of sync. Empty and hidden outside Dashboard.
+function renderDashTeamRow(){
+  const el = document.getElementById("dashTeamRow");
+  if (state.primary !== "dashboard"){
+    el.className = "dash-team-row";
+    el.innerHTML = "";
+    return;
+  }
+  el.className = "dash-team-row shown";
+  el.innerHTML = dashTeamPillsHTML(state.dashActiveSport);
 }
 
 /* =========================================================
@@ -3132,8 +3236,11 @@ function renderContent(){
 }
 
 function renderAll(){
+  if (!state.dashActiveSport) state.dashActiveSport = DASHBOARD_COLUMNS[0];
   renderPrimaryNav();
   renderSecondaryNav();
+  renderDashSportRow();
+  renderDashTeamRow();
   renderContent();
 }
 
