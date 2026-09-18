@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Nav Prototype — not real data</title>
+<style>
+  * { box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:Verdana, Geneva, sans-serif;
+    background:#f5f6f4;
+    color:#1c1f1c;
+  }
+  .proto-banner{
+    background:#2b2f2a;
+    color:#fff;
+    text-align:center;
+    font-size:12px;
+    padding:6px;
+  }
+  .app-header{
+    max-width:1400px;
+    margin:0 auto;
+    padding:16px 20px 0;
+  }
+  .app-header h1{ font-size:22px; margin:0 0 4px; }
+  .app-header p{ font-size:13px; color:#5b5f58; margin:0 0 14px; }
+
+  /* ---- Sticky nav shell ---- */
+  .nav-shell{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:#fff;
+    border-bottom:1px solid #d8dad4;
+  }
+  .nav-row{
+    max-width:1400px;
+    margin:0 auto;
+    display:flex;
+    gap:18px;
+    padding:10px 20px;
+    font-size:14px;
+    font-weight:bold;
+  }
+  .primary-row button{
+    background:none; border:none; font:inherit; font-weight:bold;
+    color:#5b5f58; cursor:pointer; padding-bottom:6px;
+  }
+  .primary-row button.active{ color:#1c1f1c; border-bottom:2px solid #2b2f2a; }
+  .sport-row, .team-row{
+    display:none;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:8px 20px;
+    border-top:1px solid #eceee9;
+    max-width:1400px;
+    margin:0 auto;
+  }
+  .sport-row.shown, .team-row.shown{ display:flex; }
+  .pill{
+    font-family:inherit; font-size:12px; font-weight:bold;
+    border-radius:14px; padding:6px 14px; cursor:pointer;
+  }
+
+  .section-title{
+    font-size:14px;
+    margin:22px 0 10px;
+    padding-bottom:6px;
+    border-bottom:1px solid #d8dad4;
+    max-width:1400px;
+    margin-left:auto; margin-right:auto;
+    padding-left:20px; padding-right:20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .collapse-btn{
+    background:none; border:1px solid #d8dad4; border-radius:4px;
+    font-size:11px; font-weight:bold; color:#5b5f58; cursor:pointer;
+    padding:2px 8px; margin-left:auto;
+  }
+
+  .week-grid{
+    max-width:1400px; margin:0 auto; padding:0 20px;
+    display:grid; grid-template-columns:repeat(7, 1fr); gap:8px;
+  }
+  .week-grid.collapsed{ display:none; }
+  .day-cell{ border:1px solid #d8dad4; border-radius:4px; padding:6px; min-height:70px; background:#fff; }
+  .day-cell .dow{ font-size:11px; color:#5b5f58; font-weight:bold; }
+  .day-cell .num{ font-size:14px; font-weight:bold; margin-bottom:4px; }
+  .mini-entry{ border-radius:3px; padding:3px 5px; font-size:10px; margin-bottom:3px; font-weight:bold; }
+
+  .content-wrap{ max-width:1400px; margin:0 auto; padding:0 20px 60px; }
+
+  .dash-columns{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .dash-col-tiles-wide{ display:block; }
+  .wide-only-pills{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+
+  .team-card{
+    background:#fff; border:1px solid #d8dad4; border-left:5px solid var(--tc);
+    border-radius:4px; padding:12px 16px;
+  }
+  .team-card-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .team-card-head .name{ font-weight:bold; font-size:16px; }
+  .team-card-head .rec{ margin-left:auto; font-weight:bold; }
+  .sched-row{ font-size:12px; padding:6px 2px; border-top:1px solid #eee; }
+  .sched-row:first-child{ border-top:none; }
+  .sched-row.next{ font-weight:bold; background:color-mix(in srgb, var(--tc) 18%, #fff); border-radius:3px; padding:6px 8px; margin:2px -6px; }
+
+  /* Narrow: hide inline pills in each column, collapse to one column, show sticky sport+team pills instead */
+  @media (max-width:760px){
+    .dash-columns{ display:block; }
+    .dash-col{ display:none; }
+    .dash-col.active-sport{ display:block; }
+    .wide-only-pills{ display:none; }
+    .sport-row, .team-row{ display:none; }
+    .sport-row.shown, .team-row.shown{ display:flex; }
+  }
+  @media (min-width:761px){
+    .sport-row, .team-row{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="proto-banner">Prototype only — fake schedule data, testing navigation feel. Resize your browser window to test both modes.</div>
+
+<div class="app-header">
+  <h1>Rich's Sports Tracker</h1>
+  <p>Nav prototype — USC, Washington, Seahawks, Bears, Kings, Kraken (sample data)</p>
+</div>
+
+<div class="nav-shell">
+  <div class="nav-row primary-row">
+    <button class="active">Dashboard</button>
+    <button>Calendar</button>
+    <button>NHL</button>
+  </div>
+  <div class="sport-row shown" id="sportRow"></div>
+  <div class="team-row shown" id="teamRow"></div>
+</div>
+
+<div class="content-wrap">
+  <div class="section-title">
+    This Week
+    <button class="collapse-btn" id="weekToggle">Hide</button>
+  </div>
+  <div class="week-grid" id="weekGrid"></div>
+
+  <div class="section-title" style="margin-top:24px;">Favorite Teams</div>
+  <div class="dash-columns" id="dashColumns"></div>
+</div>
+
+<script>
+const SPORTS = {
+  cfb: { label:"NCAA College Football", teams:{
+    usc:{ name:"USC Trojans", color:"#990000", text:"#fff" },
+    uw:{ name:"Washington Huskies", color:"#4b2e83", text:"#fff" }
+  }, order:["usc","uw"] },
+  nfl: { label:"NFL", teams:{
+    sea:{ name:"Seattle Seahawks", color:"#69be28", text:"#1c1f1c" },
+    chi:{ name:"Chicago Bears", color:"#0b162a", text:"#fff" }
+  }, order:["sea","chi"] },
+  nhl: { label:"NHL", teams:{
+    lak:{ name:"Los Angeles Kings", color:"#111111", text:"#fff" },
+    skk:{ name:"Seattle Kraken", color:"#68a2b9", text:"#1c1f1c" }
+  }, order:["lak","skk"] }
+};
+const SPORT_ORDER = ["cfb","nfl","nhl"];
+
+function fakeGames(teamName){
+  const opps = ["Rivals A","Rivals B","Rivals C","Rivals D","Rivals E","Rivals F"];
+  return opps.map((opp, i) => ({
+    date: `Sat, Sep ${6 + i*7}`,
+    final: i < 3,
+    score: i < 3 ? `${20+i*3}-${10+i}` : null,
+    opp
+  }));
+}
+
+let state = { sport:"cfb", team:"usc", weekCollapsed:false };
+
+function renderNav(){
+  const sportRow = document.getElementById("sportRow");
+  sportRow.innerHTML = SPORT_ORDER.map(sk => {
+    const active = state.sport === sk;
+    return `<button class="pill" style="${active ? `background:#2b2f2a;color:#fff;border:1px solid #2b2f2a;` : `background:#fff;color:#5b5f58;border:1px solid #d8dad4;`}" onclick="pickSport('${sk}')">${SPORTS[sk].label.replace('NCAA College Football','CFB')}</button>`;
+  }).join("");
+
+  const teamRow = document.getElementById("teamRow");
+  const sport = SPORTS[state.sport];
+  teamRow.innerHTML = sport.order.map(tk => {
+    const t = sport.teams[tk];
+    const active = state.team === tk;
+    const style = active ? `background:${t.color};color:${t.text};border:1px solid ${t.color};` : `background:#fff;color:${t.color};border:1px solid ${t.color};`;
+    return `<button class="pill" style="${style}" onclick="pickTeam('${tk}')">${t.name.split(' ').pop()}</button>`;
+  }).join("") + `<button class="pill" style="background:#fff;color:#5b5f58;border:1px solid #d8dad4;">Standings</button>`;
+}
+
+function pickSport(sk){
+  state.sport = sk;
+  state.team = SPORTS[sk].order[0];
+  renderAll();
+}
+function pickTeam(tk){
+  state.team = tk;
+  renderAll();
+}
+
+function teamCardHTML(sportKey, teamKey){
+  const t = SPORTS[sportKey].teams[teamKey];
+  const games = fakeGames(t.name);
+  const rows = games.map((g,i) => {
+    const isNext = !g.final && games.slice(0,i).every(gg=>gg.final);
+    const content = g.final
+      ? `${g.date} &middot; Final &middot; vs ${g.opp} &middot; <span style="color:#2f7a2f;">${g.score} (W)</span>`
+      : `${g.date} &middot; 1:00pm &middot; vs ${g.opp}`;
+    return `<div class="sched-row ${isNext ? 'next' : ''}">${content}</div>`;
+  }).join("");
+  return `<div class="team-card" style="--tc:${t.color};">
+    <div class="team-card-head">
+      <div class="name">${t.name}</div>
+      <div class="rec">3-0</div>
+    </div>
+    ${rows}
+  </div>`;
+}
+
+function renderColumns(){
+  const el = document.getElementById("dashColumns");
+  el.innerHTML = SPORT_ORDER.map(sk => {
+    const sport = SPORTS[sk];
+    const isActiveMobile = sk === state.sport;
+    const pills = sport.order.map(tk => {
+      const t = sport.teams[tk];
+      const active = tk === state.team && sk === state.sport;
+      const style = active ? `background:${t.color};color:${t.text};border:1px solid ${t.color};` : `background:#fff;color:${t.color};border:1px solid ${t.color};`;
+      return `<button class="pill" style="${style}" onclick="pickSport('${sk}'); pickTeam('${tk}');">${t.name.split(' ').pop()}</button>`;
+    }).join("") + `<button class="pill" style="background:#fff;color:#5b5f58;border:1px solid #d8dad4;">Standings</button>`;
+    const shownTeam = (sk === state.sport) ? state.team : sport.order[0];
+    return `<div class="dash-col ${isActiveMobile ? 'active-sport' : ''}">
+      <h3 style="font-size:12px;text-transform:uppercase;color:#5b5f58;">${sport.label}</h3>
+      <div class="wide-only-pills">${pills}</div>
+      <div class="dash-col-tiles-wide">${teamCardHTML(sk, shownTeam)}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderWeek(){
+  const grid = document.getElementById("weekGrid");
+  grid.classList.toggle("collapsed", state.weekCollapsed);
+  const days = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+  const sample = [
+    [{team:"Bears",color:"#0b162a",text:"#fff",line:"@ Panthers 59-37 (W)"}],
+    [{team:"USC",color:"#990000",text:"#fff",line:"vs SJSU 42-26 (W)"}],
+    [],
+    [],
+    [{team:"Seahawks",color:"#69be28",text:"#1c1f1c",line:"vs Cardinals 1:25pm"}],
+    [],
+    [{team:"Kings",color:"#111111",text:"#fff",line:"@ Avalanche 7:00pm"}]
+  ];
+  grid.innerHTML = days.map((d,i) => `
+    <div class="day-cell">
+      <div class="dow">${d}</div>
+      <div class="num">${13+i}</div>
+      ${sample[i].map(e => `<div class="mini-entry" style="background:${e.color};color:${e.text};">${e.team} ${e.line}</div>`).join("")}
+    </div>`).join("");
+}
+
+document.getElementById("weekToggle").onclick = () => {
+  state.weekCollapsed = !state.weekCollapsed;
+  document.getElementById("weekToggle").textContent = state.weekCollapsed ? "Show" : "Hide";
+  renderWeek();
+};
+
+function renderAll(){
+  renderNav();
+  renderColumns();
+}
+renderWeek();
+renderAll();
+</script>
+</body>
+</html>
