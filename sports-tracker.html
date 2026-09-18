@@ -238,6 +238,12 @@
     color:var(--text-mute);
     margin-bottom:4px;
   }
+  .cal-cell-dow{
+    display:none;
+    font-weight:bold;
+    margin-right:6px;
+    color:var(--text-mute);
+  }
   .cal-entry{
     background:var(--tc);
     color:var(--tc-text);
@@ -277,8 +283,15 @@
     margin-top:1px;
   }
   @media (max-width:700px){
-    .cal-grid{ grid-template-columns:repeat(7, minmax(36px, 1fr)); }
-    .cal-entry{ font-size:9px; }
+    /* Month calendar cascades to single-column, full-width day boxes
+       instead of squeezing 7 columns down to unreadable slivers. The
+       shared weekday header only makes sense with 7 columns, so it's
+       hidden in favor of a per-cell weekday label (same idea as the This
+       Week strip's per-cell day labels). */
+    .cal-grid{ grid-template-columns:1fr; gap:8px; }
+    .cal-dow-header{ display:none; }
+    .cal-grid .cal-cell.empty{ display:none; }
+    .cal-cell-dow{ display:inline; }
   }
 
   h2.section-title{
@@ -2813,7 +2826,7 @@ function renderThisWeekSection(){
 
   return `
     <h2 class="section-title" style="font-size:20px; display:flex; align-items:center; gap:10px;">This Week
-      <button class="refresh-btn" style="margin-left:auto;" onclick="toggleWeekCollapse()">${state.weekCollapsed ? "Show" : "Hide"}</button>
+      <button class="refresh-btn refresh-btn-lg" style="margin-left:auto;" onclick="toggleWeekCollapse()">${state.weekCollapsed ? "Show" : "Hide"}</button>
     </h2>
     <div class="week-grid${state.weekCollapsed ? " collapsed" : ""}">${cells}</div>`;
 }
@@ -3093,6 +3106,7 @@ function calendarEntryHTML(entry){
 
 function daysInMonth(year, monthIdx){ return new Date(year, monthIdx + 1, 0).getDate(); }
 function firstWeekdayOfMonth(year, monthIdx){ return new Date(year, monthIdx, 1).getDay(); }
+const WEEKDAY_ABBR = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
 // Full season, Sept 2026 – April 2027 — all shown stacked on one scrollable page.
 const SEASON_MONTHS = [
@@ -3165,8 +3179,9 @@ function renderMonthSection(year, month){
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     const entries = collectGamesForDate(dateStr);
     const isToday = dateStr === todayStr;
+    const weekdayLabel = WEEKDAY_ABBR[(startWeekday + d - 1) % 7];
     cells += `<div class="cal-cell${isToday ? " is-today" : ""}">
-      <div class="cal-daynum">${d}</div>
+      <div class="cal-daynum"><span class="cal-cell-dow">${weekdayLabel}</span>${d}</div>
       ${entries.map(calendarEntryHTML).join("")}
     </div>`;
   }
@@ -3177,8 +3192,8 @@ function renderMonthSection(year, month){
     <div class="cal-month-section" id="cal-month-${year}-${month}">
       <div class="cal-month-heading">${monthLabel}</div>
       <div class="cal-grid">
-        <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div>
-        <div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
+        <div class="cal-dow cal-dow-header">Sun</div><div class="cal-dow cal-dow-header">Mon</div><div class="cal-dow cal-dow-header">Tue</div>
+        <div class="cal-dow cal-dow-header">Wed</div><div class="cal-dow cal-dow-header">Thu</div><div class="cal-dow cal-dow-header">Fri</div><div class="cal-dow cal-dow-header">Sat</div>
         ${cells}
       </div>
     </div>`;
