@@ -19,7 +19,7 @@
     --chi-1:#0b162a; --chi-2:#c83803;
     --den-1:#002244; --den-2:#fb4f14;
     --lak-1:#111111; --lak-2:#a2aaad;
-    --skk-1:#355464; --skk-2:#99d9d9;
+    --skk-1:#355464; --skk-2:#68a2b9;
     --min-1:#154734; --min-2:#a6192e; --min-3:#eaaa00; --min-4:#ddcba4;
   }
 
@@ -1874,7 +1874,7 @@ const STANDINGS_ROW_COLORS = {
   "Chicago Bears": "var(--chi-1)",      // Dark Navy
   "Denver Broncos": "var(--den-2)",     // Orange
   "Los Angeles Kings": "var(--lak-1)",  // Black
-  "Seattle Kraken": "var(--skk-2)",     // Ice Blue
+  "Seattle Kraken": "var(--skk-2)",     // Shadow Blue
   "Carolina Hurricanes": "#CE1126",     // Team red
   "Minnesota Wild": "#154734"           // Forest green
 };
@@ -2776,9 +2776,15 @@ function switchDashSportTab(sportKey, which){
 // selection is either a specific team key, or the string "standings".
 function dashSportTabButtons(sportKey){
   const active = state.dashSportTab[sportKey];
-  const teamPills = TEAMS[sportKey].order.map(teamKey =>
-    `<button class="poll-tab-btn ${active === teamKey ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','${teamKey}')">${DISPLAY_NAME[teamKey]}</button>`
-  ).join("");
+  const teamPills = TEAMS[sportKey].order.map(teamKey => {
+    const color = calendarColorFor(sportKey, teamKey);
+    const textColor = calendarTextColorFor(teamKey);
+    const isActive = active === teamKey;
+    const pillStyle = isActive
+      ? `background:${color}; color:${textColor}; border-color:${color};`
+      : `background:var(--panel); color:${color}; border-color:${color};`;
+    return `<button class="poll-tab-btn" style="${pillStyle}" onclick="switchDashSportTab('${sportKey}','${teamKey}')">${DISPLAY_NAME[teamKey]}</button>`;
+  }).join("");
   return `<div class="poll-tab-group" style="margin:8px 0 12px; flex-wrap:wrap;">
     ${teamPills}
     <button class="poll-tab-btn ${active === "standings" ? "active" : ""}" onclick="switchDashSportTab('${sportKey}','standings')">Standings</button>
@@ -2859,7 +2865,7 @@ function calendarColorFor(sportKey, teamKey){
 // whether an entry's text should be white or dark against its solid fill.
 const TEAM_COLOR_HEX = {
   sea:"#69be28", chi:"#0b162a", den:"#fb4f14",
-  lak:"#111111", skk:"#99d9d9", min:"#154734",
+  lak:"#111111", skk:"#68a2b9", min:"#154734",
   usc:"#990000", uw:"#4b2e83"
 };
 
