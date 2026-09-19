@@ -119,7 +119,7 @@
   }
 
   main{ padding:20px 28px 60px; }
-  main.dashboard-view{ max-width:1360px; margin:0 auto; }
+  main.dashboard-view{ max-width:1760px; margin:0 auto; }
 
   .note{
     font-size:11px;
@@ -321,7 +321,7 @@
   /* ---- Dashboard tiles ---- */
   .dash-columns{
     display:grid;
-    grid-template-columns:repeat(3, 1fr);
+    grid-template-columns:repeat(3, minmax(0, 1fr));
     gap:20px;
   }
   .dash-col h3{
@@ -352,6 +352,8 @@
   }
   .dash-col-standings table.standings{
     font-size:11px;
+    min-width:0;
+    overflow-x:auto;
   }
   .dash-col-standings table.standings th,
   .dash-col-standings table.standings td{
@@ -442,10 +444,9 @@
     flex-direction:column;
   }
   .tile-sched-row{
-    display:grid;
-    grid-template-columns: 82px 52px 1fr 108px;
-    gap:7px;
-    align-items:center;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
     font-size:12px;
     padding:5px 2px;
     border-top:1px solid color-mix(in srgb, var(--tc1) 12%, var(--border));
@@ -453,6 +454,7 @@
   .tile-sched-row:first-child{ border-top:none; }
   .tile-sched-row.bye{
     display:flex;
+    flex-direction:row;
     gap:8px;
     color:var(--text-mute);
     font-style:italic;
@@ -465,6 +467,21 @@
     margin:2px -6px;
     border-top:none;
   }
+  .tsc-line1{
+    display:flex;
+    align-items:baseline;
+    gap:7px;
+  }
+  .tsc-date{ flex:0 0 auto; white-space:nowrap; }
+  .tsc-time{ flex:0 0 auto; white-space:nowrap; color:var(--text-mute); }
+  .tile-sched-row.bold .tsc-time{ color:inherit; }
+  .tsc-opp{
+    flex:1 1 auto;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    min-width:0;
+  }
   .tsc-result{
     display:flex;
     justify-content:flex-end;
@@ -472,8 +489,6 @@
     gap:8px;
   }
   .tsc-score, .tsc-record{ text-align:right; white-space:nowrap; }
-  .tsc-time{ color:var(--text-mute); }
-  .tile-sched-row.bold .tsc-time{ color:inherit; }
   .tile-logo{
     width:44px;
     height:44px;
@@ -858,6 +873,8 @@
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
     gap:0 24px;
+    overflow-x:auto;
+    min-width:0;
   }
   .standings-2col{
     display:grid;
@@ -2690,13 +2707,21 @@ function scheduleRowHTML(game, allGames, bold){
   const oppText = `${game.home ? "vs" : "@"} ${oppDisp}`;
   const dateText = fmtDate(game.date);
 
-  let timeText, scoreHtml = "", recordText = "";
+  // Two lines only when there's a second line worth showing (a final
+  // score + record). An upcoming game has nothing to put there, so it
+  // stays one line — date, time, and opponent sharing the full row width
+  // naturally instead of fighting a fixed-width score column for space.
+  let timeText, resultBlock = "";
   if (game.status === "final"){
     timeText = "Final";
     const win = game.score.team > game.score.opp;
     const resultColor = win ? "#2f7a2f" : "#a33";
-    scoreHtml = `<span style="color:${resultColor}">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})</span>`;
-    recordText = allGames ? cumulativeRecordThrough(allGames, game) : "";
+    const scoreHtml = `<span style="color:${resultColor}">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})</span>`;
+    const recordText = allGames ? cumulativeRecordThrough(allGames, game) : "";
+    resultBlock = `<div class="tsc-result">
+      <span class="tsc-score">${scoreHtml}</span>
+      <span class="tsc-record">${recordText}</span>
+    </div>`;
   } else {
     const { time } = parseGameTV(game.tv);
     timeText = time || "TBA";
@@ -2704,13 +2729,12 @@ function scheduleRowHTML(game, allGames, bold){
 
   const rowClass = bold ? "tile-sched-row bold" : "tile-sched-row";
   return `<div class="${rowClass}">
-    <span class="tsc-date">${dateText}</span>
-    <span class="tsc-time">${timeText}</span>
-    <span class="tsc-opp">${oppText}</span>
-    <span class="tsc-result">
-      <span class="tsc-score">${scoreHtml}</span>
-      <span class="tsc-record">${recordText}</span>
-    </span>
+    <div class="tsc-line1">
+      <span class="tsc-date">${dateText}</span>
+      <span class="tsc-time">${timeText}</span>
+      <span class="tsc-opp">${oppText}</span>
+    </div>
+    ${resultBlock}
   </div>`;
 }
 
