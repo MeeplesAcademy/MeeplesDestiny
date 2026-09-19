@@ -327,6 +327,9 @@
     grid-template-columns:repeat(4, minmax(0, 1fr));
     gap:20px;
   }
+  .dash-columns.other-sports{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+  }
   .dash-col h3{
     font-size:12px;
     text-transform:uppercase;
@@ -516,7 +519,7 @@
   .dash-tile.secondary{ opacity:.92; }
 
   @media (max-width:760px){
-    .dash-columns{ grid-template-columns:1fr; }
+    .dash-columns, .dash-columns.other-sports{ grid-template-columns:1fr; }
   }
 
   /* ---- Dashboard mobile nav: sport-tab row (level 2) + team-pill row
@@ -2024,6 +2027,31 @@ function sortNFLDivision(teamNames){
   });
 }
 
+// Same idea as sortNFLDivision, generalized for every other standings table
+// (NHL, MLB, and the Other Sports leagues) — none of them were actually
+// re-sorting by the live record once it came in, only merging the numbers
+// onto whatever order the static team list happened to be typed in. A
+// primaryKey (points, win pct — whatever that sport's table leads with) is
+// compared first when given, wins/losses always break remaining ties.
+// Teams with no live record yet sort to the bottom, keeping their relative
+// static order so the table doesn't visibly reshuffle before data loads.
+function sortByLiveRecord(teamNames, liveRecords, primaryKey){
+  return [...teamNames].sort((a, b) => {
+    const ra = liveRecords[a], rb = liveRecords[b];
+    if (!ra && !rb) return 0;
+    if (!ra) return 1;
+    if (!rb) return -1;
+    if (primaryKey){
+      const pa = parseFloat(ra[primaryKey]) || 0, pb = parseFloat(rb[primaryKey]) || 0;
+      if (pb !== pa) return pb - pa;
+    }
+    const wa = parseInt(ra.w, 10) || 0, wb = parseInt(rb.w, 10) || 0;
+    if (wb !== wa) return wb - wa;
+    const la = parseInt(ra.l, 10) || 0, lb = parseInt(rb.l, 10) || 0;
+    return la - lb;
+  });
+}
+
 // Live NHL standings — same defensive pattern as the NFL/Big Ten/MLB fetches.
 const ESPN_NHL_STANDINGS_URL = "https://site.api.espn.com/apis/v2/sports/hockey/nhl/standings?type=0&level=3";
 let nhlStandingsFetchState = "idle"; // idle | loading | done | failed
@@ -2596,7 +2624,7 @@ function renderNHLStandings(){
     html += `<table class="standings">
       <caption>${conf} ${div}</caption>
       <tr><th>Team</th><th>W</th><th>L</th><th>OT</th></tr>
-      ${NHL_STANDINGS[conf][div].map(t => nhlStandingsRow(t, MY_TEAMS_NHL)).join("")}
+      ${sortByLiveRecord(NHL_STANDINGS[conf][div], NHL_LIVE_RECORDS).map(t => nhlStandingsRow(t, MY_TEAMS_NHL)).join("")}
     </table>`;
   });
   html += `</div>`;
@@ -2701,7 +2729,7 @@ function renderMLBStandings(){
     html += `<table class="standings">
       <caption>${league} League ${div}</caption>
       <tr><th>Team</th><th>W</th><th>L</th><th>PCT</th></tr>
-      ${MLB_STANDINGS[league][div].map(mlbStandingsRow).join("")}
+      ${sortByLiveRecord(MLB_STANDINGS[league][div], MLB_LIVE_RECORDS, "pct").map(mlbStandingsRow).join("")}
     </table>`;
   });
   html += `</div>`;
@@ -3311,7 +3339,7 @@ function renderMLSStandings(){
     html += `<table class="standings">
       <caption>${conf} Conference</caption>
       <tr><th>Team</th><th>W</th><th>L</th><th>D</th><th>PTS</th></tr>
-      ${MLS_STANDINGS[conf].map(t => mlsStandingsRow(t, MY_TEAMS_MLS)).join("")}
+      ${sortByLiveRecord(MLS_STANDINGS[conf], MLS_LIVE_RECORDS, "pts").map(t => mlsStandingsRow(t, MY_TEAMS_MLS)).join("")}
     </table>`;
   });
   html += `</div>`;
@@ -3396,7 +3424,7 @@ function renderNWSLStandings(){
   <div class="standings-groups"><table class="standings">
       <caption>NWSL</caption>
       <tr><th>Team</th><th>W</th><th>L</th><th>D</th><th>PTS</th></tr>
-      ${NWSL_STANDINGS.map(t => nwslStandingsRow(t, MY_TEAMS_NWSL)).join("")}
+      ${sortByLiveRecord(NWSL_STANDINGS, NWSL_LIVE_RECORDS, "pts").map(t => nwslStandingsRow(t, MY_TEAMS_NWSL)).join("")}
     </table>
   </div>`;
   return html;
@@ -3545,7 +3573,7 @@ function renderWHLStandings(){
     html += `<table class="standings">
       <caption>${conf} — ${div} Division</caption>
       <tr><th>Team</th><th>W</th><th>L</th><th>OTL</th><th>PTS</th></tr>
-      ${WHL_STANDINGS[conf][div].map(t => whlStandingsRow(t, MY_TEAMS_WHL)).join("")}
+      ${sortByLiveRecord(WHL_STANDINGS[conf][div], WHL_LIVE_RECORDS, "pts").map(t => whlStandingsRow(t, MY_TEAMS_WHL)).join("")}
     </table>`;
   });
   html += `</div>`;
@@ -3561,7 +3589,7 @@ function dashPendingDataTab(sportKey){
 }
 
 function renderOtherSports(){
-  let html = `<h2 class="section-title" style="font-size:20px;">Other Sports</h2><div class="dash-columns" style="grid-template-columns:repeat(3, minmax(0, 1fr));">`;
+  let html = `<h2 class="section-title" style="font-size:20px;">Other Sports</h2><div class="dash-columns other-sports">`;
   OTHER_SPORTS_COLUMNS.forEach(sportKey => {
     const sport = TEAMS[sportKey];
     const active = state.dashSportTab[sportKey];

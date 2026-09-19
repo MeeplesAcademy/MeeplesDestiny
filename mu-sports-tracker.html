@@ -1885,6 +1885,31 @@ function sortNFLDivision(teamNames){
   });
 }
 
+// Same idea as sortNFLDivision, generalized for every other standings table
+// (NHL, MLB, and the Other Sports leagues) — none of them were actually
+// re-sorting by the live record once it came in, only merging the numbers
+// onto whatever order the static team list happened to be typed in. A
+// primaryKey (points, win pct — whatever that sport's table leads with) is
+// compared first when given, wins/losses always break remaining ties.
+// Teams with no live record yet sort to the bottom, keeping their relative
+// static order so the table doesn't visibly reshuffle before data loads.
+function sortByLiveRecord(teamNames, liveRecords, primaryKey){
+  return [...teamNames].sort((a, b) => {
+    const ra = liveRecords[a], rb = liveRecords[b];
+    if (!ra && !rb) return 0;
+    if (!ra) return 1;
+    if (!rb) return -1;
+    if (primaryKey){
+      const pa = parseFloat(ra[primaryKey]) || 0, pb = parseFloat(rb[primaryKey]) || 0;
+      if (pb !== pa) return pb - pa;
+    }
+    const wa = parseInt(ra.w, 10) || 0, wb = parseInt(rb.w, 10) || 0;
+    if (wb !== wa) return wb - wa;
+    const la = parseInt(ra.l, 10) || 0, lb = parseInt(rb.l, 10) || 0;
+    return la - lb;
+  });
+}
+
 // Live NHL standings — same defensive pattern as the NFL/Big Ten/MLB fetches.
 const ESPN_NHL_STANDINGS_URL = "https://site.api.espn.com/apis/v2/sports/hockey/nhl/standings?type=0&level=3";
 let nhlStandingsFetchState = "idle"; // idle | loading | done | failed
@@ -2456,7 +2481,7 @@ function renderNHLStandings(){
     html += `<table class="standings">
       <caption>${conf} ${div}</caption>
       <tr><th>Team</th><th>W</th><th>L</th><th>OT</th></tr>
-      ${NHL_STANDINGS[conf][div].map(t => nhlStandingsRow(t, MY_TEAMS_NHL)).join("")}
+      ${sortByLiveRecord(NHL_STANDINGS[conf][div], NHL_LIVE_RECORDS).map(t => nhlStandingsRow(t, MY_TEAMS_NHL)).join("")}
     </table>`;
   });
   html += `</div>`;
@@ -2561,7 +2586,7 @@ function renderMLBStandings(){
     html += `<table class="standings">
       <caption>${league} League ${div}</caption>
       <tr><th>Team</th><th>W</th><th>L</th><th>PCT</th></tr>
-      ${MLB_STANDINGS[league][div].map(mlbStandingsRow).join("")}
+      ${sortByLiveRecord(MLB_STANDINGS[league][div], MLB_LIVE_RECORDS, "pct").map(mlbStandingsRow).join("")}
     </table>`;
   });
   html += `</div>`;
