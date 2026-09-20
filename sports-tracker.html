@@ -2109,6 +2109,17 @@ async function fetchBigTenStandings(forceRerender){
 
       if (overall){ row.ovrW = overall.w; row.ovrL = overall.l; row.known = true; matched++; }
 
+      // TEMPORARY DIAGNOSTIC — remove once the conference-record parsing
+      // bug is actually found. Overall records are updating correctly but
+      // conference records aren't for at least one team (Rutgers), with no
+      // fetch error logged, which means confStat is either not being found
+      // or not parsing — this dumps exactly what ESPN sent for that team's
+      // stats so the real field name/shape can be seen and fixed for real
+      // instead of guessed at again.
+      if (overall && !conf){
+        console.log(`[BigTen debug] ${teamKey}: no usable conference stat found. Raw stats array:`, stats);
+      }
+
       // A conference record can never involve more games than the team's
       // overall record — conference games are a subset of all games played.
       // Reject an implausible parse (e.g. "0-5" for a team that's 3-0
