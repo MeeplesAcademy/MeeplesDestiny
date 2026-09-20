@@ -473,6 +473,34 @@
     display:flex;
     flex-direction:column;
   }
+  .tile-window-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:8px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--border);
+  }
+  .tile-window-note{
+    font-size:11px;
+    font-weight:bold;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    color:var(--text-mute);
+  }
+  .tile-full-schedule-btn{
+    font-family:inherit;
+    font-size:12px;
+    font-weight:bold;
+    color:var(--accent);
+    background:none;
+    cursor:pointer;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:5px 12px;
+  }
+  .tile-full-schedule-btn:hover{ background:#f1f4ee; }
   .tile-sched-row{
     display:flex;
     flex-direction:column;
@@ -2977,7 +3005,8 @@ function fullScheduleCardBody(teamKey, games){
 }
 
 // NHL primary team: last 5 completed + next 5 upcoming, immediate next game bolded.
-function nhlWindowCardBody(teamKey, games){
+// NHL/MLB primary team: last 5 completed + next 5 upcoming, immediate next game bolded.
+function last5Next5CardBody(teamKey, games){
   const finalGames = games.filter(g => g.status === "final");
   const upcoming = games.filter(g => g.status === "scheduled");
   const last5 = finalGames.slice(-5);
@@ -3009,11 +3038,11 @@ function favoriteTeamCardHTML(sportKey, teamKey, team){
   const recent = mostRecentFinalGame(teamKey);
   const recordLabel = recent ? cumulativeRecordThrough(games, recent) : "";
 
-  // NHL keeps the condensed 5-back/5-ahead window (its schedule is far
-  // longer); every other sport shows the full season for every team,
-  // primary or secondary — there's no more stacked "everyone at once" view,
-  // so there's no reason to keep a condensed treatment for secondaries.
-  const body = sportKey === "nhl" ? nhlWindowCardBody(teamKey, games) : fullScheduleCardBody(teamKey, games);
+  // NHL and MLB keep a condensed schedule window (both seasons are far
+  // longer than everyone else's) — every other sport shows the full season
+  // for every team, primary or secondary.
+  const body = (sportKey === "nhl" || sportKey === "mlb") ? last5Next5CardBody(teamKey, games)
+    : fullScheduleCardBody(teamKey, games);
 
   // CFB/NFL no longer have their own standalone pages — the Dashboard pill
   // *is* the destination now. NHL and MLB still have their own pages (their
@@ -3199,6 +3228,12 @@ function renderDashboard(){
       html += `</div>`;
     } else {
       html += `<div class="dash-col-tiles">`;
+      if (hasOwnPage){
+        html += `<div class="tile-window-header">
+          <span class="tile-window-note">Last 5, Next 5</span>
+          <button class="tile-full-schedule-btn" onclick="goToTeam('${sportKey}','${active}')">Full Schedule →</button>
+        </div>`;
+      }
       html += favoriteTeamCardHTML(sportKey, active, sport.teams[active]);
       html += `</div>`;
     }
