@@ -164,7 +164,21 @@
     font-size:13px;
     padding:6px 16px;
     border-radius:14px;
+    border:2px solid var(--accent);
   }
+  .week-toggle-btn{
+    margin-left:auto;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:bold;
+    padding:6px 16px;
+    border-radius:14px;
+    border:none;
+    cursor:pointer;
+    background:var(--uw-1);
+    color:#fff;
+  }
+  .week-toggle-btn:hover{ opacity:.85; }
 
   /* ---- Calendar tab ---- */
   .cal-header{
@@ -393,6 +407,16 @@
     border-radius:4px;
   }
   .dash-standings-link:hover{ background:#f1f4ee; }
+  .external-standings-link{
+    display:inline-block;
+    font-size:12px;
+    color:var(--text-mute);
+    text-decoration:none;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:6px 14px;
+  }
+  .external-standings-link:hover{ background:#f1f4ee; color:var(--text); }
   .dash-tile{
     background: color-mix(in srgb, var(--tc1) 12%, var(--panel));
     border:1px solid var(--border);
@@ -1916,7 +1940,7 @@ const NFL_STANDINGS_ALIASES = {
 let REFRESH_TIMES = {};
 function refreshTimeLabel(key){
   if (!REFRESH_TIMES[key]) return "";
-  return `Last refreshed ${REFRESH_TIMES[key].toLocaleTimeString()}`;
+  return `Refreshed ${REFRESH_TIMES[key].toLocaleTimeString()}`;
 }
 
 // Walks the response to find each division's own entries list, keeping the
@@ -2240,8 +2264,22 @@ async function fetchBigTenStandings(forceRerender){
 
       const stats = entry.stats || [];
       const overallStat = stats.find(s => /^overall$/i.test(s.name) || /^total$/i.test(s.type));
-      const confStat = stats.find(s => /conf/i.test(s.name) || /vsconf/i.test(s.type));
-      const streakStat = stats.find(s => /streak/i.test(s.name));
+      // ESPN's response includes a whole family of stats prefixed "vsconf_"
+      // (games back, point differential, streak, etc. — computed within the
+      // conference-only context) alongside the one real conference W-L
+      // record, whose type is the bare, unsuffixed "vsconf". The old
+      // unanchored /vsconf/i test matched whichever of those came first in
+      // the array — usually "gamesBehind" — whose "-" (no games back yet)
+      // parsed to nothing, and whose "0.5" (half a game back) got its
+      // decimal point misread as a W-L separator by parseRecordPair below,
+      // producing a bogus "0-5". Requiring an exact type (or name) match
+      // picks the actual record stat instead of a same-family neighbor.
+      const confStat = stats.find(s => s.type === "vsconf") || stats.find(s => /^vs\.?\s*conf\.?$/i.test(s.name || ""));
+      // Same family-collision risk as the conference record above — there's
+      // likely a "vsconf_streak" (and possibly "vsaprankedteams_streak")
+      // alongside the actual overall streak. Preferring an exact-type match
+      // first avoids grabbing a same-named neighbor from the wrong category.
+      const streakStat = stats.find(s => s.type === "total_streak") || stats.find(s => /streak/i.test(s.name || ""));
 
       const overall = parseRecordPair(overallStat?.displayValue || overallStat?.summary);
       const conf = parseRecordPair(confStat?.displayValue || confStat?.summary);
@@ -2253,17 +2291,6 @@ async function fetchBigTenStandings(forceRerender){
       const priorOverallTotal = (row.ovrW || 0) + (row.ovrL || 0);
 
       if (overall){ row.ovrW = overall.w; row.ovrL = overall.l; row.known = true; matched++; }
-
-      // TEMPORARY DIAGNOSTIC — remove once the conference-record parsing
-      // bug is actually found. Overall records are updating correctly but
-      // conference records aren't for at least one team (Rutgers), with no
-      // fetch error logged, which means confStat is either not being found
-      // or not parsing — this dumps exactly what ESPN sent for that team's
-      // stats so the real field name/shape can be seen and fixed for real
-      // instead of guessed at again.
-      if (overall && !conf){
-        console.log(`[BigTen debug] ${teamKey}: no usable conference stat found. Raw stats array:`, stats);
-      }
 
       // A conference record can never involve more games than the team's
       // overall record — conference games are a subset of all games played.
@@ -2499,16 +2526,21 @@ function cfbMainPollColumn(){
   const body = active === "ap" ? apPollCompactTable()
     : active === "cfp" ? cfpPollCompactTable()
     : bigTenCompactTable();
+  // CFP has no separate ESPN page yet — it redirects to the AP poll page
+  // until the committee's first weekly rankings are released (typically
+  // early-to-mid November), so both link to the same place until then.
+  const espnUrl = active === "b1g" ? ESPN_BIGTEN_STANDINGS_PAGE_URL : ESPN_AP_POLL_PAGE_URL;
+  const espnLabel = "View on ESPN";
   return `
-    <div class="col-heading heading-with-btn">
+    <div class="col-heading heading-with-btn" style="flex-wrap:wrap; row-gap:6px;">
       <div class="poll-tab-group">
         <button class="poll-tab-btn ${active === "ap" ? "active" : ""}" onclick="switchCfbMainPoll('ap')">AP Top 25</button>
         <button class="poll-tab-btn ${active === "cfp" ? "active" : ""}" onclick="switchCfbMainPoll('cfp')">CFP</button>
         <button class="poll-tab-btn ${active === "b1g" ? "active" : ""}" onclick="switchCfbMainPoll('b1g')">B1G</button>
       </div>
       <button class="refresh-btn refresh-btn-lg" onclick="${refreshAction}">Refresh</button>
+      ${refreshRowHTML(lastRefresh, espnUrl, espnLabel)}
     </div>
-    ${lastRefresh ? `<div class="last-refreshed">${lastRefresh}</div>` : ""}
     ${body}`;
 }
 
@@ -2526,9 +2558,12 @@ function cfpPollColumn(){
       </table>`
     : `<div class="note">Not released yet this season — the CFP committee's first weekly rankings typically come out in early-to-mid November. This populates automatically from the same ESPN feed as the AP poll once released.</div>`;
   return `
-    <div class="col-heading heading-with-btn"><span>College Football Playoff</span><button class="refresh-btn refresh-btn-lg" onclick="fetchApPoll(true)">Refresh now</button></div>
+    <div class="col-heading heading-with-btn" style="flex-wrap:wrap; row-gap:6px;">
+      <span>College Football Playoff</span>
+      <button class="refresh-btn refresh-btn-lg" onclick="fetchApPoll(true)">Refresh</button>
+      ${refreshRowHTML(lastRefresh, ESPN_AP_POLL_PAGE_URL, "View on ESPN")}
+    </div>
     ${CFP_POLL.length ? `<div class="note">${apPollStatusNote()}</div>` : ""}
-    ${lastRefresh ? `<div class="last-refreshed">${lastRefresh}</div>` : ""}
     ${table}`;
 }
 
@@ -2541,18 +2576,24 @@ function renderCFBStandings(){
     <h2 class="section-title">CFB Standings</h2>
     <div class="standings-3col">
       <div>
-        <div class="col-heading heading-with-btn"><span>AP Top 25</span><button class="refresh-btn refresh-btn-lg" onclick="fetchApPoll(true)">Refresh now</button></div>
+        <div class="col-heading heading-with-btn" style="flex-wrap:wrap; row-gap:6px;">
+          <span>AP Top 25</span>
+          <button class="refresh-btn refresh-btn-lg" onclick="fetchApPoll(true)">Refresh</button>
+          ${refreshRowHTML(apRefresh, ESPN_AP_POLL_PAGE_URL, "View on ESPN")}
+        </div>
         <div class="note">${apPollStatusNote()}</div>
-        ${apRefresh ? `<div class="last-refreshed">${apRefresh}</div>` : ""}
         ${apPollTable()}
       </div>
       <div>
         ${cfpPollColumn()}
       </div>
       <div>
-        <div class="col-heading heading-with-btn"><span>Big Ten Conference Standings</span><button class="refresh-btn refresh-btn-lg" onclick="fetchBigTenStandings(true)">Refresh now</button></div>
+        <div class="col-heading heading-with-btn" style="flex-wrap:wrap; row-gap:6px;">
+          <span>Big Ten Conference Standings</span>
+          <button class="refresh-btn refresh-btn-lg" onclick="fetchBigTenStandings(true)">Refresh</button>
+          ${refreshRowHTML(bigTenRefresh, ESPN_BIGTEN_STANDINGS_PAGE_URL, "View on ESPN")}
+        </div>
         <div class="note">Sorted by conference wins, then overall wins. ${bigTenFetchStatusNote()}</div>
-        ${bigTenRefresh ? `<div class="last-refreshed">${bigTenRefresh}</div>` : ""}
         ${bigTenTable()}
       </div>
     </div>`;
@@ -2625,11 +2666,11 @@ function renderNFLCompare(){
 
 function renderNFLStandings(){
   if (nflStandingsFetchState === "idle") fetchNFLStandings(true);
-  const refreshedText = REFRESH_TIMES.nfl ? `Refreshed from ESPN ${REFRESH_TIMES.nfl.toLocaleTimeString()}` : "";
+  const refreshedText = REFRESH_TIMES.nfl ? `Refreshed ${REFRESH_TIMES.nfl.toLocaleTimeString()}` : "";
   let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
     <span>NFL Standings</span>
-    <button class="refresh-btn refresh-btn-lg" onclick="fetchNFLStandings(true)">Refresh now</button>
-    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+    <button class="refresh-btn refresh-btn-lg" onclick="fetchNFLStandings(true)">Refresh</button>
+    ${refreshRowHTML(refreshedText, ESPN_NFL_STANDINGS_PAGE_URL, "View on ESPN")}
   </h2>
   <div class="nfl-standings-wrap">`;
   NFL_CONF_ORDER.forEach(conf => {
@@ -2654,11 +2695,11 @@ const NHL_DISPLAY_ORDER = [
 
 function renderNHLStandings(){
   if (nhlStandingsFetchState === "idle") fetchNHLStandings(true);
-  const refreshedText = REFRESH_TIMES.nhl ? `Refreshed from ESPN ${REFRESH_TIMES.nhl.toLocaleTimeString()}` : "";
+  const refreshedText = REFRESH_TIMES.nhl ? `Refreshed ${REFRESH_TIMES.nhl.toLocaleTimeString()}` : "";
   let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
     <span>NHL Standings</span>
-    <button class="refresh-btn refresh-btn-lg" onclick="fetchNHLStandings(true)">Refresh now</button>
-    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+    <button class="refresh-btn refresh-btn-lg" onclick="fetchNHLStandings(true)">Refresh</button>
+    ${refreshRowHTML(refreshedText, ESPN_NHL_STANDINGS_PAGE_URL, "View on ESPN")}
   </h2>
   <div class="standings-groups">`;
   NHL_DISPLAY_ORDER.forEach(([conf, div]) => {
@@ -2759,11 +2800,11 @@ function mlbStandingsRow(team){
 
 function renderMLBStandings(){
   if (mlbFetchState === "idle") fetchMLBStandings(true);
-  const refreshedText = REFRESH_TIMES.mlb ? `Refreshed from ESPN ${REFRESH_TIMES.mlb.toLocaleTimeString()}` : "";
+  const refreshedText = REFRESH_TIMES.mlb ? `Refreshed ${REFRESH_TIMES.mlb.toLocaleTimeString()}` : "";
   let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
     <span>MLB Standings</span>
-    <button class="refresh-btn refresh-btn-lg" onclick="fetchMLBStandings(true)">Refresh now</button>
-    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+    <button class="refresh-btn refresh-btn-lg" onclick="fetchMLBStandings(true)">Refresh</button>
+    ${refreshRowHTML(refreshedText, ESPN_MLB_STANDINGS_PAGE_URL, "View on ESPN")}
   </h2>
   <div class="standings-groups">`;
   MLB_DISPLAY_ORDER.forEach(([league, div]) => {
@@ -3178,7 +3219,7 @@ function renderThisWeekSection(){
 
   return `
     <h2 class="section-title" style="font-size:20px; display:flex; align-items:center; gap:10px;">This Week
-      <button class="refresh-btn refresh-btn-lg" style="margin-left:auto;" onclick="toggleWeekCollapse()">${state.weekCollapsed ? "Show" : "Hide"}</button>
+      <button class="week-toggle-btn" onclick="toggleWeekCollapse()">${state.weekCollapsed ? "Show" : "Hide"}</button>
     </h2>
     <div class="week-grid${state.weekCollapsed ? " collapsed" : ""}">${cells}</div>`;
 }
@@ -3234,6 +3275,36 @@ function pickDashSport(sportKey){
 function dashStandingsLink(sportKey, label){
   return `<div class="dash-standings-link" onclick="goToSport('${sportKey}'); state.secondary='standings'; renderAll();">${label} →</div>`;
 }
+
+// A small "View Full ... on ESPN" (or the WHL's own site) link, dropped at
+// the bottom of every standings/rankings table so there's always a
+// one-click path to the real, authoritative source — useful for checking
+// our own numbers against theirs, or just seeing more than the compact
+// table here shows (full tiebreaker detail, more columns, etc).
+function externalStandingsLinkHTML(url, label){
+  return `<a class="external-standings-link" href="${url}" target="_blank" rel="noopener">${label} ↗</a>`;
+}
+
+// Combines the "Refreshed [time]" note and the source link into one inline
+// group that sits together on its own line within the heading, instead of
+// the link living separately below the table — wraps via flex-basis:100%
+// so it doesn't compete with the title/button for space on narrow screens.
+function refreshRowHTML(refreshedText, url, label){
+  if (!refreshedText && !url) return "";
+  return `<span style="display:inline-flex; align-items:center; gap:10px; flex-wrap:wrap; flex-basis:100%; margin:0;">
+    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+    ${url ? externalStandingsLinkHTML(url, label) : ""}
+  </span>`;
+}
+
+const ESPN_AP_POLL_PAGE_URL = "https://www.espn.com/college-football/rankings";
+const ESPN_BIGTEN_STANDINGS_PAGE_URL = "https://www.espn.com/college-football/standings/_/group/5/view/fbs";
+const ESPN_NFL_STANDINGS_PAGE_URL = "https://www.espn.com/nfl/standings";
+const ESPN_NHL_STANDINGS_PAGE_URL = "https://www.espn.com/nhl/standings";
+const ESPN_MLB_STANDINGS_PAGE_URL = "https://www.espn.com/mlb/standings";
+const WHL_STANDINGS_PAGE_URL = "https://chl.ca/whl-silvertips/standings/295/conference/";
+const ESPN_MLS_STANDINGS_PAGE_URL = "https://www.espn.com/soccer/standings/_/league/usa.1";
+const ESPN_NWSL_STANDINGS_PAGE_URL = "https://www.espn.com/soccer/standings/_/league/usa.nwsl";
 
 // CFB: the full AP/CFP/Big Ten picture, stacked (not tabbed) so nothing is
 // hidden — same compact tables already built for the CFB Main page's widget.
@@ -3369,11 +3440,11 @@ function mlsStandingsRow(teamName, myList){
 
 function renderMLSStandings(){
   if (mlsStandingsFetchState === "idle") fetchMLSStandings(true);
-  const refreshedText = REFRESH_TIMES.mls ? `Refreshed from ESPN ${REFRESH_TIMES.mls.toLocaleTimeString()}` : "";
+  const refreshedText = REFRESH_TIMES.mls ? `Refreshed ${REFRESH_TIMES.mls.toLocaleTimeString()}` : "";
   let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
     <span>MLS Standings</span>
-    <button class="refresh-btn refresh-btn-lg" onclick="fetchMLSStandings(true)">Refresh now</button>
-    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+    <button class="refresh-btn refresh-btn-lg" onclick="fetchMLSStandings(true)">Refresh</button>
+    ${refreshRowHTML(refreshedText, ESPN_MLS_STANDINGS_PAGE_URL, "View on ESPN")}
   </h2>
   <div class="standings-groups">`;
   MLS_DISPLAY_ORDER.forEach(conf => {
@@ -3456,11 +3527,11 @@ function nwslStandingsRow(teamName, myList){
 
 function renderNWSLStandings(){
   if (nwslStandingsFetchState === "idle") fetchNWSLStandings(true);
-  const refreshedText = REFRESH_TIMES.nwsl ? `Refreshed from ESPN ${REFRESH_TIMES.nwsl.toLocaleTimeString()}` : "";
+  const refreshedText = REFRESH_TIMES.nwsl ? `Refreshed ${REFRESH_TIMES.nwsl.toLocaleTimeString()}` : "";
   let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
     <span>NWSL Standings</span>
-    <button class="refresh-btn refresh-btn-lg" onclick="fetchNWSLStandings(true)">Refresh now</button>
-    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+    <button class="refresh-btn refresh-btn-lg" onclick="fetchNWSLStandings(true)">Refresh</button>
+    ${refreshRowHTML(refreshedText, ESPN_NWSL_STANDINGS_PAGE_URL, "View on ESPN")}
   </h2>
   <div class="standings-groups"><table class="standings">
       <caption>NWSL</caption>
@@ -3599,14 +3670,14 @@ function whlStandingsRow(teamName, myList){
 
 function renderWHLStandings(){
   if (whlStandingsFetchState === "idle") fetchWHLStandings(true);
-  const refreshedText = REFRESH_TIMES.whl ? `Refreshed from Highlightly ${REFRESH_TIMES.whl.toLocaleTimeString()}` : "";
+  const refreshedText = REFRESH_TIMES.whl ? `Refreshed ${REFRESH_TIMES.whl.toLocaleTimeString()}` : "";
   const statusNote = whlStandingsFetchState === "failed"
     ? `<p style="font-size:12px; color:var(--text-mute); margin:4px 0 0;">Live fetch didn't come back with usable data — showing placeholders below instead.</p>`
     : "";
   let html = `<h2 class="section-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
     <span>WHL Standings</span>
-    <button class="refresh-btn refresh-btn-lg" onclick="fetchWHLStandings(true)">Refresh now</button>
-    ${refreshedText ? `<span class="last-refreshed" style="margin:0;">${refreshedText}</span>` : ""}
+    <button class="refresh-btn refresh-btn-lg" onclick="fetchWHLStandings(true)">Refresh</button>
+    ${refreshRowHTML(refreshedText, WHL_STANDINGS_PAGE_URL, "View on chl.ca")}
   </h2>
   ${statusNote}
   <div class="standings-groups">`;
