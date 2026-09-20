@@ -1548,9 +1548,12 @@ BIG_TEN.forEach(row => {
   if (BIG_TEN_KNOWN[row.team]) Object.assign(row, BIG_TEN_KNOWN[row.team], { known:true });
 });
 
-// AP Top 25 — preseason poll (base/fallback). "votes" = 1st-place votes.
-// Overwritten by fetchApPoll() on load if the live ESPN rankings endpoint returns usable data.
-const AP_POLL = [
+// AP Top 25 — preseason poll (initial fallback shown only until the first
+// live fetch succeeds, or if a fetch ever fails outright). Once fetchApPoll()
+// succeeds this whole array gets replaced wholesale with ESPN's own list —
+// see the comment above fetchApPoll() for why that "replace, don't merge"
+// approach replaced the old name-matching logic entirely.
+let AP_POLL = [
   { rank:1,  team:"Ohio State",  votes:40, record:"0-0", points:1672, trend:"NR" },
   { rank:2,  team:"Oregon",      votes:14, record:"0-0", points:1597, trend:"NR" },
   { rank:3,  team:"Georgia",     votes:0,  record:"0-0", points:1513, trend:"NR" },
@@ -2362,35 +2365,6 @@ function bigTenFetchStatusNote(){
 const ESPN_RANKINGS_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/rankings";
 let apPollFetchState = "idle"; // idle | loading | done | failed
 
-const AP_POLL_ALIASES = {
-  "BYU": ["BYU", "Brigham Young"],
-  "Ole Miss": ["Ole Miss", "Mississippi Rebels", "Mississippi"],
-  "Texas A&M": ["Texas A&M"],
-  "SMU": ["SMU", "Southern Methodist"]
-};
-const AP_POLL_NAMES_BY_LENGTH = [...AP_POLL].sort((a, b) => b.team.length - a.team.length);
-
-// ESPN's team object shape varies by response — sometimes displayName is the full
-// "School Mascot" combo, sometimes it's mascot-only and the school name only shows
-// up in location/name/shortDisplayName. Check every candidate field rather than
-// assuming one; a match failure here used to fail silently (stale data) or, worse,
-// get treated as a brand-new team and overwrite the correct school name with a
-// mascot-only one.
-function apTeamCandidates(team){
-  if (!team) return [];
-  return [team.location, team.displayName, team.name, team.shortDisplayName].filter(Boolean);
-}
-
-function matchApTeam(team){
-  const candidates = apTeamCandidates(team);
-  if (!candidates.length) return null;
-  for (const row of AP_POLL_NAMES_BY_LENGTH){
-    const aliases = AP_POLL_ALIASES[row.team] || [row.team];
-    if (aliases.some(a => candidates.some(c => c.includes(a)))) return row;
-  }
-  return null;
-}
-
 // College Football Playoff committee rankings — same ESPN endpoint/response as the AP
 // poll, just a different poll source within it. Empty until the CFP committee starts
 // publishing (usually early-to-mid November); this just needs to sit here ready.
@@ -2414,47 +2388,29 @@ async function fetchApPoll(forceRerender){
     const ranksLookValid = ranks.every(r => Number.isInteger(r.current));
     if (!ranksLookValid) throw new Error("Rankings entries missing a usable rank number");
 
-    let matched = 0;
-    const newlyAdded = [];
-    const touched = new Set();
-    ranks.forEach(r => {
-      let target = matchApTeam(r.team);
-      // A team that wasn't in the preseason 25 but has since climbed into the
-      // rankings has no existing row to match — add one rather than drop it.
-      // Prefer "location" (usually just the school name) over the full
-      // displayName so a genuinely new entry still reads as a school name
-      // rather than a mascot where possible.
-      if (!target){
-        const bestName = r.team?.location || r.team?.displayName || r.team?.name || r.team?.shortDisplayName;
-        if (bestName){
-          target = { rank: r.current, team: bestName, votes:0, record:"0-0", points:0, trend:"NR" };
-          newlyAdded.push(target);
-        }
-      }
-      // Deliberately never overwrite an existing target.team — we keep the school name
-      // (e.g. "USC") rather than whatever mascot-only name ESPN returns.
-      if (target){
-        target.rank = r.current ?? target.rank;
-        target.votes = r.firstPlaceVotes || 0;
-        target.record = r.recordSummary || target.record;
-        target.points = r.points ?? target.points;
-        target.trend = r.trend || target.trend;
-        touched.add(target);
-        matched++;
-      }
-    });
-    if (matched === 0) throw new Error("Fetched poll but couldn't match any team names");
-
-    // Only now that we know the fetch was genuinely usable do we mutate the list:
-    // add newly-ranked teams, then drop anyone this fetch didn't actually touch
-    // (tracked by object identity, not rank number — a rank slot can change hands
-    // to a different team entirely, so the old occupant must not survive on a
-    // number-only check).
-    newlyAdded.forEach(t => { AP_POLL.push(t); AP_POLL_NAMES_BY_LENGTH.push(t); });
-    for (let i = AP_POLL.length - 1; i >= 0; i--){
-      if (!touched.has(AP_POLL[i])) AP_POLL.splice(i, 1);
-    }
-    AP_POLL.sort((a, b) => a.rank - b.rank);
+    // Build the poll fresh from ESPN every time and replace AP_POLL wholesale
+    // — this used to try to match each incoming team against whatever was
+    // already in AP_POLL (by name, to preserve manual corrections), but that
+    // matching used a loose "does this name contain that alias" check. Ole
+    // Miss's alias list included the bare word "Mississippi" so it would be
+    // recognized under any of its short forms — except "Mississippi State"
+    // *also* contains "Mississippi", so the two schools collided onto the
+    // same row: whichever ESPN processed second silently overwrote the
+    // first's rank/record, and the row's team name never changed to match,
+    // so the wrong school's name sat next to the right school's numbers.
+    // ESPN's own response is already the authoritative, complete Top 25 in
+    // order — there's no correct reason to reconcile it against a locally
+    // held list at all, so this just mirrors it directly.
+    const freshPoll = ranks.map(r => ({
+      rank: r.current,
+      team: r.team?.location || r.team?.displayName || r.team?.name || r.team?.shortDisplayName || "Unknown",
+      votes: r.firstPlaceVotes || 0,
+      record: r.recordSummary || "0-0",
+      points: r.points ?? 0,
+      trend: r.trend || "NR"
+    }));
+    freshPoll.sort((a, b) => a.rank - b.rank);
+    AP_POLL = freshPoll;
 
     // Same response, different poll source — grab CFP committee rankings if present.
     const cfpPoll = polls.find(p => /college football playoff/i.test(p.name || p.shortName || "") || p.type === "cfp");
@@ -2479,7 +2435,7 @@ async function fetchApPoll(forceRerender){
 function apPollStatusNote(){
   if (apPollFetchState === "loading") return "Fetching live poll from ESPN…";
   if (apPollFetchState === "done") return "Live poll loaded from ESPN just now.";
-  if (apPollFetchState === "failed") return "Live fetch didn't return usable data — showing the preseason poll below instead.";
+  if (apPollFetchState === "failed") return "Live fetch didn't return usable data — showing the last known rankings instead.";
   return "Showing the preseason poll until Week 1 rankings post.";
 }
 
