@@ -2101,14 +2101,31 @@ async function fetchBigTenStandings(forceRerender){
       const overall = parseRecordPair(overallStat?.displayValue || overallStat?.summary);
       const conf = parseRecordPair(confStat?.displayValue || confStat?.summary);
 
+      // Capture the previously-known overall total BEFORE this fetch's
+      // value overwrites row.ovrW/row.ovrL below — otherwise "prior" and
+      // "this fetch" would read as the same number and the staleness
+      // protection a few lines down would do nothing.
+      const priorOverallTotal = (row.ovrW || 0) + (row.ovrL || 0);
+
       if (overall){ row.ovrW = overall.w; row.ovrL = overall.l; row.known = true; matched++; }
+
       // A conference record can never involve more games than the team's
       // overall record — conference games are a subset of all games played.
       // Reject an implausible parse (e.g. "0-5" for a team that's 3-0
       // overall) instead of displaying it; this has been happening when
       // the stat-matching heuristic above grabbed the wrong field out of
       // ESPN's response for some teams.
-      const confPlausible = conf && (!overall || (conf.w + conf.l) <= (overall.w + overall.l));
+      //
+      // The ceiling uses whichever is larger: this fetch's overall total,
+      // or the overall total already stored from a previous successful
+      // fetch. Right after a game ends, ESPN's own response can have the
+      // conference stat updated before the overall stat catches up in that
+      // same payload — comparing only against this fetch's (briefly stale)
+      // overall would wrongly reject a conference record that just became
+      // correct, which is exactly backwards from the intent here.
+      const thisOverallTotal = overall ? overall.w + overall.l : 0;
+      const overallCeiling = Math.max(priorOverallTotal, thisOverallTotal);
+      const confPlausible = conf && (overallCeiling === 0 || (conf.w + conf.l) <= overallCeiling);
       if (confPlausible){ row.confW = conf.w; row.confL = conf.l; }
       if (streakStat?.displayValue) row.streak = streakStat.displayValue;
     });
