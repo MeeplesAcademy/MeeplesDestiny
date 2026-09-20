@@ -12,6 +12,13 @@
     --text: #1c1f1c;
     --text-mute: #5b5f58;
     --accent: #2b2f2a;
+    /* Measured (not guessed) at runtime by syncStickyOffsets() — a label
+       that wraps to two lines (or a larger system font size) changes these
+       real heights, and hardcoding them caused the sticky rows below to
+       overlap the primary nav on scroll. Fallback values here only matter
+       for the instant before that first measurement runs. */
+    --nav1-h: 46px;
+    --nav2-h: 44px;
 
     --uw-1:#4b2e83;  --uw-2:#b7a57a;
     --sea-1:#002244; --sea-2:#69be28;
@@ -167,7 +174,7 @@
     margin-bottom:16px;
     padding:10px 4px;
     position:sticky;
-    top:46px;
+    top:var(--nav1-h);
     background:var(--bg);
     z-index:5;
     border-bottom:1px solid var(--border);
@@ -539,8 +546,8 @@
       scrollbar-width:none;
     }
     .dash-sport-row.shown::-webkit-scrollbar, .dash-team-row.shown::-webkit-scrollbar{ display:none; }
-    .dash-sport-row.shown{ position:sticky; top:46px; z-index:16; }
-    .dash-team-row.shown{ position:sticky; top:92px; z-index:15; }
+    .dash-sport-row.shown{ position:sticky; top:var(--nav1-h); z-index:16; }
+    .dash-team-row.shown{ position:sticky; top:calc(var(--nav1-h) + var(--nav2-h)); z-index:15; }
     .dash-sport-row .pill{
       flex:0 0 auto;
       white-space:nowrap;
@@ -930,7 +937,6 @@
 
 <header class="site-head">
   <h1>Austin's Sports Tracker</h1>
-  <p>Dashboard for UW, Seahawks, Bills, Kraken &amp; Mariners — plus Sounders, Silvertips &amp; Reign FC</p>
 </header>
 
 <nav class="primary" id="primaryNav"></nav>
@@ -2241,7 +2247,14 @@ async function fetchBigTenStandings(forceRerender){
       const conf = parseRecordPair(confStat?.displayValue || confStat?.summary);
 
       if (overall){ row.ovrW = overall.w; row.ovrL = overall.l; row.known = true; matched++; }
-      if (conf){ row.confW = conf.w; row.confL = conf.l; }
+      // A conference record can never involve more games than the team's
+      // overall record — conference games are a subset of all games played.
+      // Reject an implausible parse (e.g. "0-5" for a team that's 3-0
+      // overall) instead of displaying it; this has been happening when
+      // the stat-matching heuristic above grabbed the wrong field out of
+      // ESPN's response for some teams.
+      const confPlausible = conf && (!overall || (conf.w + conf.l) <= (overall.w + overall.l));
+      if (confPlausible){ row.confW = conf.w; row.confL = conf.l; }
       if (streakStat?.displayValue) row.streak = streakStat.displayValue;
     });
 
@@ -3954,6 +3967,19 @@ function renderContent(){
   content.innerHTML = renderTeamSchedule(state.primary, state.secondary);
 }
 
+// Measures the ACTUAL rendered height of the primary nav and the mobile
+// sport-tab row, rather than assuming a fixed pixel value — a nav label
+// that wraps to two lines (e.g. "Other Sports" on a narrow phone, or a
+// viewer's larger system font size) changes these heights, and a
+// hardcoded guess caused the sticky rows below them to overlap on scroll
+// instead of stacking cleanly.
+function syncStickyOffsets(){
+  const nav1 = document.querySelector("nav.primary");
+  if (nav1 && nav1.offsetHeight) document.documentElement.style.setProperty("--nav1-h", nav1.offsetHeight + "px");
+  const nav2 = document.getElementById("dashSportRow");
+  if (nav2 && nav2.offsetHeight) document.documentElement.style.setProperty("--nav2-h", nav2.offsetHeight + "px");
+}
+
 function renderAll(){
   if (!state.dashActiveSport) state.dashActiveSport = DASHBOARD_COLUMNS[0];
   if (!state.otherActiveSport) state.otherActiveSport = OTHER_SPORTS_COLUMNS[0];
@@ -3962,10 +3988,12 @@ function renderAll(){
   renderDashSportRow();
   renderDashTeamRow();
   renderContent();
+  syncStickyOffsets();
 }
 
 renderAll();
 fetchAllLiveScores();
+window.addEventListener("resize", syncStickyOffsets);
 </script>
 </body>
 </html>
