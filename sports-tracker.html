@@ -548,6 +548,11 @@
     gap:8px;
   }
   .tsc-score, .tsc-record{ text-align:right; white-space:nowrap; }
+  .tsc-tv{
+    font-size:11px;
+    color:var(--text-mute);
+  }
+  .tile-sched-row.bold .tsc-tv{ color:inherit; opacity:.85; }
   .tile-logo{
     width:44px;
     height:44px;
@@ -2790,32 +2795,33 @@ const DASHBOARD_COLUMNS = ["cfb","nfl","nhl"]; // left-to-right order requested
 
 // --- Favorite Teams dashboard cards ---
 
-// One row: DATE · TIME · OPPONENT · SCORE · RECORD. TIME sits empty (but keeps
-// its surrounding dots, as a visual "this one's done" cue) once a game is
-// final; SCORE/RECORD stay fully absent — no dot at all — until they exist.
+// One row, always 2 lines: DATE/TIME/OPPONENT on line 1, then either the
+// final score+record or the TV network on line 2 — every game gets a
+// second line now, not just completed ones.
 function scheduleRowHTML(game, allGames, bold){
   const oppDisp = MASCOT_MAP[game.opp] || game.opp;
   const oppText = `${game.home ? "vs" : "@"} ${oppDisp}`;
   const dateText = fmtDate(game.date);
 
-  // Two lines only when there's a second line worth showing (a final
-  // score + record). An upcoming game has nothing to put there, so it
-  // stays one line — date, time, and opponent sharing the full row width
-  // naturally instead of fighting a fixed-width score column for space.
-  let timeText, resultBlock = "";
+  let timeText, line2 = "";
   if (game.status === "final"){
     timeText = "Final";
     const win = game.score.team > game.score.opp;
     const resultColor = win ? "#2f7a2f" : "#a33";
     const scoreHtml = `<span style="color:${resultColor}">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})</span>`;
     const recordText = allGames ? cumulativeRecordThrough(allGames, game) : "";
-    resultBlock = `<div class="tsc-result">
+    line2 = `<div class="tsc-result">
       <span class="tsc-score">${scoreHtml}</span>
       <span class="tsc-record">${recordText}</span>
     </div>`;
   } else {
-    const { time } = parseGameTV(game.tv);
+    const { time, network } = parseGameTV(game.tv);
     timeText = time || "TBA";
+    // A genuinely empty network (e.g. WHL games, which aren't televised) is
+    // different from data that explicitly says "TBA" — keep that distinction
+    // visible rather than collapsing both into the same generic text.
+    const tvLabel = !network ? "Not televised" : (network.toUpperCase() === "TBA" ? "TV TBA" : network);
+    line2 = `<div class="tsc-tv">${tvLabel}</div>`;
   }
 
   const rowClass = bold ? "tile-sched-row bold" : "tile-sched-row";
@@ -2825,7 +2831,7 @@ function scheduleRowHTML(game, allGames, bold){
       <span class="tsc-time">${timeText}</span>
       <span class="tsc-opp">${oppText}</span>
     </div>
-    ${resultBlock}
+    ${line2}
   </div>`;
 }
 
