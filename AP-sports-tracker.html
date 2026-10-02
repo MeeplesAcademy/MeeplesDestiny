@@ -2950,17 +2950,38 @@ function hasRealBroadcastInfo(comp){
   return !!(comp.broadcasts?.length || comp.geoBroadcasts?.length);
 }
 
+// ESPN numbers each league's season differently. Single-calendar-year
+// leagues (NFL, college football, MLB) use the year the season starts. Leagues
+// whose season spans two calendar years (NHL) use the year it ENDS, so the
+// 2026-27 NHL season is "2027". Asking for NHL season=2026 returns LAST
+// season's games (Oct 2025 - Apr 2026), which the date-range safety net below
+// correctly throws away. That was why NHL scores never updated.
+const ESPN_SEASON_YEAR = {
+  "nfl": 2026,
+  "college-football": 2026,
+  "mlb": 2026,
+  "nhl": 2027
+};
+
+async function fetchEspnScheduleEvents(meta, seasonYear, teamKey){
+  const seasonParam = seasonYear ? `season=${seasonYear}&` : "";
+  // seasontype=2 asks ESPN for regular season only — preseason exhibition games
+  // (common in Sept for NHL/NFL) must never be treated as real results.
+  const url = `https://site.api.espn.com/apis/site/v2/sports/${meta.sport}/${meta.league}/teams/${meta.id}/schedule?${seasonParam}seasontype=2`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${teamKey}`);
+  const data = await res.json();
+  return data?.events || [];
+}
+
 async function fetchLiveScoresForTeam(teamKey){
   const meta = TEAM_ESPN_META[teamKey];
   const games = SCHEDULES[teamKey];
   if (!meta || !games) return;
-  // seasontype=2 asks ESPN for regular season only — preseason exhibition games
-  // (common in Sept for NHL/NFL) must never be treated as real results.
-  const url = `https://site.api.espn.com/apis/site/v2/sports/${meta.sport}/${meta.league}/teams/${meta.id}/schedule?season=2026&seasontype=2`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${teamKey}`);
-  const data = await res.json();
-  const events = data?.events || [];
+  // Season year comes from ESPN_SEASON_YEAR (NHL is labeled by the year its
+  // season ENDS, so the 2026-27 NHL season is 2027, not 2026).
+  const seasonYear = ESPN_SEASON_YEAR[meta.league] ?? 2026;
+  let events = await fetchEspnScheduleEvents(meta, seasonYear, teamKey);
 
   // Hard safety net: never trust a fetched date outside the range our own
   // schedule data actually covers. ESPN's live endpoint has been observed
@@ -2970,6 +2991,20 @@ async function fetchLiveScoresForTeam(teamKey){
   const scheduleDates = games.map(g => g.date).filter(Boolean).sort();
   const minDate = scheduleDates[0];
   const maxDate = scheduleDates[scheduleDates.length - 1];
+
+  // Fallback: if the requested season returned nothing inside our schedule's
+  // date range, ask ESPN once more with no season parameter (it then serves
+  // whatever it considers the current season) and use that if it fits.
+  const anyInRange = evs => evs.some(ev => {
+    const d = ev.date ? eventDateInZone(ev.date, CALENDAR_TIMEZONE) : null;
+    return d && d >= minDate && d <= maxDate;
+  });
+  if (!anyInRange(events)){
+    try {
+      const alt = await fetchEspnScheduleEvents(meta, null, teamKey);
+      if (anyInRange(alt)) events = alt;
+    } catch (e) { /* keep original (empty) result; fail silently */ }
+  }
 
   events.forEach(ev => {
     const comp = ev.competitions?.[0];
