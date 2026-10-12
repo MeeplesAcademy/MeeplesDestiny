@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DEL_SEG_XMS</title>
+<style>
+  :root { --border: #ccc; --text: #2a2a2a; --muted: #6b6b6b; --dd: #a15b00; --matched-border: #2563eb; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #fafafa;
+    color: var(--text);
+    margin: 0;
+    padding: 0 0 60px 0;
+    font-size: 13px;
+  }
+  header {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  header h1 { font-size: 18px; margin: 0; }
+  .header-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .header-toolbar button {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .header-toolbar button:hover { background: #f2f2f2; }
+  #save-status { font-size: 12px; color: var(--muted); padding: 0 20px; }
+
+  main { padding: 18px 20px 0 20px; }
+
+  /* ---------- Tabs (matches DEL_MAIN_SHOW) ---------- */
+  nav.tabs {
+    display: flex;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    margin-top: 6px;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  nav.tabs button {
+    padding: 10px 18px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+    margin-top: 6px;
+    color: #2a2a2a;
+  }
+  nav.tabs button.active {
+    border-bottom: 1px solid transparent;
+    margin-bottom: -1px;
+    color: #1a1a1a;
+    font-weight: 700;
+  }
+
+  /* ---------- Day tab: vertical A–E, Secular | XMAS side by side ---------- */
+  #day-container { max-width: 1200px; margin: 0 auto; }
+  .dv-banner { cursor: default; }
+  .dv-banner:hover { filter: none; }
+  .dv-colheads {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0 10px 6px 44px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .dv-colheads .dv-xms-head { padding-left: 8px; color: #2f7a47; }
+  .dv-hour { margin-bottom: 12px; }
+  .song-card.row { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; }
+  .song-card.row .song-line + .song-line { border-top: none; border-left: 1px dashed #b9dcc3; }
+  .song-card.row .song-line.xms { border-radius: 0 5px 5px 0; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 18px;
+    font-size: 12px;
+    color: #333;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-ring {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: 0 0 0 3px var(--pair-color);
+  }
+  /* Ring toggle switches (one per matching day) */
+  .ring-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+  }
+  .ring-toggle .switch {
+    position: relative;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 16px;
+    border-radius: 8px;
+    background: #ccc;
+    transition: background-color 0.15s ease;
+  }
+  .ring-toggle .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    transition: left 0.15s ease;
+  }
+  .ring-toggle.on .switch { background: var(--pair-color); }
+  .ring-toggle.on .switch::after { left: 14px; }
+  .ring-toggle.off .toggle-text { color: #aaa; text-decoration: line-through; }
+  .legend-divider { width: 1px; height: 16px; background: #ddd; }
+  .legend-swatch { display: inline-block; width: 13px; height: 13px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.15); }
+  .legend-matched { background: #dcdcdc; border: 2px solid var(--matched-border); }
+  .legend-dd {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--dd);
+    border-radius: 3px;
+    padding: 1px 4px;
+  }
+
+  .day-block { margin-bottom: 20px; }
+  .day-title {
+    font-weight: 800;
+    font-size: 15px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .day-title:hover { filter: brightness(0.96); }
+  .day-title .day-note { font-size: 11px; font-weight: 600; opacity: 0.65; }
+  .day-title .day-status { margin-left: auto; font-size: 11px; font-weight: 700; opacity: 0.75; }
+  .day-toggle { font-size: 11px; display: inline-block; width: 12px; }
+  .day-hours { display: flex; gap: 12px; }
+  .day-hours.collapsed { display: none; }
+  .hour-box {
+    flex: 1 1 0;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 9px;
+    background: #fff;
+  }
+  .hour-label {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 7px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+  }
+  .empty-note { font-size: 11.5px; color: #bbb; font-style: italic; padding: 4px 2px; }
+
+  /* ---------- Slot card (secular on top, XMS below) ---------- */
+  .song-card {
+    --ring: 0 0 0 1px #e5e5e5;
+    position: relative;
+    padding: 0 0 0 34px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    font-size: 12.5px;
+    line-height: 1.35;
+    background: #fafafa;
+    box-shadow: var(--ring);
+    cursor: pointer;
+  }
+  .song-card:last-child { margin-bottom: 0; }
+  .song-card.shared { --ring: 0 0 0 3px var(--pair-color); background: #fff; }
+  .song-card.shared:hover { --ring: 0 0 0 4px var(--pair-color); }
+  .song-card:not(.shared):hover { --ring: 0 0 0 1px #bdbdbd; }
+
+  /* Call-matched toggle: gray background + highlighted border (kept alongside any match ring) */
+  .song-card.matched { background: #dcdcdc; }
+  /* Overlay so the highlighted border sits above the green XMS line and the badge */
+  .song-card.matched::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--matched-border);
+    border-radius: 5px;
+    pointer-events: none;
+  }
+
+  .slot-badge {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    background: rgba(0,0,0,0.08);
+    border-radius: 5px 0 0 5px;
+    color: #444;
+  }
+  .slot-badge.dd { background: var(--dd); color: #fff; }
+  .slot-badge .dd-mark { font-size: 9px; font-weight: 800; opacity: 0.9; }
+  .song-card.matched .slot-badge:not(.dd) { background: rgba(0,0,0,0.14); }
+
+  .song-line { padding: 7px 8px; }
+  .song-line + .song-line { border-top: 1px dashed #d6d6d6; }
+  .song-card.matched .song-line + .song-line { border-top-color: #b8b8b8; }
+
+  /* XMS line: soft green so the holiday song stands apart from the AC song */
+  .song-line.xms { background: #e6f4ea; border-radius: 0 0 5px 0; }
+  .song-line.xms + .song-line,
+  .song-line + .song-line.xms { border-top-color: #b9dcc3; }
+  .song-card.matched .song-line.xms { background: #c9d6cc; }
+  .song-line.xms.missing { background: #f1f8f3; }
+
+  /* DD (Dilemma) slot: soft tint of the DD brown across the whole card so it reads as "skippable" */
+  .song-card.dd,
+  .song-card.dd .song-line.xms { background: #f5e9da; }
+  .song-card.dd .song-line + .song-line { border-top-color: #dcc3a3; border-left-color: #dcc3a3; }
+  .song-card.dd .song-title { color: #5c4630; }
+  .song-card.dd .song-artist { color: #8a7258; }
+  /* Call-matched still wins over the DD tint */
+  .song-card.dd.matched,
+  .song-card.dd.matched .song-line.xms { background: #dcdcdc; }
+  .song-card.dd.matched .song-title { color: inherit; }
+  .song-card.dd.matched .song-artist { color: var(--muted); }
+  .song-card.dd .song-line.needs-review { background: #fff8ec; }
+  .title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+  .song-title { font-weight: 700; min-width: 0; flex: 1 1 auto; }
+  .song-artist { color: var(--muted); }
+  .song-line.missing .song-title { font-weight: 400; font-style: italic; color: #bbb; }
+  .ref-tag { flex: 0 0 auto; white-space: nowrap; font-size: 11px; font-weight: 800; color: #444; }
+  .ref-arrow { font-size: 16px; font-weight: 800; margin-right: 2px; vertical-align: -1px; }
+
+  .song-line.needs-review,
+  .song-line.xms.needs-review { background: #fff8ec; box-shadow: inset 0 0 0 2px #f59e0b; }
+  .song-line.needs-review .song-artist { color: #b45309; font-weight: 700; }
+
+  .copy-btn {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.06);
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    color: #444;
+  }
+  .copy-btn:hover { background: rgba(0,0,0,0.14); }
+  .copy-btn.copied { background: #d9f2e6; border-color: #1f9d55; color: #0e7c37; }
+
+  /* ---------- Modal (matches DEL_MAIN_SHOW) ---------- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px 12px;
+    overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 8px; max-width: 720px; width: 100%; padding: 20px; max-height: 90vh; overflow-y: auto; }
+  .modal h2 { margin-top: 0; font-size: 16px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .modal-actions button {
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: #f5f5f5;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .note { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .import-section { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 14px; }
+  .import-section h3 { margin: 0 0 8px 0; font-size: 13px; }
+  .import-section input[type="file"] { font-size: 13px; }
+  #import-status { font-size: 12px; margin-top: 10px; }
+  #import-status .import-ok { color: #2a6f4f; margin-bottom: 4px; }
+  #import-status .import-err { color: #b91c1c; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>DEL_SEG_XMS</h1>
+  <div class="header-toolbar">
+    <button id="btn-import">&#11014; IMPORT LOGS</button>
+    <button id="btn-save-json">&#128190; SAVE STATE (.JSON)</button>
+    <button id="btn-load-json">&#11014; LOAD STATE (.JSON)</button>
+    <input type="file" id="load-json-file" accept=".json" style="display:none">
+  </div>
+</header>
+<div id="save-status">Not saved to browser &mdash; use Save State (.json) to keep this session's imports and matched slots.</div>
+<nav class="tabs" id="view-tabs"></nav>
+
+<main>
+  <div class="legend" id="legend"></div>
+  <div id="week-container"></div>
+  <div id="day-container" style="display:none"></div>
+</main>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal">
+    <h2>Import Segment Request Logs</h2>
+    <div class="import-section">
+      <h3>Upload .txt log files &mdash; select multiple days and both versions at once</h3>
+      <div class="note">
+        Select one or more "DEL SEG REQS" .txt exports. A file is treated as the XMS version when its
+        filename contains "XMAS" or "XMS" (e.g. "DEL XMAS SEG REQS 12-29-25 MON.txt"); otherwise it's the
+        secular version. The day is read from the filename first, then from the file's header line.
+        Importing a file replaces only that day's matching version &mdash; the other version and other days
+        are left alone. Lines whose title/artist columns can't be split cleanly are flagged in amber.
+      </div>
+      <input type="file" id="import-files" accept=".txt" multiple>
+      <div id="import-status"></div>
+    </div>
+    <div class="modal-actions">
+      <button id="import-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const DAYS = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+  const HOURS = ["A","B","C","D","E"];
+  const VERSIONS = ["sec","xms"];
+  const HOUR_TIME = {A:"16:00", B:"17:00", C:"18:00", D:"19:00", E:"20:00"};
+  const DAY_FULL = {MON:"MONDAY", TUE:"TUESDAY", WED:"WEDNESDAY", THU:"THURSDAY", FRI:"FRIDAY", SAT:"SATURDAY", SUN:"SUNDAY"};
+  const TITLE_COL = 35;   // width of the title column in the .txt export
+  // Dilemma call: A Hour call 2 (A4), repeats in D Hour call 2 (D4).
+  const DD_LABELS = ["A4","D4"];
+
+  // Same palette as DEL_SEG_WEEK.
+  const DAY_COLORS = {
+    MON: "#FFFF99", TUE: "#33CCCC", WED: "#CCFFCC", THU: "#FFCC99",
+    FRI: "#FF99CC", SAT: "#FFB3B3", SUN: "#CC99FF"
+  };
+  const DAY_BORDER = {
+    MON: "#caa500", TUE: "#0e8a8a", WED: "#4caf50", THU: "#e08a2e",
+    FRI: "#c2447e", SAT: "#d9534f", SUN: "#8b5cf6"
+  };
+  const MATCH_DAYS = {
+    MON: ["SAT"], TUE: ["SAT"], SAT: ["MON","TUE"],
+    WED: ["SUN"], THU: ["SUN"], SUN: ["WED","THU"],
+    FRI: []
+  };
+
+  function emptyHours(){ return {A:[],B:[],C:[],D:[],E:[]}; }
+
+  // weekData[day][version][hour] = array of songs
+  let weekData = {};
+  let dayDates = {};
+  let matchedSlots = new Set();   // slot ids like "MON-A4"
+  let collapsedDays = new Set();
+  // Legend switches: days whose repeat border/tag is currently turned off.
+  const RING_DAYS = ["MON","TUE","SAT","WED","THU","SUN"];
+  let hiddenRings = new Set();
+
+  function resetDay(day){
+    weekData[day] = {sec: emptyHours(), xms: emptyHours()};
+    dayDates[day] = "";
+  }
+  DAYS.forEach(resetDay);
+
+  function lighten(hexColor, ratio){
+    hexColor = hexColor.replace("#","");
+    let r = parseInt(hexColor.substring(0,2),16);
+    let g = parseInt(hexColor.substring(2,4),16);
+    let b = parseInt(hexColor.substring(4,6),16);
+    r = Math.round(r + (255-r)*ratio);
+    g = Math.round(g + (255-g)*ratio);
+    b = Math.round(b + (255-b)*ratio);
+    return "#" + [r,g,b].map(v => v.toString(16).padStart(2,"0")).join("");
+  }
+
+  function esc(s){
+    const d = document.createElement("div");
+    d.textContent = s || "";
+    return d.innerHTML;
+  }
+
+  // ---------- Parsing (same rules as DEL_SEG_WEEK) ----------
+  function normalizeTitle(raw){
+    let t = (raw || "").trim();
+    t = t.replace(/^\*+/, "").trim();
+    if ((t.startsWith("(") && t.endsWith(")")) || (t.startsWith("{") && t.endsWith("}"))) {
+      t = t.slice(1, -1).trim();
+    } else {
+      t = t.replace(/\s*[\(\{][^)}]*[\)\}]\s*$/, "").trim();
+    }
+    t = t.replace(/\s+/g, " ").trim();
+    return t.toUpperCase();
+  }
+
+  function splitTitleArtist(line){
+    const parts = line.split(/\s{2,}/).map(p => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      return {title: parts[0], artist: parts[parts.length - 1], ok: true};
+    }
+    // Fallback: the export's title column is a fixed 35 characters + 1 space. A title that fills
+    // the whole column (e.g. "IT'S BEGINNING TO LOOK A LOT LIKE C") leaves only one space before
+    // the artist, so split at that column rather than flagging it.
+    const raw = line.replace(/\s+$/, "");
+    if (raw.length > TITLE_COL + 1 && raw.charAt(TITLE_COL) === " " && raw.charAt(TITLE_COL - 1) !== " ") {
+      return {title: raw.slice(0, TITLE_COL).trim(), artist: raw.slice(TITLE_COL + 1).trim(), ok: true};
+    }
+    return {title: line.trim(), artist: "", ok: false};
+  }
+
+  function parseFilenameHints(filename){
+    const dayMatch = filename.match(/(?:^|[^A-Z])(MON|TUE|WED|THU|FRI|SAT|SUN)(?:[^A-Z]|$)/i);
+    const dateMatch = filename.match(/(\d{1,2}-\d{1,2}-\d{2,4})/);
+    const isXms = /(?:^|[^A-Z])(XMAS|XMS)(?:[^A-Z]|$)/i.test(filename);
+    return {
+      day: dayMatch ? dayMatch[1].toUpperCase() : null,
+      date: dateMatch ? dateMatch[1] : null,
+      version: isXms ? "xms" : "sec"
+    };
+  }
+
+  function parseSegText(text){
+    const rawLines = text.replace(/\t/g, "    ").split(/\r?\n/);
+    const hours = emptyHours();
+    let current = null;
+    let headerDay = null, headerDate = null;
+    rawLines.forEach(line => {
+      const stripped = line.trim();
+      if (!stripped) return;
+      const hMatch = stripped.match(/^([A-E])\s*HR$/i);
+      if (hMatch) { current = hMatch[1].toUpperCase(); return; }
+      if (/^DEL (XMAS |XMS )?SEG REQS/i.test(stripped)) {
+        const dm = stripped.match(/\b(MON|TUE|WED|THU|FRI|SAT|SUN)\b/i);
+        const dtm = stripped.match(/(\d{1,2}-\d{1,2}-\d{2,4})/);
+        if (dm) headerDay = dm[1].toUpperCase();
+        if (dtm) headerDate = dtm[1];
+        return;
+      }
+      if (!current) return;
+      const {title, artist, ok} = splitTitleArtist(stripped);
+      hours[current].push({
+        title_raw: title,
+        artist_raw: ok ? artist : "⚠ Check spacing in source line",
+        title_norm: ok ? normalizeTitle(title) : "",
+        flagged: title.startsWith("*"),
+        needsReview: !ok
+      });
+    });
+    return {hours, headerDay, headerDate};
+  }
+
+  function labelFor(hour, idx){ return `${hour}${2*(idx+1)}`; }
+  function slotId(day, hour, idx){ return `${day}-${labelFor(hour, idx)}`; }
+
+  // ---------- Match computation (secular songs only; XMS repeats ignored) ----------
+  function computeMatchIndex(){
+    const flat = [];
+    DAYS.forEach(day => {
+      HOURS.forEach(h => {
+        weekData[day].sec[h].forEach((song, idx) => flat.push({day, hour: h, idx, song}));
+      });
+    });
+    const map = new Map();
+    flat.forEach(e => {
+      const id = slotId(e.day, e.hour, e.idx);
+      const allowedDays = MATCH_DAYS[e.day] || [];
+      if (!allowedDays.length || !e.song.title_norm) return;
+      const matches = flat.filter(o =>
+        o !== e && allowedDays.includes(o.day) &&
+        o.song.title_norm && o.song.title_norm === e.song.title_norm
+      );
+      // Drop repeats on days whose legend switch is off; ring color follows the first remaining day.
+      const visible = matches.filter(m => !hiddenRings.has(m.day));
+      if (visible.length) {
+        map.set(id, {
+          otherRefs: visible.map(m => ({day: m.day, label: labelFor(m.hour, m.idx)})),
+          pairColor: DAY_BORDER[visible[0].day]
+        });
+      }
+    });
+    return map;
+  }
+
+  // ---------- Rendering ----------
+  function renderLegend(){
+    const el = document.getElementById("legend");
+    let html = "";
+    RING_DAYS.forEach(d => {
+      const on = !hiddenRings.has(d);
+      html += `<button type="button" class="ring-toggle ${on ? "on" : "off"}" data-ring-day="${d}" role="switch" aria-checked="${on}" style="--pair-color:${DAY_BORDER[d]}" title="Show or hide borders for repeats on ${d}"><span class="switch"></span><span class="toggle-text">Border = secular song repeats on ${d}</span></button>`;
+    });
+    html += `<span class="legend-divider"></span>`;
+    html += `<span class="legend-item"><span class="legend-swatch legend-matched"></span>Call matched (click slot to toggle)</span>`;
+    html += `<span class="legend-item"><span class="legend-dd">DD</span>Dilemma call</span>`;
+    el.innerHTML = html;
+  }
+
+  function songLineHtml(song, version, refHtml){
+    if (!song) {
+      const what = version === "xms" ? "No XMS song" : "No secular song";
+      return `<div class="song-line ${version} missing" data-version="${version}"><div class="title-row"><span class="song-title">${what}</span></div></div>`;
+    }
+    const star = song.flagged ? "★ " : "";
+    const copyText = song.needsReview ? song.title_raw : `${song.title_raw} | ${song.artist_raw}`;
+    const cls = `song-line ${version}` + (song.needsReview ? " needs-review" : "");
+    return `<div class="${cls}" data-version="${version}"><div class="title-row"><span class="song-title">${esc(star + song.title_raw)}</span>${refHtml || ""}<button type="button" class="copy-btn" data-copy-text="${esc(copyText)}" title="Copy Title | Artist to clipboard">&#10697;</button></div><div class="song-artist">${esc(song.artist_raw)}</div></div>`;
+  }
+
+  function dayStatus(day){
+    const has = v => HOURS.some(h => weekData[day][v][h].length);
+    const parts = [];
+    parts.push(has("sec") ? "AC ✓" : "AC —");
+    parts.push(has("xms") ? "XMS ✓" : "XMS —");
+    const total = HOURS.reduce((n, h) => n + Math.max(weekData[day].sec[h].length, weekData[day].xms[h].length), 0);
+    if (total) {
+      const matched = Array.from(matchedSlots).filter(id => id.startsWith(day + "-")).length;
+      parts.push(`${matched}/${total} matched`);
+    }
+    return parts.join(" · ");
+  }
+
+  // One slot card (secular + XMS). Used by both the WEEK tab (stacked) and day tabs ("row" = side by side).
+  function cardHtml(day, h, idx, matchIndex, extraClass){
+    const id = slotId(day, h, idx);
+    const label = labelFor(h, idx);
+    const isDD = DD_LABELS.includes(label);
+    const info = matchIndex.get(id);
+    const secSong = weekData[day].sec[h][idx];
+    const xmsSong = weekData[day].xms[h][idx];
+
+    let cls = "song-card" + (extraClass ? " " + extraClass : "") + (isDD ? " dd" : "");
+    let style = "";
+    let refHtml = "";
+    if (info && secSong && !secSong.needsReview) {
+      cls += " shared";
+      style = ` style="--pair-color:${info.pairColor}"`;
+      const refStrs = info.otherRefs.map(r => `${r.day} ${r.label}`).join(", ");
+      refHtml = `<span class="ref-tag"><span class="ref-arrow">&#8596;</span>${esc(refStrs)}</span>`;
+    }
+    if (matchedSlots.has(id)) cls += " matched";
+
+    const badge = isDD
+      ? `<div class="slot-badge dd" title="Dilemma call"><span>${label}</span><span class="dd-mark">DD</span></div>`
+      : `<div class="slot-badge">${label}</div>`;
+
+    return `<div class="${cls}" data-slotid="${id}"${style}>${badge}${songLineHtml(secSong, "sec", refHtml)}${songLineHtml(xmsSong, "xms", "")}</div>`;
+  }
+
+  // ---------- Tabs ----------
+  let activeTab = "WEEK";
+
+  function renderTabs(){
+    const nav = document.getElementById("view-tabs");
+    nav.innerHTML = "";
+    const weekBtn = document.createElement("button");
+    weekBtn.textContent = "WEEK";
+    weekBtn.className = activeTab === "WEEK" ? "active" : "";
+    weekBtn.style.backgroundColor = activeTab === "WEEK" ? "#ffffff" : "#e2e2e2";
+    weekBtn.addEventListener("click", () => setTab("WEEK"));
+    nav.appendChild(weekBtn);
+    DAYS.forEach(day => {
+      const btn = document.createElement("button");
+      btn.textContent = DAY_FULL[day];
+      const isActive = activeTab === day;
+      btn.className = isActive ? "active" : "";
+      btn.style.backgroundColor = lighten(DAY_COLORS[day], isActive ? 0.9 : 0.5);
+      btn.addEventListener("click", () => setTab(day));
+      nav.appendChild(btn);
+    });
+  }
+
+  function setTab(tab){
+    activeTab = tab;
+    renderTabs();
+    renderAll();
+    window.scrollTo(0, 0);
+  }
+
+  function renderAll(){
+    const isWeek = activeTab === "WEEK";
+    document.getElementById("week-container").style.display = isWeek ? "" : "none";
+    document.getElementById("day-container").style.display = isWeek ? "none" : "";
+    if (isWeek) renderWeek(); else renderDayView(activeTab);
+  }
+
+  function renderDayView(day){
+    const matchIndex = computeMatchIndex();
+    const container = document.getElementById("day-container");
+    const dateStr = dayDates[day] ? ` &middot; ${esc(dayDates[day])}` : "";
+    const noMatchNote = MATCH_DAYS[day].length === 0 ? `<span class="day-note">(does not match with other days)</span>` : "";
+    let html = `<div class="day-title dv-banner" style="background:${lighten(DAY_COLORS[day], 0.35)}">${DAY_FULL[day]}${dateStr} ${noMatchNote}<span class="day-status">${dayStatus(day)}</span></div>`;
+    html += `<div class="dv-colheads"><span>SECULAR</span><span class="dv-xms-head">XMAS</span></div>`;
+    HOURS.forEach(h => {
+      const count = Math.max(weekData[day].sec[h].length, weekData[day].xms[h].length);
+      html += `<div class="hour-box dv-hour"><div class="hour-label">${h} HOUR &middot; ${HOUR_TIME[h]}</div>`;
+      if (!count) {
+        html += `<div class="empty-note">No data imported</div>`;
+      } else {
+        for (let idx = 0; idx < count; idx++) html += cardHtml(day, h, idx, matchIndex, "row");
+      }
+      html += `</div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function renderWeek(){
+    const matchIndex = computeMatchIndex();
+    const container = document.getElementById("week-container");
+    container.innerHTML = "";
+
+    DAYS.forEach(day => {
+      const block = document.createElement("div");
+      block.className = "day-block";
+      block.setAttribute("data-day", day);
+      const isCollapsed = collapsedDays.has(day);
+
+      const banner = document.createElement("div");
+      banner.className = "day-title";
+      banner.style.background = lighten(DAY_COLORS[day], 0.35);
+      const dateStr = dayDates[day] ? ` &middot; ${esc(dayDates[day])}` : "";
+      const noMatchNote = MATCH_DAYS[day].length === 0 ? `<span class="day-note">(does not match with other days)</span>` : "";
+      banner.innerHTML = `<span class="day-toggle">${isCollapsed ? "▶" : "▼"}</span> ${day}${dateStr} ${noMatchNote}<span class="day-status">${dayStatus(day)}</span>`;
+      banner.addEventListener("click", () => toggleDayCollapse(day));
+      block.appendChild(banner);
+
+      const hoursRow = document.createElement("div");
+      hoursRow.className = "day-hours" + (isCollapsed ? " collapsed" : "");
+
+      HOURS.forEach(h => {
+        const box = document.createElement("div");
+        box.className = "hour-box";
+        let html = `<div class="hour-label">${h} HOUR &middot; ${HOUR_TIME[h]}</div>`;
+
+        const sec = weekData[day].sec[h];
+        const xms = weekData[day].xms[h];
+        const count = Math.max(sec.length, xms.length);
+        if (!count) {
+          html += `<div class="empty-note">No data imported</div>`;
+        } else {
+          for (let idx = 0; idx < count; idx++) {
+            html += cardHtml(day, h, idx, matchIndex, "");
+          }
+        }
+        box.innerHTML = html;
+        hoursRow.appendChild(box);
+      });
+
+      block.appendChild(hoursRow);
+      container.appendChild(block);
+    });
+  }
+
+  function refreshDayStatus(day){
+    const el = document.querySelector(`.day-block[data-day="${day}"] .day-status`);
+    if (el) el.textContent = dayStatus(day);
+    if (activeTab === day) {
+      const dv = document.querySelector("#day-container .day-status");
+      if (dv) dv.textContent = dayStatus(day);
+    }
+  }
+
+  // ---------- Copy to clipboard ----------
+  function copyTextToClipboard(text){
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => fallbackCopyText(text));
+    } else {
+      fallbackCopyText(text);
+    }
+  }
+  function fallbackCopyText(text){
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) { /* no-op */ }
+    document.body.removeChild(ta);
+  }
+
+  // ---------- Collapse / expand a day ----------
+  function toggleDayCollapse(day){
+    const block = document.querySelector(`.day-block[data-day="${day}"]`);
+    if (!block) return;
+    const hoursRow = block.querySelector(".day-hours");
+    const icon = block.querySelector(".day-toggle");
+    const nowCollapsed = hoursRow.classList.toggle("collapsed");
+    if (nowCollapsed) collapsedDays.add(day); else collapsedDays.delete(day);
+    if (icon) icon.textContent = nowCollapsed ? "▶" : "▼";
+  }
+
+  // ---------- Clicks: copy buttons, call-matched toggle (event delegation) ----------
+  document.addEventListener("click", function(e){
+    const copyBtn = e.target.closest(".copy-btn");
+    if (copyBtn) {
+      e.stopPropagation();
+      copyTextToClipboard(copyBtn.getAttribute("data-copy-text") || "");
+      copyBtn.innerHTML = "&#10003;";
+      copyBtn.classList.add("copied");
+      setTimeout(() => {
+        copyBtn.innerHTML = "&#10697;";
+        copyBtn.classList.remove("copied");
+      }, 1100);
+      return;
+    }
+
+    const ringToggle = e.target.closest(".ring-toggle");
+    if (ringToggle) {
+      const d = ringToggle.getAttribute("data-ring-day");
+      if (hiddenRings.has(d)) hiddenRings.delete(d); else hiddenRings.add(d);
+      renderLegend();
+      renderAll();
+      return;
+    }
+
+    const card = e.target.closest(".song-card");
+    if (!card) return;
+    const id = card.getAttribute("data-slotid");
+    if (matchedSlots.has(id)) matchedSlots.delete(id); else matchedSlots.add(id);
+    document.querySelectorAll(`.song-card[data-slotid="${id}"]`).forEach(c => c.classList.toggle("matched", matchedSlots.has(id)));
+    refreshDayStatus(id.split("-")[0]);
+  });
+
+  // ---------- Import ----------
+  function renderImportStatus(results){
+    const el = document.getElementById("import-status");
+    el.innerHTML = results.map(r =>
+      `<div class="${r.ok ? "import-ok" : "import-err"}">${r.ok ? "✓" : "✗"} ${esc(r.file)}: ${r.msg}</div>`
+    ).join("");
+  }
+
+  function handleImportFiles(fileList){
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    let pending = files.length;
+    const results = [];
+    const finish = () => { pending--; if (pending === 0) { renderImportStatus(results); renderAll(); } };
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const fnHints = parseFilenameHints(file.name);
+        const parsed = parseSegText(e.target.result);
+        const day = fnHints.day || parsed.headerDay;
+        const date = fnHints.date || parsed.headerDate;
+        const version = fnHints.version;
+        const vName = version === "xms" ? "XMS" : "secular";
+        if (!day || DAYS.indexOf(day) === -1) {
+          results.push({file: file.name, ok: false, msg: "Could not determine day from filename or file header."});
+        } else {
+          weekData[day][version] = parsed.hours;
+          dayDates[day] = date || dayDates[day] || "";
+          const total = HOURS.reduce((sum, h) => sum + parsed.hours[h].length, 0);
+          const reviewCount = HOURS.reduce((sum, h) => sum + parsed.hours[h].filter(s => s.needsReview).length, 0);
+          let msg = `Imported ${total} ${vName} song${total === 1 ? "" : "s"} into ${day}${date ? " (" + date + ")" : ""}.`;
+          if (reviewCount) msg += ` ⚠ ${reviewCount} line(s) flagged for manual review.`;
+          results.push({file: file.name, ok: true, msg});
+        }
+        finish();
+      };
+      reader.onerror = () => {
+        results.push({file: file.name, ok: false, msg: "Could not read this file."});
+        finish();
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  // ---------- Save / Load state (.json) ----------
+  function localDateStamp(){
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+
+  function downloadJsonState(){
+    try {
+      const payload = {app: "DEL_SEG_XMS", weekData, dayDates, matchedSlots: Array.from(matchedSlots), hiddenRings: Array.from(hiddenRings)};
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `DEL_SEG_XMS_SAVE_${localDateStamp()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      document.getElementById("save-status").textContent = "State downloaded " + new Date().toLocaleTimeString() + ".";
+    } catch (err) {
+      alert("Download not available in this environment.");
+    }
+  }
+
+  function handleJsonStateFile(file){
+    if (!confirm("Loading this file will replace ALL current data (all 7 days, both versions, and matched slots) with what's in the file. Continue?")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        const loadedWeek = parsed.weekData || {};
+        const loadedDates = parsed.dayDates || {};
+        DAYS.forEach(d => {
+          resetDay(d);
+          const src = loadedWeek[d] || {};
+          VERSIONS.forEach(v => {
+            HOURS.forEach(h => {
+              if (src[v] && Array.isArray(src[v][h])) weekData[d][v][h] = src[v][h];
+            });
+          });
+          dayDates[d] = loadedDates[d] || "";
+        });
+        matchedSlots = new Set(Array.isArray(parsed.matchedSlots) ? parsed.matchedSlots : []);
+        hiddenRings = new Set(Array.isArray(parsed.hiddenRings) ? parsed.hiddenRings : []);
+        renderLegend();
+        renderAll();
+        document.getElementById("save-status").textContent = "Loaded " + file.name + ".";
+      } catch (err) {
+        alert("Could not read that file as saved show data: " + err.message);
+      }
+    };
+    reader.onerror = () => alert("Could not read that file.");
+    reader.readAsText(file);
+  }
+
+  // ---------- Init ----------
+  function openModal(id){ document.getElementById(id).classList.add("open"); }
+  function closeModal(id){ document.getElementById(id).classList.remove("open"); }
+
+  document.getElementById("btn-import").addEventListener("click", () => {
+    document.getElementById("import-status").innerHTML = "";
+    document.getElementById("import-files").value = "";
+    openModal("modal-import");
+  });
+  document.getElementById("import-close").addEventListener("click", () => closeModal("modal-import"));
+  document.getElementById("import-files").addEventListener("change", (e) => handleImportFiles(e.target.files));
+
+  document.getElementById("btn-save-json").addEventListener("click", downloadJsonState);
+  document.getElementById("btn-load-json").addEventListener("click", () => document.getElementById("load-json-file").click());
+  document.getElementById("load-json-file").addEventListener("change", (e) => {
+    if (e.target.files && e.target.files[0]) handleJsonStateFile(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  renderLegend();
+  renderTabs();
+  renderAll();
+})();
+</script>
+</body>
+</html>
