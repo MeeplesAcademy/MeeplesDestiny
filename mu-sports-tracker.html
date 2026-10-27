@@ -1652,16 +1652,33 @@ function renderSecondaryNav(){
   if (state.primary !== "nfl") nav.appendChild(makeStandingsBtn());
 }
 
+// NHL records are W-L-OTL: a loss in overtime or a shootout goes in its own
+// third column instead of counting as a regular loss. The live score fetch
+// flags those games with ot:true (NHL teams only), so every record and
+// result tag on the page can tell them apart.
+function isNHLSchedule(games){
+  return !!(TEAMS.nhl && TEAMS.nhl.order.some(k => SCHEDULES[k] === games));
+}
+
+function resultTag(g){
+  if (g.score.team > g.score.opp) return "W";
+  return g.ot ? "OTL" : "L";
+}
+
 function cumulativeRecordThrough(games, game){
-  let w = 0, l = 0, t = 0;
+  const nhl = isNHLSchedule(games);
+  let w = 0, l = 0, t = 0, otl = 0;
   for (const gm of games){
     if (gm.status === "final"){
       if (gm.score.team > gm.score.opp) w++;
-      else if (gm.score.team < gm.score.opp) l++;
+      else if (gm.score.team < gm.score.opp){
+        if (nhl && gm.ot) otl++; else l++;
+      }
       else t++;
     }
     if (gm === game) break;
   }
+  if (nhl) return `${w}-${l}-${otl}`;
   return t > 0 ? `${w}-${l}-${t}` : `${w}-${l}`;
 }
 
@@ -1681,7 +1698,7 @@ function gameCardHTML(g, team, allGames){
     const win = g.score.team > g.score.opp;
     const record = allGames ? cumulativeRecordThrough(allGames, g) : "";
     scoreHTML = `<div class="score">
-      <div>${g.score.team}-${g.score.opp} <span class="wl-tag" style="color:${win ? '#2f7a2f' : '#a33'}">${win ? "W" : "L"}</span></div>
+      <div>${g.score.team}-${g.score.opp} <span class="wl-tag" style="color:${win ? '#2f7a2f' : '#a33'}">${resultTag(g)}</span></div>
       ${record ? `<div class="game-card-record">${record}</div>` : ""}
     </div>`;
   } else {
@@ -2502,7 +2519,7 @@ function cmpCellHTML(g, team, allGames){
     const record = allGames ? cumulativeRecordThrough(allGames, g) : "";
     scoreBlock = `
       <div class="cmp-cell-score">
-        <div style="font-weight:bold; color:${win ? "#2f7a2f" : "#a33"};">${g.score.team}-${g.score.opp} (${win ? "W" : "L"})</div>
+        <div style="font-weight:bold; color:${win ? "#2f7a2f" : "#a33"};">${g.score.team}-${g.score.opp} (${resultTag(g)})</div>
         ${record ? `<div class="cmp-cell-record">${record}</div>` : ""}
       </div>`;
   }
@@ -2922,6 +2939,14 @@ async function fetchLiveScoresForTeam(teamKey){
     if (ownScore == null || oppScore == null) return;
     match.status = "final";
     match.score = { team: ownScore, opp: oppScore };
+    // NHL only: note whether the game went past regulation (3 periods), so a
+    // loss there is recorded as an OT loss. ESPN reports the last period
+    // played (4 = OT, 5 = shootout) and labels it "Final/OT" or "Final/SO".
+    if (TEAMS.nhl && TEAMS.nhl.teams[teamKey]){
+      const period = Number(comp.status?.period ?? ev.status?.period);
+      const detail = String(comp.status?.type?.shortDetail || comp.status?.type?.detail || "");
+      match.ot = (Number.isFinite(period) && period > 3) || /\b(OT|SO)\b/i.test(detail);
+    }
   });
 }
 
@@ -2993,7 +3018,7 @@ function scheduleRowHTML(game, allGames, bold){
     timeText = "Final";
     const win = game.score.team > game.score.opp;
     const resultColor = win ? "#2f7a2f" : "#a33";
-    const scoreHtml = `<span style="color:${resultColor}">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})</span>`;
+    const scoreHtml = `<span style="color:${resultColor}">${game.score.team}-${game.score.opp} (${resultTag(game)})</span>`;
     const recordText = allGames ? cumulativeRecordThrough(allGames, game) : "";
     line2 = `<div class="tsc-result">
       <span class="tsc-score">${scoreHtml}</span>
@@ -3068,7 +3093,13 @@ function favoriteTeamCardHTML(sportKey, teamKey, team){
   const logo = LOGOS[teamKey] ? `<img class="tile-logo" src="${LOGOS[teamKey]}" alt="${team.name} logo">` : "";
   const tileColor = team.dashColor || team.c1;
   const recent = mostRecentFinalGame(teamKey);
-  const recordLabel = recent ? cumulativeRecordThrough(games, recent) : "";
+  let recordLabel = recent ? cumulativeRecordThrough(games, recent) : "";
+  // NHL header record comes straight from the live standings (W-L-OTL) when
+  // they've loaded, so it always matches the Standings table exactly.
+  if (sportKey === "nhl"){
+    const live = NHL_LIVE_RECORDS[team.name];
+    if (live) recordLabel = `${live.w}-${live.l}-${live.ot}`;
+  }
 
   // NHL and MLB keep a condensed schedule window (both seasons are far
   // longer than everyone else's) — every other sport shows the full season
@@ -3432,7 +3463,7 @@ function calendarEntryHTML(entry){
     const record = cumulativeRecordThrough(SCHEDULES[teamKey] || [], game);
     return `<div class="cal-entry" ${styleAttr}>
       <div class="cal-entry-matchup">${matchupLine}</div>
-      <div class="cal-entry-meta" style="font-weight:bold;">${game.score.team}-${game.score.opp} (${win ? "W" : "L"})${record ? ` · ${record}` : ""}</div>
+      <div class="cal-entry-meta" style="font-weight:bold;">${game.score.team}-${game.score.opp} (${resultTag(game)})${record ? ` · ${record}` : ""}</div>
     </div>`;
   }
   if (game.date < todayISO()){
