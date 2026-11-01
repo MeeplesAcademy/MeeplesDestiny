@@ -2278,49 +2278,77 @@ let apPollFetchState = "idle"; // idle | loading | done | failed
 // publishing (usually early-to-mid November); this just needs to sit here ready.
 let CFP_POLL = [];
 
+const AP_POLL_CACHE_KEY = "sportsTracker.apPollCache.v1";
+let apPollWeekNote = ""; // set when we're showing a previous week's AP poll
+
+// Only ever accept the Associated Press poll. ESPN's rankings response also
+// carries the AFCA Coaches Poll (and the CFP rankings later in the season),
+// and on poll day the Coaches Poll can post hours before the AP. The old code
+// fell back to "whatever poll ESPN listed first" when it couldn't find the AP,
+// which is exactly how the Coaches Poll ended up in the AP Top 25 column.
+// There is deliberately no fallback to any other poll anymore.
+function findApPoll(polls){
+  return (polls || []).find(p => {
+    if ((p.type || "").toLowerCase() === "ap") return true;
+    const label = `${p.name || ""} ${p.shortName || ""}`;
+    return /\bAP\b|associated press/i.test(label) && !/coach|afca|usa today|playoff/i.test(label);
+  }) || null;
+}
+
+function apRanksValid(ranks){
+  return Array.isArray(ranks) && ranks.length > 0 && ranks.every(r => Number.isInteger(r.current));
+}
+
+function pollWeekNumber(poll, data){
+  return poll?.occurrence?.number ?? data?.latestWeek?.number ?? null;
+}
+
+// ESPN's response is the authoritative, complete Top 25 in order, so this
+// mirrors it directly (no name-matching against a local list; see the
+// Ole Miss / Mississippi State collision that caused that to be removed).
+function mapApRanks(ranks){
+  const poll = ranks.map(r => ({
+    rank: r.current,
+    team: r.team?.location || r.team?.displayName || r.team?.name || r.team?.shortDisplayName || "Unknown",
+    votes: r.firstPlaceVotes || 0,
+    record: r.recordSummary || "0-0",
+    points: r.points ?? 0,
+    trend: r.trend || "NR"
+  }));
+  poll.sort((a, b) => a.rank - b.rank);
+  return poll;
+}
+
+// Last good AP poll is saved in this browser so a gap on ESPN's side never
+// forces the page back onto the preseason list or onto another poll.
+function saveApPollCache(poll, week){
+  try { localStorage.setItem(AP_POLL_CACHE_KEY, JSON.stringify({ poll, week, savedAt: Date.now() })); } catch (e) {}
+}
+function loadApPollCache(){
+  try {
+    const raw = localStorage.getItem(AP_POLL_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    return Array.isArray(cached?.poll) && cached.poll.length ? cached : null;
+  } catch (e) { return null; }
+}
+
+async function fetchRankings(week){
+  const url = week ? `${ESPN_RANKINGS_URL}?seasontype=2&week=${week}` : ESPN_RANKINGS_URL;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
 async function fetchApPoll(forceRerender){
   apPollFetchState = "loading";
+  apPollWeekNote = "";
   try {
-    const res = await fetch(ESPN_RANKINGS_URL);
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-
+    const data = await fetchRankings();
     const polls = data?.rankings || [];
-    const apPoll = polls.find(p => /^ap top/i.test(p.name || p.shortName || "")) || polls[0];
-    const ranks = apPoll?.ranks;
-    if (!ranks || !ranks.length) throw new Error("Unexpected response shape from ESPN rankings API");
 
-    // Validate the shape fully before touching AP_POLL at all — a malformed
-    // response (e.g. every rank undefined) must never be allowed to wipe out
-    // the existing list.
-    const ranksLookValid = ranks.every(r => Number.isInteger(r.current));
-    if (!ranksLookValid) throw new Error("Rankings entries missing a usable rank number");
-
-    // Build the poll fresh from ESPN every time and replace AP_POLL wholesale
-    // — this used to try to match each incoming team against whatever was
-    // already in AP_POLL (by name, to preserve manual corrections), but that
-    // matching used a loose "does this name contain that alias" check. Ole
-    // Miss's alias list included the bare word "Mississippi" so it would be
-    // recognized under any of its short forms — except "Mississippi State"
-    // *also* contains "Mississippi", so the two schools collided onto the
-    // same row: whichever ESPN processed second silently overwrote the
-    // first's rank/record, and the row's team name never changed to match,
-    // so the wrong school's name sat next to the right school's numbers.
-    // ESPN's own response is already the authoritative, complete Top 25 in
-    // order — there's no correct reason to reconcile it against a locally
-    // held list at all, so this just mirrors it directly.
-    const freshPoll = ranks.map(r => ({
-      rank: r.current,
-      team: r.team?.location || r.team?.displayName || r.team?.name || r.team?.shortDisplayName || "Unknown",
-      votes: r.firstPlaceVotes || 0,
-      record: r.recordSummary || "0-0",
-      points: r.points ?? 0,
-      trend: r.trend || "NR"
-    }));
-    freshPoll.sort((a, b) => a.rank - b.rank);
-    AP_POLL = freshPoll;
-
-    // Same response, different poll source — grab CFP committee rankings if present.
+    // CFP committee rankings: same response, separate poll. Handled on its
+    // own now, so a missing AP poll no longer blocks CFP from updating.
     const cfpPoll = polls.find(p => /college football playoff/i.test(p.name || p.shortName || "") || p.type === "cfp");
     if (cfpPoll?.ranks?.length){
       CFP_POLL = cfpPoll.ranks.map(r => ({
@@ -2331,19 +2359,59 @@ async function fetchApPoll(forceRerender){
       }));
     }
 
-    apPollFetchState = "done";
+    let ap = findApPoll(polls);
+    let apWeek = pollWeekNumber(ap, data);
+    let usingPreviousWeek = false;
+
+    // This week's AP poll isn't on ESPN yet (common on Sunday afternoons):
+    // ask ESPN for last week's AP poll instead of using any other poll.
+    if (!ap || !apRanksValid(ap.ranks)){
+      ap = null;
+      const currentWeek = pollWeekNumber(polls[0], data);
+      if (currentWeek && currentWeek > 1){
+        try {
+          const prevData = await fetchRankings(currentWeek - 1);
+          const prevAp = findApPoll(prevData?.rankings);
+          if (prevAp && apRanksValid(prevAp.ranks)){
+            ap = prevAp;
+            apWeek = pollWeekNumber(prevAp, prevData) ?? (currentWeek - 1);
+            usingPreviousWeek = true;
+          }
+        } catch (e) { /* fall through to the saved copy below */ }
+      }
+    }
+
+    if (ap){
+      AP_POLL = mapApRanks(ap.ranks);
+      saveApPollCache(AP_POLL, apWeek);
+      apPollWeekNote = usingPreviousWeek
+        ? `This week's AP poll isn't on ESPN yet, so this is the Week ${apWeek} AP poll. It switches over automatically once ESPN posts the new one.`
+        : "";
+      apPollFetchState = "done";
+    } else {
+      const cached = loadApPollCache();
+      if (!cached) throw new Error("No AP poll in ESPN's response and no saved copy");
+      AP_POLL = cached.poll;
+      apPollWeekNote = cached.week
+        ? `This week's AP poll isn't on ESPN yet. Showing the last saved AP poll (Week ${cached.week}).`
+        : "This week's AP poll isn't on ESPN yet. Showing the last saved AP poll.";
+      apPollFetchState = "done";
+    }
   } catch (err){
+    // Network or shape failure: still prefer a saved AP poll over preseason.
+    const cached = loadApPollCache();
+    if (cached) AP_POLL = cached.poll;
     apPollFetchState = "failed";
-    console.warn("AP poll live fetch failed — showing last-known data instead.", err);
+    console.warn("AP poll live fetch failed — showing last-known AP data instead.", err);
   }
   REFRESH_TIMES.appoll = new Date();
   if (forceRerender) renderAll();
 }
 
 function apPollStatusNote(){
-  if (apPollFetchState === "loading") return "Fetching live poll from ESPN…";
-  if (apPollFetchState === "done") return "Live poll loaded from ESPN just now.";
-  if (apPollFetchState === "failed") return "Live fetch didn't return usable data — showing the last known rankings instead.";
+  if (apPollFetchState === "loading") return "Fetching live AP poll from ESPN…";
+  if (apPollFetchState === "done") return apPollWeekNote || "Live AP poll loaded from ESPN just now.";
+  if (apPollFetchState === "failed") return "Live fetch didn't return usable data — showing the last known AP rankings instead.";
   return "Showing the preseason poll until Week 1 rankings post.";
 }
 
@@ -3237,7 +3305,7 @@ function refreshRowHTML(refreshedText, url, label){
   </span>`;
 }
 
-const ESPN_AP_POLL_PAGE_URL = "https://www.espn.com/college-football/rankings";
+const ESPN_AP_POLL_PAGE_URL = "https://www.espn.com/college-football/rankings/_/poll/1";
 const ESPN_BIGTEN_STANDINGS_PAGE_URL = "https://www.espn.com/college-football/standings/_/group/5/view/fbs";
 const ESPN_NFL_STANDINGS_PAGE_URL = "https://www.espn.com/nfl/standings";
 const ESPN_NHL_STANDINGS_PAGE_URL = "https://www.espn.com/nhl/standings";
