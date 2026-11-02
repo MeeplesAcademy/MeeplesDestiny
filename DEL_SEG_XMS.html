@@ -500,12 +500,33 @@
   function labelFor(hour, idx){ return `${hour}${2*(idx+1)}`; }
   function slotId(day, hour, idx){ return `${day}-${labelFor(hour, idx)}`; }
 
-  // ---------- Match computation (secular songs only; XMS repeats ignored) ----------
+  // ---------- Match computation ----------
+  // Best Of days (SAT, SUN) repeat calls from their weekdays. Matching uses the secular (SEG) log
+  // when the Best Of day has one; if it only has the XMAS log, matching falls back to XMAS songs
+  // on both sides (e.g. SAT XMAS vs MON/TUE XMAS). Each Best Of day decides independently.
+  const BEST_OF_FOR = {MON: "SAT", TUE: "SAT", SAT: "SAT", WED: "SUN", THU: "SUN", SUN: "SUN"};
+
+  function hasVersion(day, v){ return HOURS.some(h => weekData[day][v][h].length); }
+
+  // Which version a Best Of day matches on: "sec", "xms" (fallback), or null (nothing imported).
+  function bestOfSource(bestDay){
+    if (hasVersion(bestDay, "sec")) return "sec";
+    if (hasVersion(bestDay, "xms")) return "xms";
+    return null;
+  }
+
+  function matchVersionFor(day){
+    const bestDay = BEST_OF_FOR[day];
+    return bestDay ? bestOfSource(bestDay) : null;
+  }
+
   function computeMatchIndex(){
     const flat = [];
     DAYS.forEach(day => {
+      const v = matchVersionFor(day);
+      if (!v) return;
       HOURS.forEach(h => {
-        weekData[day].sec[h].forEach((song, idx) => flat.push({day, hour: h, idx, song}));
+        weekData[day][v][h].forEach((song, idx) => flat.push({day, hour: h, idx, song, version: v}));
       });
     });
     const map = new Map();
@@ -514,13 +535,14 @@
       const allowedDays = MATCH_DAYS[e.day] || [];
       if (!allowedDays.length || !e.song.title_norm) return;
       const matches = flat.filter(o =>
-        o !== e && allowedDays.includes(o.day) &&
+        o !== e && allowedDays.includes(o.day) && o.version === e.version &&
         o.song.title_norm && o.song.title_norm === e.song.title_norm
       );
       // Drop repeats on days whose legend switch is off; ring color follows the first remaining day.
       const visible = matches.filter(m => !hiddenRings.has(m.day));
       if (visible.length) {
         map.set(id, {
+          version: e.version,
           otherRefs: visible.map(m => ({day: m.day, label: labelFor(m.hour, m.idx)})),
           pairColor: DAY_BORDER[visible[0].day]
         });
@@ -529,13 +551,22 @@
     return map;
   }
 
+  // Banner note on SAT/SUN when matching has fallen back to the XMAS log.
+  function fallbackNote(day){
+    if ((day === "SAT" || day === "SUN") && bestOfSource(day) === "xms") {
+      return `<span class="day-note">(Best Of matched from XMAS log &mdash; no SEG log)</span>`;
+    }
+    return "";
+  }
+
   // ---------- Rendering ----------
   function renderLegend(){
     const el = document.getElementById("legend");
     let html = "";
     RING_DAYS.forEach(d => {
       const on = !hiddenRings.has(d);
-      html += `<button type="button" class="ring-toggle ${on ? "on" : "off"}" data-ring-day="${d}" role="switch" aria-checked="${on}" style="--pair-color:${DAY_BORDER[d]}" title="Show or hide borders for repeats on ${d}"><span class="switch"></span><span class="toggle-text">Border = secular song repeats on ${d}</span></button>`;
+      const which = matchVersionFor(d) === "xms" ? "XMAS song" : "secular song";
+      html += `<button type="button" class="ring-toggle ${on ? "on" : "off"}" data-ring-day="${d}" role="switch" aria-checked="${on}" style="--pair-color:${DAY_BORDER[d]}" title="Show or hide borders for repeats on ${d}"><span class="switch"></span><span class="toggle-text">Border = ${which} repeats on ${d}</span></button>`;
     });
     html += `<span class="legend-divider"></span>`;
     html += `<span class="legend-item"><span class="legend-swatch legend-matched"></span>Call matched (click slot to toggle)</span>`;
@@ -578,12 +609,14 @@
 
     let cls = "song-card" + (extraClass ? " " + extraClass : "") + (isDD ? " dd" : "");
     let style = "";
-    let refHtml = "";
-    if (info && secSong && !secSong.needsReview) {
+    let secRef = "", xmsRef = "";
+    const matchedSong = info ? (info.version === "xms" ? xmsSong : secSong) : null;
+    if (info && matchedSong && !matchedSong.needsReview) {
       cls += " shared";
       style = ` style="--pair-color:${info.pairColor}"`;
       const refStrs = info.otherRefs.map(r => `${r.day} ${r.label}`).join(", ");
-      refHtml = `<span class="ref-tag"><span class="ref-arrow">&#8596;</span>${esc(refStrs)}</span>`;
+      const refHtml = `<span class="ref-tag"><span class="ref-arrow">&#8596;</span>${esc(refStrs)}</span>`;
+      if (info.version === "xms") xmsRef = refHtml; else secRef = refHtml;
     }
     if (matchedSlots.has(id)) cls += " matched";
 
@@ -591,7 +624,7 @@
       ? `<div class="slot-badge dd" title="Dilemma call"><span>${label}</span><span class="dd-mark">DD</span></div>`
       : `<div class="slot-badge">${label}</div>`;
 
-    return `<div class="${cls}" data-slotid="${id}"${style}>${badge}${songLineHtml(secSong, "sec", refHtml)}${songLineHtml(xmsSong, "xms", "")}</div>`;
+    return `<div class="${cls}" data-slotid="${id}"${style}>${badge}${songLineHtml(secSong, "sec", secRef)}${songLineHtml(xmsSong, "xms", xmsRef)}</div>`;
   }
 
   // ---------- Tabs ----------
@@ -625,6 +658,7 @@
   }
 
   function renderAll(){
+    renderLegend();
     const isWeek = activeTab === "WEEK";
     document.getElementById("week-container").style.display = isWeek ? "" : "none";
     document.getElementById("day-container").style.display = isWeek ? "none" : "";
@@ -636,7 +670,7 @@
     const container = document.getElementById("day-container");
     const dateStr = dayDates[day] ? ` &middot; ${esc(dayDates[day])}` : "";
     const noMatchNote = MATCH_DAYS[day].length === 0 ? `<span class="day-note">(does not match with other days)</span>` : "";
-    let html = `<div class="day-title dv-banner" style="background:${lighten(DAY_COLORS[day], 0.35)}">${DAY_FULL[day]}${dateStr} ${noMatchNote}<span class="day-status">${dayStatus(day)}</span></div>`;
+    let html = `<div class="day-title dv-banner" style="background:${lighten(DAY_COLORS[day], 0.35)}">${DAY_FULL[day]}${dateStr} ${noMatchNote}${fallbackNote(day)}<span class="day-status">${dayStatus(day)}</span></div>`;
     html += `<div class="dv-colheads"><span>SECULAR</span><span class="dv-xms-head">XMAS</span></div>`;
     HOURS.forEach(h => {
       const count = Math.max(weekData[day].sec[h].length, weekData[day].xms[h].length);
@@ -667,7 +701,7 @@
       banner.style.background = lighten(DAY_COLORS[day], 0.35);
       const dateStr = dayDates[day] ? ` &middot; ${esc(dayDates[day])}` : "";
       const noMatchNote = MATCH_DAYS[day].length === 0 ? `<span class="day-note">(does not match with other days)</span>` : "";
-      banner.innerHTML = `<span class="day-toggle">${isCollapsed ? "▶" : "▼"}</span> ${day}${dateStr} ${noMatchNote}<span class="day-status">${dayStatus(day)}</span>`;
+      banner.innerHTML = `<span class="day-toggle">${isCollapsed ? "▶" : "▼"}</span> ${day}${dateStr} ${noMatchNote}${fallbackNote(day)}<span class="day-status">${dayStatus(day)}</span>`;
       banner.addEventListener("click", () => toggleDayCollapse(day));
       block.appendChild(banner);
 
