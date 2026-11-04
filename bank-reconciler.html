@@ -1,0 +1,1168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bank Reconciler</title>
+<style>
+:root{
+  --ink:#1f2933; --muted:#6b7680; --line:#e3e6ea; --line2:#cfd4da; --bg:#f5f6f8; --card:#fff;
+  --accent:#1d6f6a; --accent-soft:#e3f1ef; --neg:#c00000; --warn:#b26a00; --warn-bg:#fff4dd; --bad-bg:#fde8e8;
+  --top:60px; --thead:40px; --sub:0px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Verdana,Geneva,sans-serif;font-size:13px}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:18px;padding:10px 20px;min-height:60px}
+.brand{font-weight:bold;font-size:16px;letter-spacing:.3px;white-space:nowrap}
+.brand small{display:block;font-weight:normal;font-size:10px;color:var(--muted);letter-spacing:0}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:1px solid transparent;background:none;padding:8px 14px;border-radius:7px;color:var(--muted)}
+.tab:hover{background:var(--bg)}
+.tab.on{background:var(--accent-soft);color:var(--accent);border-color:#bcdcd8;font-weight:bold}
+.tab .count{display:inline-block;min-width:18px;padding:1px 5px;margin-left:5px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;font-weight:bold}
+.spacer{flex:1}
+.status{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
+.status.dirty{color:var(--warn)}
+.btn{border:1px solid var(--line2);background:#fff;padding:7px 12px;border-radius:7px;white-space:nowrap}
+.btn:hover{background:var(--bg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#185c58}
+.btn.danger{color:var(--neg);border-color:#efc4c4}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:4px 9px;font-size:11px}
+
+main{max-width:1180px;margin:0 auto;padding:18px 20px 80px}
+.view{display:none}
+.view.on{display:block}
+
+/* banner */
+.banner{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat .k{font-size:11px;color:var(--muted);margin-bottom:5px}
+.stat .v{font-size:18px;font-weight:bold}
+.stat .s{font-size:11px;color:var(--muted);margin-top:4px}
+.stat.click{cursor:pointer}
+.stat.click:hover{border-color:var(--line2)}
+.stat.warn{background:var(--warn-bg);border-color:#f0d39a}
+.stat.bad{background:var(--bad-bg);border-color:#f2b8b8}
+.neg{color:var(--neg)}
+
+.subbar{position:sticky;top:var(--top);z-index:30;background:var(--bg);margin:-18px -20px 0;padding:14px 20px 4px;border-bottom:1px solid transparent}
+.subbar.stuck{border-bottom-color:var(--line2);box-shadow:0 6px 12px -10px rgba(0,0,0,.25)}
+.subbar .banner{margin-bottom:10px}
+.subbar .stat{padding:7px 12px;border-radius:8px}
+.subbar .stat .k{font-size:10px;margin-bottom:2px}
+.subbar .stat .v{font-size:15px}
+.subbar .stat .s{font-size:10px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.subbar .banner{gap:10px}
+.subbar .legend{margin-bottom:6px}
+.slim{display:flex;flex-wrap:wrap;align-items:center;gap:8px 22px;padding:2px 0 8px;font-size:12px;color:var(--muted)}
+.slim b{color:var(--ink);font-size:13px}
+.slim .x{cursor:pointer}
+.slim .x:hover b{text-decoration:underline}
+.slim .warnchip{font-weight:bold}
+.tablewrap.ledger-wrap{margin-top:10px}
+select.jump{appearance:auto;padding-right:8px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;font-size:11px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 4px;border-radius:12px;background:#fff;border:1px solid var(--line)}
+.chip i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.chip.bp i{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.7) 0 3px,transparent 3px 6px)}
+
+/* ledger table */
+.tablewrap{background:#fff;border:1px solid var(--line);border-radius:10px}
+table.grid{width:100%;border-collapse:separate;border-spacing:0}
+table.grid thead th{position:sticky;top:calc(var(--top) + var(--sub));z-index:20;background:#fbfbfc;border-bottom:1px solid var(--line2);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 10px;height:var(--thead)}
+table.grid thead th:first-child{border-top-left-radius:10px}
+table.grid thead th:last-child{border-top-right-radius:10px}
+table.grid th.r,table.grid td.r{text-align:right}
+table.grid td{border-bottom:1px solid var(--line);padding:1px 10px;height:31px;vertical-align:middle}
+tr.mhead td{position:sticky;top:calc(var(--top) + var(--sub) + var(--thead));z-index:10;background:#eef1f3;border-bottom:1px solid var(--line2);border-top:1px solid var(--line2);padding:0;height:38px;cursor:pointer}
+tr.mhead.current td{background:#e3f1ef}
+.mh{display:flex;align-items:center;gap:18px;padding:0 12px;height:38px}
+.mh .caret{width:14px;color:var(--muted);transition:transform .15s}
+.mh .caret.open{transform:rotate(90deg)}
+.mh .name{font-weight:bold;font-size:14px;min-width:170px;letter-spacing:.4px}
+.mh .tag{font-size:10px;font-weight:bold;background:var(--accent);color:#fff;border-radius:9px;padding:2px 7px;margin-left:6px;letter-spacing:0}
+.mh .m{font-size:11px;color:var(--muted);white-space:nowrap}
+.mh .m b{color:var(--ink);font-weight:normal}
+.mh .acts{margin-left:auto;display:flex;gap:6px}
+.mh .w{font-size:12px;font-weight:bold}
+
+td.grip{width:30px;color:#a7aeb5;text-align:center;padding:0}
+.grip span{cursor:grab;display:inline-block;padding:4px 4px;user-select:none}
+.grip span.off{cursor:default;opacity:.25}
+td.mon{width:52px;font-size:10px;color:var(--muted);letter-spacing:.5px}
+td.day{width:70px}
+td.amt{width:130px;padding:0}
+td.desc{padding:0}
+td.bal{width:125px;font-variant-numeric:tabular-nums}
+td.notes{width:60px;text-align:center}
+td.warn{width:52px;text-align:center}
+td.act{width:132px;white-space:nowrap;text-align:right}
+.btn.purple{background:#6b2fb3;border-color:#6b2fb3;color:#fff;font-weight:bold}
+.btn.purple:hover{background:#58249a}
+.ico.ins{font-size:13px;font-weight:bold;padding:3px 6px;letter-spacing:-1px}
+.ico.ins:hover{color:var(--accent);background:var(--accent-soft)}
+td.chk{width:44px;text-align:center}
+td.sw{width:20px;padding:0 0 0 8px}
+
+.cell{width:100%;border:1px solid transparent;background:transparent;border-radius:5px;padding:4px 8px;outline:none}
+.cell:hover{border-color:var(--line2);background:rgba(255,255,255,.6)}
+.cell:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 2px rgba(29,111,106,.15)}
+.cell[readonly]{cursor:default}
+.cell[readonly]:hover{border-color:transparent;background:transparent}
+td.amt .cell{text-align:right;font-variant-numeric:tabular-nums;height:30px;border-radius:0}
+td.desc .cell{height:30px;border-radius:0}
+td.amt.bp{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 4px,transparent 4px 8px)}
+.cell.neg{color:var(--neg)}
+.cell.bold{font-weight:bold}
+
+tr.row.rec td{background-color:#fafbfb}
+tr.row.rec td.desc,tr.row.rec td.amt{opacity:.92}
+tr.row.rec .cell{color:#4b5560}
+tr.row.rec .cell.neg{color:#a33}
+tr.row.flash td{animation:flash 1.6s ease}
+@keyframes flash{0%,40%{background-color:#fff1b8}100%{}}
+tr.drop-above td{box-shadow:inset 0 3px 0 var(--accent)}
+tr.drop-below td{box-shadow:inset 0 -3px 0 var(--accent)}
+tr.mhead.drop-into td{box-shadow:inset 0 -3px 0 var(--accent)}
+tr.dragging td{opacity:.35}
+
+.ico{border:none;background:none;padding:3px 6px;border-radius:5px;color:var(--muted);font-size:14px;line-height:1}
+.ico:hover{background:var(--bg);color:var(--ink)}
+.ico.has{color:var(--accent)}
+.ico.has::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:2px;vertical-align:top}
+.lock{font-size:13px}
+.lock.locked{color:var(--accent)}
+.lock.open{color:var(--warn)}
+.clr{font-size:10px;color:var(--accent);font-weight:bold;margin-right:2px}
+.wi{font-size:16px;cursor:help}
+.wi.bad{color:var(--neg)}
+.wi.low{color:var(--warn)}
+td.bal.neg{color:var(--neg);font-weight:bold}
+td.bal.low{color:var(--warn)}
+tr.note-row td{background:#fcfcfd;padding:4px 10px 6px 122px;height:auto}
+tr.note-row textarea{width:100%;max-width:620px;min-height:46px;resize:vertical;border:1px solid var(--line2);border-radius:6px;padding:7px 9px;font-size:12px;background:#fff}
+.empty-month td{color:var(--muted);font-style:italic;text-align:center}
+
+/* reconcile */
+.recon-panel{display:grid;grid-template-columns:1.1fr 1fr 1fr 1.3fr;gap:12px;margin-bottom:14px}
+.recon-panel .stat .v input{width:100%;font-size:18px;font-weight:bold;border:1px solid var(--line2);border-radius:6px;padding:6px 8px}
+.recon-panel .big{background:#fff}
+.recon-panel .big.zero{background:#e7f5ea;border-color:#a8d6b2}
+.recon-panel .big .v{font-size:24px}
+.recon-actions{display:flex;gap:8px;margin-top:10px}
+.subhead{font-size:14px;font-weight:bold;margin:26px 0 10px}
+.hint{color:var(--muted);font-size:12px;margin:-4px 0 12px;line-height:1.6}
+tr.rhead td{background:#eef1f3;font-weight:bold;font-size:12px;letter-spacing:.4px;height:30px;position:sticky;top:calc(var(--top) + var(--sub) + var(--thead));z-index:10}
+tr.row.checked td{background-color:#eef8f0}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;vertical-align:middle}
+.hist td{height:32px}
+.hist .rows-list{font-size:11px;color:var(--muted);line-height:1.7;padding:8px 0}
+
+/* categories */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h3{margin:0 0 12px;font-size:14px}
+.card table{width:100%;border-collapse:collapse}
+.card td,.card th{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:12px}
+.card th{font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.5px}
+.card input[type=text],.card input[type=number],.card select{border:1px solid var(--line2);border-radius:6px;padding:5px 7px;width:100%;background:#fff}
+.card input[type=color]{width:36px;height:28px;border:1px solid var(--line2);border-radius:6px;padding:1px;background:#fff}
+.row-inline{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.desc-scroll{max-height:620px;overflow:auto;border-top:1px solid var(--line)}
+.desc-scroll thead th{position:sticky;top:0;background:#fff;z-index:2}
+.desc-tools{display:flex;gap:8px;align-items:center;margin:4px 0 8px}
+.desc-tools input,.desc-tools select{width:auto!important;flex:1}
+.desc-count{font-size:11px;color:var(--muted);margin-bottom:6px}
+.pill{display:inline-block;padding:3px 9px;border-radius:5px}
+
+/* modal + menu + toast */
+.overlay{position:fixed;inset:0;background:rgba(20,28,34,.35);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:12px;max-width:520px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.22);padding:22px}
+.modal h2{margin:0 0 10px;font-size:16px}
+.modal p{margin:0 0 12px;line-height:1.6;color:#3a444d}
+.modal .opts{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.modal .opts .btn{text-align:left;padding:10px 14px}
+.modal .opts .btn small{display:block;font-size:11px;opacity:.8;margin-top:3px}
+.modal .row-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.modal label.cb{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12px}
+.modal select,.modal input[type=text]{width:100%;border:1px solid var(--line2);border-radius:6px;padding:7px 9px}
+.menu{position:absolute;z-index:90;background:#fff;border:1px solid var(--line2);border-radius:9px;box-shadow:0 10px 30px rgba(0,0,0,.14);padding:5px;min-width:230px}
+.menu button{display:block;width:100%;text-align:left;border:none;background:none;padding:8px 11px;border-radius:6px}
+.menu button:hover{background:var(--bg)}
+.menu button:disabled{opacity:.4;cursor:not-allowed;background:none}
+.menu hr{border:none;border-top:1px solid var(--line);margin:4px 0}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1f2933;color:#fff;padding:10px 18px;border-radius:8px;z-index:120;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+
+.welcome{max-width:560px;margin:60px auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:30px;text-align:center}
+.welcome h1{font-size:20px;margin:0 0 10px}
+.welcome p{color:var(--muted);line-height:1.6}
+.welcome .btn{margin:6px}
+
+@media (max-width:900px){
+  .banner,.recon-panel{grid-template-columns:1fr 1fr}
+  .two{grid-template-columns:1fr}
+  td.mon{display:none}
+  .mh{gap:10px}.mh .m.opt{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="brand">Bank Reconciler</div>
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-view="main">Main</button>
+    <button class="tab" data-view="recon">Reconcile <span class="count" id="reconCount">0</span></button>
+    <button class="tab" data-view="template">Template</button>
+    <button class="tab" data-view="cats">Categories</button>
+  </nav>
+  <div class="spacer"></div>
+  <div class="status" id="status"></div>
+  <button class="btn" id="btnLoad">Load JSON</button>
+  <button class="btn primary" id="btnSave">Save JSON</button>
+  <input type="file" id="fileIn" accept=".json,application/json" class="hidden">
+</header>
+
+<main>
+  <section class="view on" id="view-main"></section>
+  <section class="view" id="view-recon"></section>
+  <section class="view" id="view-template"></section>
+  <section class="view" id="view-cats"></section>
+</main>
+
+<datalist id="descList"></datalist>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants & state ---------- */
+const LS_KEY = 'bankReconciler.v1';
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MON3 = MONTHS.map(m => m.slice(0,3).toUpperCase());
+const DEFAULT_CATS = [
+  {id:'util',name:'Utilities',color:'#F4CCCC',bold:false,ballpark:true,skipPrompt:true},
+  {id:'recur',name:'Recurring Misc',color:'#F9CB9C',bold:false,ballpark:false,skipPrompt:false},
+  {id:'rent',name:'Rent',color:'#D9D2E9',bold:false,ballpark:false,skipPrompt:false},
+  {id:'inc_rlf',name:'Income (RLF)',color:'#B6D7A8',bold:true,ballpark:false,skipPrompt:false},
+  {id:'inc_suf',name:'Income (SUF)',color:'#B6D7A8',bold:true,ballpark:false,skipPrompt:false},
+  {id:'inc_misc',name:'Income (Misc)',color:'#D9EAD3',bold:false,ballpark:false,skipPrompt:false},
+  {id:'debt',name:'Debt',color:'#9FC5E8',bold:false,ballpark:false,skipPrompt:false},
+  {id:'sl',name:'Student Loans',color:'#5CD3F2',bold:false,ballpark:false,skipPrompt:false},
+  {id:'xfer',name:'Transfers',color:'#D4EAF7',bold:false,ballpark:false,skipPrompt:false},
+  {id:'misc',name:'Misc.',color:'#FFF2CC',bold:false,ballpark:false,skipPrompt:false}
+];
+
+let S = null;            // the saved state
+let dirty = false;       // changed since last JSON save
+let lastSaved = null;
+let view = 'main';
+let showAllNotes = false;
+const notesOpen = new Set();
+const unlocked = new Set();  // reconciled rows temporarily unlocked (not saved)
+let openingUnlocked = false;  // opening balance edit guard (never saved)
+let descFilter = '';         // '' all, '_unused', or a category id
+let descSearch = '';
+let reconRange = 'next';     // 'this' | 'next' | 'all'
+let histOpen = null;
+let dragId = null;
+let pendingFocus = null;
+let firstRender = true;
+
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const round2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+const fmt2 = n => Math.abs(round2(n)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money = n => round2(n) < 0 ? '(' + fmt2(n) + ')' : fmt2(n);
+const dollars = n => round2(n) < 0 ? '($' + fmt2(n) + ')' : '$' + fmt2(n);
+const ordinal = d => { if (d == null || d === '') return ''; const s = ['th','st','nd','rd'], v = d % 100; return d + (s[(v-20)%10] || s[v] || s[0]); };
+const mkey = (y,m) => y + '-' + String(m).padStart(2,'0');
+const mlabel = (y,m) => MONTHS[m-1].toUpperCase() + ' ' + y;
+const today = new Date();
+const CUR = {y: today.getFullYear(), m: today.getMonth()+1};
+const cmpYM = (a,b) => (a.y - b.y) || (a.m - b.m);
+const eqDesc = (a,b) => String(a||'').trim().toLowerCase() === String(b||'').trim().toLowerCase();
+
+function parseAmt(str){
+  let s = String(str).trim().replace(/[$,\s]/g,'').replace(/^-\((.*)\)$/,'($1)');
+  let neg = false;
+  if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1,-1); }
+  if (s === '' ) return 0;
+  const n = Number(s);
+  if (!isFinite(n)) return null;
+  return round2(neg ? -Math.abs(n) : n);
+}
+function parseDay(str){
+  const m = String(str).match(/\d{1,2}/);
+  if (!m) return null;
+  const d = parseInt(m[0],10);
+  return d >= 1 && d <= 31 ? d : null;
+}
+function tint(hex, t){
+  const h = hex.replace('#','');
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  const mix = c => Math.round(c + (255 - c) * t);
+  return '#' + [mix(r),mix(g),mix(b)].map(x => x.toString(16).padStart(2,'0')).join('');
+}
+function cat(id){ return S.categories.find(c => c.id === id) || S.categories.find(c => c.id === 'misc') || S.categories[0]; }
+function descEntry(name){ return S.descriptions.find(d => eqDesc(d.name, name)); }
+function findItem(id){ return S.rows.find(r => r.id === id) || S.template.find(t => t.id === id); }
+function isTpl(id){ return String(id).startsWith('t'); }
+function newRowId(){ return 'r' + (S.nextId++); }
+function newTplId(){ return 't' + (S.nextTid++); }
+function isLocked(r){ return !!r.rec && !unlocked.has(r.id); }
+
+/* ---------- persistence ---------- */
+function persist(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify({state:S, dirty, lastSaved})); }
+  catch(e){ /* storage unavailable; JSON save still works */ }
+}
+function loadLocal(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const o = JSON.parse(raw);
+    if (!o || !o.state || !Array.isArray(o.state.rows)) return false;
+    S = upgrade(o.state); dirty = !!o.dirty; lastSaved = o.lastSaved || null;
+    return true;
+  } catch(e){ return false; }
+}
+function upgrade(st){
+  st.settings = Object.assign({openingBalance:0, openingLabel:'Opening balance', cushion:500}, st.settings || {});
+  st.categories = st.categories && st.categories.length ? st.categories : JSON.parse(JSON.stringify(DEFAULT_CATS));
+  st.descriptions = st.descriptions || [];
+  st.rows = st.rows || [];
+  st.template = st.template || [];
+  st.recon = st.recon || {target:null, checked:[]};
+  st.recon.checked = st.recon.checked || [];
+  st.reconHistory = st.reconHistory || [];
+  st.collapsed = st.collapsed || {};
+  const maxNum = (arr, p) => arr.reduce((m,x) => Math.max(m, parseInt(String(x.id).slice(1),10) || 0), 0);
+  st.nextId = Math.max(st.nextId || 1, maxNum(st.rows) + 1);
+  st.nextTid = Math.max(st.nextTid || 1, maxNum(st.template) + 1);
+  st.app = 'bank-reconciler'; st.version = 1;
+  return st;
+}
+function commit(opts={}){
+  dirty = true;
+  normalize();
+  persist();
+  scheduleRender(opts);
+}
+function scheduleRender(opts={}){
+  // let focus settle (e.g. after Tab) before rebuilding, then restore it
+  setTimeout(() => {
+    const ae = document.activeElement;
+    const k = opts.focus || (ae && ae.dataset ? ae.dataset.k : null);
+    const sel = ae && ae.selectionStart != null && !opts.focus ? [ae.selectionStart, ae.selectionEnd] : null;
+    render();
+    if (k){
+      const el = document.querySelector('[data-k="' + CSS.escape(k) + '"]');
+      if (el && opts.reveal){
+        const tr = el.closest('tr');
+        const r = tr.getBoundingClientRect();
+        const topLimit = $('#topbar').offsetHeight + ($('.view.on .subbar') ? $('.view.on .subbar').offsetHeight : 0) + 90;
+        if (r.top < topLimit || r.bottom > window.innerHeight - 20) window.scrollTo({top: Math.max(0, r.top + window.scrollY - window.innerHeight / 2), behavior:'smooth'});
+        tr.classList.add('flash');
+      }
+      if (el){ el.focus({preventScroll:true}); if (sel && el.setSelectionRange) try{ el.setSelectionRange(sel[0], sel[1]); }catch(e){} else if (opts.focus && el.select) el.select(); }
+    }
+  }, 0);
+}
+function normalize(){
+  // keep rows grouped by month, preserving manual order inside each month
+  S.rows = S.rows.map((r,i) => [r,i]).sort((a,b) => (a[0].y - b[0].y) || (a[0].m - b[0].m) || (a[1] - b[1])).map(x => x[0]);
+  const ids = new Set(S.rows.filter(r => !r.rec).map(r => r.id));
+  S.recon.checked = S.recon.checked.filter(id => ids.has(id));
+}
+
+/* ---------- calculations ---------- */
+function compute(){
+  const bal = {}, warn = {};
+  let b = S.settings.openingBalance;
+  let lowest = null, negCount = 0, lowCount = 0, firstNeg = null;
+  const months = [];
+  let cur = null;
+  for (const r of S.rows){
+    const k = mkey(r.y, r.m);
+    if (!cur || cur.key !== k){ cur = {key:k, y:r.y, m:r.m, rows:[], inn:0, out:0, rec:0, warnBad:0, warnLow:0, end:0, low:null}; months.push(cur); }
+    b = round2(b + (Number(r.amt) || 0));
+    bal[r.id] = b;
+    cur.rows.push(r);
+    if (r.amt > 0) cur.inn += r.amt; else cur.out += r.amt;
+    if (r.rec) cur.rec++;
+    cur.end = b;
+    if (!r.rec){
+      if (b <= 0){ warn[r.id] = 'bad'; negCount++; cur.warnBad++; if (!firstNeg) firstNeg = r; }
+      else if (b < S.settings.cushion){ warn[r.id] = 'low'; lowCount++; cur.warnLow++; }
+      if (!lowest || b < lowest.bal) lowest = {bal:b, row:r};
+      if (cur.low == null || b < cur.low) cur.low = b;
+    }
+  }
+  const cleared = round2(S.settings.openingBalance + S.rows.filter(r => r.rec).reduce((s,r) => s + (Number(r.amt)||0), 0));
+  return {bal, warn, months, lowest, negCount, lowCount, firstNeg, cleared};
+}
+
+/* ---------- rendering ---------- */
+function render(){
+  if (!S){ renderWelcome(); return; }
+  $('#tabs').classList.remove('hidden'); $('#btnSave').disabled = false;
+  const C = compute();
+  $('#reconCount').textContent = S.rows.filter(r => !r.rec && inReconRange(r)).length;
+  renderDatalist();
+  renderStatus();
+  $$('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + view));
+  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.view === view));
+  if (view === 'main') renderMain(C);
+  if (view === 'recon') renderRecon(C);
+  if (view === 'template') renderTemplate();
+  if (view === 'cats'){
+    const ds = $('.desc-scroll'); const keep = ds ? ds.scrollTop : 0; const wy = window.scrollY;
+    renderCats();
+    const ds2 = $('.desc-scroll'); if (ds2) ds2.scrollTop = keep;
+    window.scrollTo(0, wy);
+  }
+  measure();
+  if (firstRender && view === 'main'){ firstRender = false; setTimeout(() => scrollToMonth(mkey(CUR.y, CUR.m), false), 30); }
+}
+function measure(){
+  const tb = $('#topbar');
+  document.documentElement.style.setProperty('--top', tb.offsetHeight + 'px');
+  const sb = $('.view.on .subbar');
+  document.documentElement.style.setProperty('--sub', (sb ? sb.offsetHeight : 0) + 'px');
+  const th = $('.view.on table.grid thead');
+  if (th) document.documentElement.style.setProperty('--thead', th.offsetHeight + 'px');
+}
+window.addEventListener('resize', measure);
+window.addEventListener('scroll', () => { const sb = $('.view.on .subbar'); if (sb) sb.classList.toggle('stuck', window.scrollY > 4); }, {passive:true});
+
+function renderStatus(){
+  const st = $('#status');
+  if (dirty){ st.className = 'status dirty'; st.innerHTML = 'Unsaved changes<br>kept in this browser until you Save JSON'; }
+  else { st.className = 'status'; st.innerHTML = lastSaved ? 'Saved to JSON<br>' + new Date(lastSaved).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : 'Loaded'; }
+}
+function renderDatalist(){
+  $('#descList').innerHTML = S.descriptions.slice().sort((a,b) => a.name.localeCompare(b.name)).map(d => '<option value="' + esc(d.name) + '">').join('');
+}
+function renderWelcome(){
+  $('#tabs').classList.add('hidden'); $('#btnSave').disabled = true;
+  $('#status').textContent = '';
+  $$('.view').forEach(v => v.classList.remove('on'));
+  const v = $('#view-main'); v.classList.add('on');
+  v.innerHTML = '<div class="welcome"><h1>Load your checkbook</h1><p>Open the JSON file you saved last time (or the starter file built from your spreadsheet). Your data stays on your computer, in that file.</p><button class="btn primary" data-act="load">Load JSON</button><button class="btn" data-act="blank">Start blank</button></div>';
+}
+
+function amtCellStyle(item){
+  const c = cat(item.cat);
+  return 'background-color:' + (item.ballpark ? tint(c.color, .5) : c.color);
+}
+function rowCells(r, opts){
+  // shared cells for ledger, reconcile and template rows
+  const c = cat(r.cat);
+  const lock = opts.locked;
+  const ro = lock ? ' readonly' : '';
+  const amtCls = 'cell' + (r.amt < 0 ? ' neg' : '') + (c.bold ? ' bold' : '');
+  return {
+    day: '<td class="day"><input class="cell" data-k="' + r.id + ':day" value="' + esc(ordinal(r.day)) + '"' + ro + ' placeholder="day"></td>',
+    amt: '<td class="amt' + (r.ballpark ? ' bp' : '') + '" style="' + amtCellStyle(r) + '" title="' + esc(c.name) + (r.ballpark ? ' · ballpark amount' : ' · usual amount') + '"><input class="' + amtCls + '" data-k="' + r.id + ':amt" value="' + esc(money(r.amt)) + '"' + ro + ' inputmode="decimal"></td>',
+    desc: '<td class="desc" style="background-color:' + c.color + '" title="' + esc(c.name) + '"><input class="cell' + (c.bold ? ' bold' : '') + '" list="descList" data-k="' + r.id + ':desc" value="' + esc(r.desc) + '"' + ro + ' placeholder="Description"></td>'
+  };
+}
+function noteBtn(r){
+  const has = r.notes && r.notes.trim();
+  return '<button class="ico' + (has ? ' has' : '') + '" data-act="note" data-id="' + r.id + '" title="' + (has ? esc(r.notes) : 'Add a note') + '">✎</button>';
+}
+function noteRow(r, colspan, locked){
+  if (!(showAllNotes || notesOpen.has(r.id))) return '';
+  return '<tr class="note-row" data-note="' + r.id + '"><td colspan="' + colspan + '"><textarea data-k="' + r.id + ':notes" placeholder="Note for this row"' + (locked ? ' readonly' : '') + '>' + esc(r.notes) + '</textarea></td></tr>';
+}
+
+function jumpSelect(C, cls){
+  const ahead = C.months.filter(M => cmpYM(M, CUR) > 0);
+  if (!ahead.length) return '';
+  return '<select class="' + cls + ' jump" id="jumpMonth" title="Jump to a future month"><option value="">Jump to month…</option>' + ahead.map(M => '<option value="' + M.key + '">' + MONTHS[M.m-1] + ' ' + M.y + (M.warnBad ? ' ⚠' : M.warnLow ? ' ⚠' : '') + '</option>').join('') + '</select>';
+}
+function goMonth(key){ S.collapsed[key] = false; persist(); render(); setTimeout(() => scrollToMonth(key), 20); }
+function renderMain(C){
+  const v = $('#view-main');
+  const L = C.lowest;
+  const curMonth = C.months.find(m => m.y === CUR.y && m.m === CUR.m);
+  const lowCls = C.negCount ? 'bad' : (C.lowCount ? 'warn' : '');
+  const hid = !!S.settings.summaryHidden;
+  let h = '<div class="subbar' + (window.scrollY > 4 ? ' stuck' : '') + '" id="subbar">';
+  if (hid){
+    const wTxt = C.negCount ? '<span class="neg warnchip">⚠ ' + C.negCount + ' at $0 or below</span>' : (C.lowCount ? '<span class="warnchip" style="color:var(--warn)">⚠ ' + C.lowCount + ' under ' + dollars(S.settings.cushion) + '</span>' : '<span>No warnings</span>');
+    h += '<div class="slim"><span>Cleared <b' + (C.cleared < 0 ? ' class="neg"' : '') + '>' + dollars(C.cleared) + '</b></span>';
+    h += '<span class="x" data-act="jump" data-id="' + (curMonth ? curMonth.rows[curMonth.rows.length-1].id : '') + '" title="Jump to the last row of ' + MONTHS[CUR.m-1] + '">End of ' + MONTHS[CUR.m-1] + ' <b>' + (curMonth ? dollars(curMonth.end) : '—') + '</b></span>';
+    h += '<span class="x" data-act="jump" data-id="' + (L ? L.row.id : '') + '" title="Jump to that row">Lowest <b' + (L && L.bal < 0 ? ' class="neg"' : '') + '>' + (L ? dollars(L.bal) : '—') + '</b>' + (L ? ' · ' + MON3[L.row.m-1] + ' ' + ordinal(L.row.day) + ' ' + L.row.y : '') + '</span>';
+    h += (C.firstNeg ? '<span class="x" data-act="jump" data-id="' + C.firstNeg.id + '">' + wTxt + '</span>' : wTxt);
+    h += '<span class="spacer"></span><button class="btn sm" data-act="addMonth">+ Add next month</button><button class="btn sm" data-act="goCurrent">Go to ' + MONTHS[CUR.m-1] + '</button>' + jumpSelect(C, 'btn sm') + '<button class="btn sm purple" data-act="toggleSummary">Show summary ▾</button></div></div>';
+  } else {
+  h += '<div class="banner">';
+  h += '<div class="stat"><div class="k">Cleared balance (reconciled)</div><div class="v' + (C.cleared < 0 ? ' neg' : '') + '">' + dollars(C.cleared) + '</div><div class="s">' + S.rows.filter(r => r.rec).length + ' reconciled rows</div></div>';
+  h += '<div class="stat click" data-act="jump" data-id="' + (curMonth ? curMonth.rows[curMonth.rows.length-1].id : '') + '" title="Jump to the last row of ' + MONTHS[CUR.m-1] + '"><div class="k">Projected end of ' + MONTHS[CUR.m-1] + '</div><div class="v' + (curMonth && curMonth.end < 0 ? ' neg' : '') + '">' + (curMonth ? dollars(curMonth.end) : '—') + '</div><div class="s">' + (curMonth ? (curMonth.rows.length - curMonth.rec) + ' rows still to clear' : 'no rows this month') + '</div></div>';
+  h += '<div class="stat click ' + lowCls + '" data-act="jump" data-id="' + (L ? L.row.id : '') + '"><div class="k">Lowest projected balance</div><div class="v' + (L && L.bal < 0 ? ' neg' : '') + '">' + (L ? dollars(L.bal) : '—') + '</div><div class="s">' + (L ? MONTHS[L.row.m-1] + ' ' + ordinal(L.row.day) + ' ' + L.row.y + ' · ' + esc(L.row.desc) : 'nothing projected') + '</div></div>';
+  h += '<div class="stat ' + lowCls + (C.firstNeg ? ' click" data-act="jump" data-id="' + C.firstNeg.id : '') + '"><div class="k">Warnings</div><div class="v">' + (C.negCount ? '<span class="neg">⚠ ' + C.negCount + ' at $0 or below</span>' : (C.lowCount ? '⚠ ' + C.lowCount + ' under ' + dollars(S.settings.cushion) : 'All clear')) + '</div><div class="s">' + (C.negCount ? 'First: ' + MONTHS[C.firstNeg.m-1] + ' ' + ordinal(C.firstNeg.day) + ' ' + C.firstNeg.y : (C.negCount || C.lowCount ? '' : 'Nothing projected under ' + dollars(S.settings.cushion))) + (C.negCount && C.lowCount ? ' · ' + C.lowCount + ' more under ' + dollars(S.settings.cushion) : '') + '</div></div>';
+  h += '</div>';
+
+  h += '<div class="toolbar"><button class="btn primary" data-act="addMonth">+ Add next month</button><button class="btn" data-act="goCurrent">Go to ' + MONTHS[CUR.m-1] + '</button>' + jumpSelect(C, 'btn') + '';
+  h += '<button class="btn" data-act="expandAll">Expand all</button><button class="btn" data-act="collapseAll">Collapse all</button><button class="btn" data-act="collapseRec">Collapse reconciled months</button>';
+  h += '<button class="btn" data-act="toggleNotes">' + (showAllNotes ? 'Hide all notes' : 'Show all notes') + '</button>';
+  h += '<span class="spacer"></span><button class="btn purple" data-act="toggleSummary">Hide summary ▴</button></div></div>';
+
+  }
+
+  h += '<div class="tablewrap ledger-wrap"><table class="grid" id="ledger"><thead><tr><th></th><th>Month</th><th>Day</th><th class="r">Amount</th><th>Description</th><th class="r">Balance</th><th>Notes</th><th>Warn</th><th></th></tr></thead>';
+  if (!C.months.length) h += '<tbody><tr class="empty-month"><td colspan="9">No rows yet. Use "+ Add next month" to start from your template.</td></tr></tbody>';
+  for (const M of C.months){
+    const open = !S.collapsed[M.key];
+    const isCur = M.y === CUR.y && M.m === CUR.m;
+    const w = M.warnBad ? '<span class="w neg" title="Balance at $0 or below this month">⚠ ' + M.warnBad + '</span>' : (M.warnLow ? '<span class="w" style="color:var(--warn)" title="Under ' + dollars(S.settings.cushion) + ' this month">⚠ ' + M.warnLow + '</span>' : '');
+    h += '<tbody data-month="' + M.key + '">';
+    h += '<tr class="mhead' + (isCur ? ' current' : '') + '" data-month="' + M.key + '" data-act="toggleMonth"><td colspan="9"><div class="mh"><span class="caret' + (open ? ' open' : '') + '">▶</span><span class="name">' + mlabel(M.y, M.m) + (isCur ? '<span class="tag">NOW</span>' : '') + '</span>';
+    h += '<span class="m">In <b>' + money(M.inn) + '</b></span><span class="m">Out <b class="neg">' + money(M.out) + '</b></span><span class="m">Ends <b' + (M.end < 0 ? ' class="neg"' : '') + '>' + dollars(M.end) + '</b></span><span class="m opt">Cleared <b>' + M.rec + '/' + M.rows.length + '</b></span>' + w;
+    h += '<span class="acts"><button class="btn sm" data-act="sortMonth" data-month="' + M.key + '" title="Reorders rows by day. Running balance recalculates; reconciling is not affected.">Sort by day</button><button class="btn sm" data-act="addRowMonth" data-month="' + M.key + '">+ Row</button></span></div></td></tr>';
+    if (open){
+      for (const r of M.rows){
+        const lock = isLocked(r);
+        const cells = rowCells(r, {locked:lock});
+        const wv = C.warn[r.id];
+        const b = C.bal[r.id];
+        h += '<tr class="row' + (r.rec ? ' rec' : '') + '" data-id="' + r.id + '">';
+        h += '<td class="grip"><span draggable="' + (!lock) + '" class="' + (lock ? 'off' : '') + '" data-drag="' + r.id + '" title="' + (lock ? 'Reconciled rows are locked' : 'Drag to move') + '">⠿</span></td>';
+        h += '<td class="mon">' + MON3[r.m-1] + '</td>' + cells.day + cells.amt + cells.desc;
+        h += '<td class="bal r' + (b <= 0 ? ' neg' : (wv === 'low' ? ' low' : '')) + '">' + money(b) + '</td>';
+        h += '<td class="notes">' + noteBtn(r) + '</td>';
+        h += '<td class="warn">' + (wv === 'bad' ? '<span class="wi bad" title="Projected balance at $0 or below">⚠</span>' : wv === 'low' ? '<span class="wi low" title="Projected balance under ' + dollars(S.settings.cushion) + '">⚠</span>' : '') + '</td>';
+        h += '<td class="act">' + (r.rec ? '<button class="ico lock ' + (lock ? 'locked' : 'open') + '" data-act="lock" data-id="' + r.id + '" title="' + (lock ? 'Reconciled and locked. Click to unlock.' : 'Unlocked for editing. Click to lock again.') + '">' + (lock ? '🔒' : '🔓') + '</button>' : '') + '<button class="ico ins" data-act="insAbove" data-id="' + r.id + '" title="Insert row above">+↑</button><button class="ico ins" data-act="insBelow" data-id="' + r.id + '" title="Insert row below">+↓</button>' + '<button class="ico" data-act="menu" data-id="' + r.id + '" title="Row options">⋯</button></td>';
+        h += '</tr>' + noteRow(r, 9, lock);
+      }
+    }
+    h += '</tbody>';
+  }
+  h += '</table></div>';
+  v.innerHTML = h;
+}
+
+function inReconRange(r){
+  if (reconRange === 'all') return true;
+  const lim = reconRange === 'this' ? {y:CUR.y, m:CUR.m} : (CUR.m === 12 ? {y:CUR.y+1, m:1} : {y:CUR.y, m:CUR.m+1});
+  return cmpYM(r, lim) <= 0;
+}
+function reconNumbers(C){
+  const checked = new Set(S.recon.checked);
+  const rows = S.rows.filter(r => checked.has(r.id) && !r.rec);
+  const sum = round2(rows.reduce((s,r) => s + (Number(r.amt)||0), 0));
+  const t = S.recon.target;
+  const left = t == null ? null : round2(t - C.cleared - sum);
+  return {rows, sum, left, t};
+}
+function renderRecon(C){
+  const v = $('#view-recon');
+  const N = reconNumbers(C);
+  const zero = N.left != null && Math.abs(N.left) < 0.005;
+  const canFinal = zero && N.rows.length > 0;
+  let h = '<div class="recon-panel">';
+  h += '<div class="stat"><div class="k">Target: current bank balance</div><div class="v"><input id="reconTarget" inputmode="decimal" placeholder="0.00" value="' + (N.t == null ? '' : esc(money(N.t))) + '"></div></div>';
+  h += '<div class="stat"><div class="k">Cleared balance</div><div class="v">' + dollars(C.cleared) + '</div><div class="s">from rows already reconciled</div></div>';
+  h += '<div class="stat"><div class="k">Checked rows</div><div class="v' + (N.sum < 0 ? ' neg' : '') + '">' + money(N.sum) + '</div><div class="s">' + N.rows.length + ' row' + (N.rows.length === 1 ? '' : 's') + ' checked</div></div>';
+  h += '<div class="stat big' + (zero ? ' zero' : '') + '"><div class="k">Reconcile balance (left to match)</div><div class="v' + (N.left != null && N.left < 0 ? ' neg' : '') + '">' + (N.left == null ? 'Enter target' : (zero ? '0.00 ✓' : money(N.left))) + '</div>';
+  h += '<div class="recon-actions"><button class="btn primary" data-act="finalize"' + (canFinal ? '' : ' disabled') + ' title="Turns on when the balance is 0.00 and at least one row is checked">Finalize reconcile</button><button class="btn" data-act="clearChecks"' + (N.rows.length ? '' : ' disabled') + '>Clear checks</button></div></div>';
+  h += '</div>';
+  h += '<p class="hint">Check each row that appears on your statement. Edits here change the Main tab too. Target minus cleared balance minus checked rows should land on 0.00.</p>';
+  h += '<div class="toolbar"><label>Show rows <select id="reconRange" class="btn"><option value="this"' + (reconRange === 'this' ? ' selected' : '') + '>through ' + MONTHS[CUR.m-1] + '</option><option value="next"' + (reconRange === 'next' ? ' selected' : '') + '>through next month</option><option value="all"' + (reconRange === 'all' ? ' selected' : '') + '>all unreconciled</option></select></label></div>';
+
+  const list = S.rows.filter(r => !r.rec && inReconRange(r));
+  const checked = new Set(S.recon.checked);
+  h += '<div class="tablewrap"><table class="grid"><thead><tr><th class="chk">✓</th><th>Day</th><th class="r">Amount</th><th>Description</th><th class="r">Balance</th><th>Notes</th><th></th></tr></thead><tbody>';
+  if (!list.length) h += '<tr class="empty-month"><td colspan="7">Nothing left to reconcile in this range.</td></tr>';
+  let lastM = null;
+  for (const r of list){
+    const k = mkey(r.y, r.m);
+    if (k !== lastM){ lastM = k; const ms = list.filter(x => x.y === r.y && x.m === r.m); const allC = ms.every(x => checked.has(x.id)); h += '<tr class="rhead"><td class="chk"><input type="checkbox" data-act="checkMonth" data-month="' + k + '"' + (allC ? ' checked' : '') + ' title="Check all in this month"></td><td colspan="6">' + mlabel(r.y, r.m) + ' <span style="font-weight:normal;color:var(--muted)">· ' + ms.length + ' unreconciled</span></td></tr>'; }
+    const cells = rowCells(r, {locked:false});
+    const on = checked.has(r.id);
+    h += '<tr class="row' + (on ? ' checked' : '') + '" data-id="' + r.id + '"><td class="chk"><input type="checkbox" data-act="check" data-id="' + r.id + '"' + (on ? ' checked' : '') + '></td>' + cells.day + cells.amt + cells.desc;
+    h += '<td class="bal r' + (C.bal[r.id] <= 0 ? ' neg' : '') + '">' + money(C.bal[r.id]) + '</td><td class="notes">' + noteBtn(r) + '</td><td class="act">' + '<button class="ico ins" data-act="insAbove" data-id="' + r.id + '" title="Insert row above">+↑</button><button class="ico ins" data-act="insBelow" data-id="' + r.id + '" title="Insert row below">+↓</button>' + '<button class="ico" data-act="menu" data-id="' + r.id + '">⋯</button></td></tr>';
+    h += noteRow(r, 7, false);
+  }
+  h += '</tbody></table></div>';
+
+  h += '<div class="subhead">Reconcile history</div>';
+  if (!S.reconHistory.length) h += '<p class="hint">Each time you finalize, a record lands here: the date, the bank balance you matched, and the rows cleared. The most recent one can be undone while you test.</p>';
+  else {
+    h += '<div class="tablewrap"><table class="grid hist"><thead><tr><th>Finalized</th><th class="r">Bank balance</th><th class="r">Rows</th><th class="r">Total cleared</th><th></th></tr></thead><tbody>';
+    S.reconHistory.slice().reverse().forEach((hx, i) => {
+      h += '<tr><td>' + new Date(hx.date).toLocaleString([], {month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) + '</td><td class="r">' + dollars(hx.target) + '</td><td class="r">' + hx.rowIds.length + '</td><td class="r' + (hx.total < 0 ? ' neg' : '') + '">' + money(hx.total) + '</td><td class="act" style="width:200px"><button class="btn sm" data-act="histView" data-hid="' + hx.id + '">' + (histOpen === hx.id ? 'Hide rows' : 'View rows') + '</button> ' + (i === 0 ? '<button class="btn sm danger" data-act="histUndo" data-hid="' + hx.id + '">Undo</button>' : '') + '</td></tr>';
+      if (histOpen === hx.id){
+        const rs = hx.rowIds.map(id => S.rows.find(r => r.id === id)).filter(Boolean);
+        h += '<tr><td colspan="5"><div class="rows-list">' + rs.map(r => MON3[r.m-1] + ' ' + r.y + ' · ' + ordinal(r.day) + ' · ' + esc(r.desc) + ' · <span class="' + (r.amt < 0 ? 'neg' : '') + '">' + money(r.amt) + '</span>').join('<br>') + '</div></td></tr>';
+      }
+    });
+    h += '</tbody></table></div>';
+  }
+  v.innerHTML = h;
+}
+
+function renderTemplate(){
+  const v = $('#view-template');
+  const months = [];
+  const seen = new Set();
+  S.rows.forEach(r => { const k = mkey(r.y,r.m); if (!seen.has(k)){ seen.add(k); months.push({k, y:r.y, m:r.m}); } });
+  const total = round2(S.template.reduce((s,t) => s + (Number(t.amt)||0), 0));
+  let h = '<div class="card" style="margin-bottom:14px"><h3>Color key</h3><div class="legend" style="margin:0">' + S.categories.map(c => '<span class="chip"><i style="background:' + c.color + '"></i>' + (c.bold ? '<b>' + esc(c.name) + '</b>' : esc(c.name)) + '</span>').join('') + '<span class="chip bp"><i style="background:' + tint('#9FC5E8', .5) + '"></i>Striped, paler amount = ballpark</span></div><p class="hint" style="margin:10px 0 0">Colors and bold are set on the Categories tab.</p></div>';
+  h += '<p class="hint">"+ Add next month" on the Main tab copies these rows into a new month. Editing here never changes the ledger.</p>';
+  h += '<div class="toolbar"><button class="btn primary" data-act="tplAdd">+ Row</button><button class="btn" data-act="tplSort">Sort by day</button>';
+  h += '<span style="margin-left:12px">Replace template with a month: <select id="tplFrom" class="btn"><option value="">choose…</option>' + months.slice().reverse().map(m => '<option value="' + m.k + '">' + mlabel(m.y, m.m) + '</option>').join('') + '</select></span>';
+  h += '<span class="spacer"></span><span style="color:var(--muted)">' + S.template.length + ' rows · month net <b class="' + (total < 0 ? 'neg' : '') + '">' + money(total) + '</b></span></div>';
+  h += '<div class="tablewrap"><table class="grid" id="tplTable"><thead><tr><th></th><th>Day</th><th class="r">Amount</th><th>Description</th><th>Notes</th><th></th></tr></thead><tbody>';
+  if (!S.template.length) h += '<tr class="empty-month"><td colspan="6">Template is empty.</td></tr>';
+  for (const t of S.template){
+    const cells = rowCells(t, {locked:false});
+    h += '<tr class="row" data-id="' + t.id + '"><td class="grip"><span draggable="true" data-drag="' + t.id + '" title="Drag to move">⠿</span></td>' + cells.day + cells.amt + cells.desc + '<td class="notes">' + noteBtn(t) + '</td><td class="act">' + '<button class="ico ins" data-act="insAbove" data-id="' + t.id + '" title="Insert row above">+↑</button><button class="ico ins" data-act="insBelow" data-id="' + t.id + '" title="Insert row below">+↓</button>' + '<button class="ico" data-act="menu" data-id="' + t.id + '">⋯</button></td></tr>';
+    h += noteRow(t, 6, false);
+  }
+  h += '</tbody></table></div>';
+  v.innerHTML = h;
+}
+
+function applyDescSearch(total){
+  const q = descSearch.trim().toLowerCase();
+  let n = 0;
+  $$('.desc-scroll tr[data-dname]').forEach(tr => { const on = !q || tr.dataset.dname.includes(q); tr.classList.toggle('hidden', !on); if (on) n++; });
+  const all = S.descriptions.length;
+  const cnt = $('#descCount'); if (cnt) cnt.textContent = (n === all ? 'Showing all ' + all : 'Showing ' + n + ' of ' + all);
+}
+document.addEventListener('input', e => { if (e.target.id === 'descSearch'){ descSearch = e.target.value; applyDescSearch(); } });
+function renderCats(){
+  const v = $('#view-cats');
+  const use = {};
+  S.rows.forEach(r => use[r.cat] = (use[r.cat]||0) + 1);
+  const dUse = {};
+  S.rows.forEach(r => { const k = r.desc.toLowerCase(); dUse[k] = (dUse[k]||0) + 1; });
+  const catOpts = sel => S.categories.map(c => '<option value="' + c.id + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('');
+  let h = '<div class="two"><div>';
+  h += '<div class="card"><h3>Categories</h3><table><thead><tr><th>Color</th><th>Name</th><th title="Bold amount and description">Bold</th><th title="New rows in this category start as ballpark amounts">Ballpark</th><th title="Skip the &quot;change future amounts&quot; popup">Skip popup</th><th>Rows</th><th></th></tr></thead><tbody>';
+  for (const c of S.categories){
+    h += '<tr><td><input type="color" data-cat="' + c.id + '" data-f="color" value="' + c.color + '"></td><td><input type="text" data-cat="' + c.id + '" data-f="name" value="' + esc(c.name) + '"></td>';
+    h += '<td><input type="checkbox" data-cat="' + c.id + '" data-f="bold"' + (c.bold ? ' checked' : '') + '></td><td><input type="checkbox" data-cat="' + c.id + '" data-f="ballpark"' + (c.ballpark ? ' checked' : '') + '></td><td><input type="checkbox" data-cat="' + c.id + '" data-f="skipPrompt"' + (c.skipPrompt ? ' checked' : '') + '></td>';
+    h += '<td>' + (use[c.id]||0) + '</td><td>' + (use[c.id] || c.id === 'misc' ? '' : '<button class="ico" data-act="catDel" data-cat="' + c.id + '" title="Delete">✕</button>') + '</td></tr>';
+  }
+  h += '</tbody></table><div class="row-inline" style="margin-top:12px"><input type="text" id="newCatName" placeholder="New category name"><button class="btn" data-act="catAdd">Add</button></div></div>';
+  h += '<div class="card" style="margin-top:18px"><h3>Settings</h3><table>';
+  h += '<tr><td>Low balance warning under</td><td style="width:140px"><input type="number" step="50" id="setCushion" value="' + S.settings.cushion + '"></td></tr>';
+  h += '<tr><td>Opening balance<br><span style="color:var(--muted);font-size:11px">' + esc(S.settings.openingLabel) + '</span></td><td style="white-space:nowrap">' + (openingUnlocked
+      ? '<input type="text" id="setOpening" value="' + money(S.settings.openingBalance) + '" style="width:110px"> <button class="btn sm" data-act="openingLock">Lock</button>'
+      : '<b style="display:inline-block;min-width:110px">' + dollars(S.settings.openingBalance) + '</b> <button class="ico lock locked" data-act="openingUnlock" title="Locked. Click to unlock.">🔒</button>') + '</td></tr>';
+  h += '</table></div></div>';
+
+  h += '<div class="card"><h3>Description list (' + S.descriptions.length + ')</h3>';
+  h += '<p class="hint" style="margin:0 0 10px">These fill the Description dropdown and decide each row\'s color. Changing a category or name here updates every matching row and template row.</p>';
+  h += '<div class="row-inline"><input type="text" id="newDescName" placeholder="New description"><select id="newDescCat" style="width:170px">' + catOpts('misc') + '</select><button class="btn" data-act="descAdd">Add</button></div>';
+  const shown = S.descriptions.slice().sort((a,b) => a.name.localeCompare(b.name)).filter(d => !descFilter || (descFilter === '_unused' ? !dUse[d.name.toLowerCase()] : d.cat === descFilter));
+  h += '<div class="desc-tools"><select id="descFilter"><option value="">All categories</option><option value="_unused"' + (descFilter === '_unused' ? ' selected' : '') + '>Unused (0 rows)</option>' + S.categories.map(c => '<option value="' + c.id + '"' + (descFilter === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select><input type="text" id="descSearch" placeholder="Search…" value="' + esc(descSearch) + '"><button class="btn sm" data-act="descTop">Top</button><button class="btn sm" data-act="descBottom">Bottom</button></div>';
+  h += '<div class="desc-count" id="descCount"></div>';
+  h += '<div class="desc-scroll"><table><thead><tr><th>Description</th><th style="width:160px">Category</th><th>Rows</th><th></th></tr></thead><tbody>';
+  for (const d of shown){
+    const c = cat(d.cat);
+    h += '<tr data-dname="' + esc(d.name.toLowerCase()) + '"><td><input type="text" data-desc="' + esc(d.name) + '" data-f="name" value="' + esc(d.name) + '" style="background:' + c.color + ';font-weight:' + (c.bold ? 'bold' : 'normal') + '"></td><td><select data-desc="' + esc(d.name) + '" data-f="cat">' + catOpts(d.cat) + '</select></td><td>' + (dUse[d.name.toLowerCase()]||0) + '</td><td><button class="ico" data-act="descDel" data-desc="' + esc(d.name) + '" title="Remove from list (rows keep their text)">✕</button></td></tr>';
+  }
+  if (!shown.length) h += '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:14px">Nothing in this filter.</td></tr>';
+  h += '</tbody></table></div></div></div>';
+  v.innerHTML = h;
+  applyDescSearch(shown.length);
+}
+
+/* ---------- modal, menu, toast ---------- */
+function modal({title, body, buttons, onOpen, wide}){
+  closeMenu();
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.innerHTML = '<div class="modal"' + (wide ? ' style="max-width:640px"' : '') + '><h2>' + esc(title) + '</h2><div class="mbody">' + body + '</div></div>';
+  const box = $('.modal', ov);
+  const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape'){ const cancel = buttons.find(b => b.cancel); close(); cancel && cancel.onClick && cancel.onClick(); } };
+  const opts = buttons.some(b => b.sub);
+  const wrap = document.createElement('div');
+  wrap.className = opts ? 'opts' : 'row-btns';
+  buttons.forEach(b => {
+    const el = document.createElement('button');
+    el.className = 'btn ' + (b.cls || '');
+    el.innerHTML = esc(b.label) + (b.sub ? '<small>' + esc(b.sub) + '</small>' : '');
+    el.onclick = () => { if (b.keepOpen !== true) close(); b.onClick && b.onClick(box); };
+    wrap.appendChild(el);
+  });
+  box.appendChild(wrap);
+  ov.addEventListener('mousedown', e => { if (e.target === ov){ const cancel = buttons.find(b => b.cancel); close(); cancel && cancel.onClick && cancel.onClick(); } });
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(ov);
+  onOpen && onOpen(box);
+  const f = box.querySelector('input,select,.btn.primary');
+  f && f.focus();
+}
+let menuEl = null;
+function closeMenu(){ if (menuEl){ menuEl.remove(); menuEl = null; } }
+function openMenu(anchor, items){
+  closeMenu();
+  menuEl = document.createElement('div');
+  menuEl.className = 'menu';
+  items.forEach(it => {
+    if (it === '-'){ menuEl.appendChild(document.createElement('hr')); return; }
+    const b = document.createElement('button');
+    b.textContent = it.label; b.disabled = !!it.disabled;
+    if (it.danger) b.style.color = 'var(--neg)';
+    b.onclick = e => { e.stopPropagation(); closeMenu(); it.onClick(); };
+    menuEl.appendChild(b);
+  });
+  document.body.appendChild(menuEl);
+  const r = anchor.getBoundingClientRect();
+  const mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
+  let left = r.right - mw + window.scrollX, top = r.bottom + 4 + window.scrollY;
+  if (r.bottom + mh + 10 > window.innerHeight) top = r.top - mh - 4 + window.scrollY;
+  menuEl.style.left = Math.max(8, left) + 'px'; menuEl.style.top = top + 'px';
+}
+document.addEventListener('mousedown', e => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); });
+let toastT = null;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2600); }
+
+/* ---------- row operations ---------- */
+function futureMatches(r){
+  const idx = S.rows.indexOf(r);
+  return S.rows.slice(idx + 1).filter(x => !x.rec && eqDesc(x.desc, r.desc));
+}
+function tplMatches(desc){ return S.template.filter(t => eqDesc(t.desc, desc)); }
+
+function onAmountChange(item, newAmt){
+  const old = item.amt;
+  if (newAmt === old){ scheduleRender(); return; }
+  if (isTpl(item.id)){ item.amt = newAmt; commit(); return; }
+  const c = cat(item.cat);
+  const fut = futureMatches(item);
+  item.amt = newAmt;
+  if (c.skipPrompt || (!fut.length && !tplMatches(item.desc).length)){ commit(); return; }
+  futureModal(item, old, newAmt, false);
+}
+function futureModal(item, old, newAmt, manual){
+  const fut = futureMatches(item);
+  const tp = tplMatches(item.desc);
+  const differ = fut.filter(x => x.amt !== newAmt && x.amt !== old).length;
+  let body = manual
+    ? '<p>Copy <b class="' + (newAmt < 0 ? 'neg' : '') + '">' + money(newAmt) + '</b> to future <b>' + esc(item.desc) + '</b> rows?</p>'
+    : '<p><b>' + esc(item.desc) + '</b> · ' + MONTHS[item.m-1] + ' ' + ordinal(item.day) + ' ' + item.y + '<br>changed from ' + money(old) + ' to <b class="' + (newAmt < 0 ? 'neg' : '') + '">' + money(newAmt) + '</b>.</p>';
+  body += '<p>' + (fut.length ? fut.length + ' later unreconciled row' + (fut.length === 1 ? '' : 's') + ' share this description' + (fut.length ? ', through ' + MONTHS[fut[fut.length-1].m-1] + ' ' + fut[fut.length-1].y : '') + '.' : 'No later rows share this description.') + (differ ? ' ' + differ + ' of them currently have a different amount and would be overwritten.' : '') + '</p>';
+  if (tp.length) body += '<label class="cb"><input type="checkbox" id="fmTpl"> Also set the Template amount to ' + money(newAmt) + ' (for future "Add next month")</label>';
+  const apply = (box) => {
+    fut.forEach(x => x.amt = newAmt);
+    const tplToo = box.querySelector('#fmTpl') && box.querySelector('#fmTpl').checked;
+    if (tplToo) tp.forEach(t => t.amt = newAmt);
+    commit();
+    toast('Updated ' + (fut.length + (manual ? 0 : 1)) + ' row' + (fut.length + (manual ? 0 : 1) === 1 ? '' : 's') + (tplToo ? ' and the template' : ''));
+  };
+  const justThis = (box) => {
+    const tplToo = box.querySelector('#fmTpl') && box.querySelector('#fmTpl').checked;
+    if (tplToo) tp.forEach(t => t.amt = newAmt);
+    commit();
+  };
+  const buttons = manual ? [
+    {label:'Apply to ' + fut.length + ' future row' + (fut.length === 1 ? '' : 's'), sub:'Template only changes if checked above', cls:'primary', onClick:apply},
+    {label:'Cancel', cancel:true, onClick:() => {}}
+  ] : [
+    {label:'This row only', sub:'A one-off change', onClick:justThis},
+    {label:'This row and all ' + fut.length + ' future row' + (fut.length === 1 ? '' : 's'), sub:'Projects the new amount forward', cls:'primary', onClick:apply},
+    {label:'Cancel', sub:'Put the amount back to ' + money(old), cancel:true, onClick:() => { item.amt = old; scheduleRender(); }}
+  ];
+  if (manual && !fut.length && tp.length) buttons[0].label = 'Update template only';
+  modal({title: manual ? 'Apply amount to future rows' : 'Change future amounts too?', body, buttons});
+}
+
+function onDescChange(item, val){
+  const v = String(val).trim();
+  if (v === item.desc){ scheduleRender(); return; }
+  if (!v){ item.desc = ''; commit(); return; }
+  const d = descEntry(v);
+  if (d){
+    item.desc = d.name; item.cat = d.cat;
+    item.ballpark = !!cat(d.cat).ballpark;
+    commit(); return;
+  }
+  const old = item.desc;
+  modal({
+    title:'New description',
+    body:'<p>"<b>' + esc(v) + '</b>" isn\'t in your list. Which category is it?</p><select id="ndCat">' + S.categories.map(c => '<option value="' + c.id + '"' + (c.id === (item.desc ? item.cat : 'misc') ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select><label class="cb"><input type="checkbox" id="ndAdd"> Add to the description list (for things that recur)</label>',
+    buttons:[
+      {label:'Cancel', cancel:true, onClick:() => { item.desc = old; scheduleRender(); }},
+      {label:'Save', cls:'primary', onClick:(box) => {
+        item.desc = v; item.cat = box.querySelector('#ndCat').value;
+        item.ballpark = !!cat(item.cat).ballpark;
+        if (box.querySelector('#ndAdd').checked) S.descriptions.push({name:v, cat:item.cat});
+        commit();
+      }}
+    ]
+  });
+}
+
+function insertRow(ref, below){
+  if (isTpl(ref.id)){
+    const t = {id:newTplId(), day:ref.day, amt:0, desc:'', cat:'misc', ballpark:false, notes:''};
+    S.template.splice(S.template.indexOf(ref) + (below ? 1 : 0), 0, t);
+    commit({focus: t.id + ':desc', reveal:true}); return;
+  }
+  const r = {id:newRowId(), y:ref.y, m:ref.m, day:ref.day, amt:0, desc:'', cat:'misc', notes:'', ballpark:false, rec:false};
+  S.rows.splice(S.rows.indexOf(ref) + (below ? 1 : 0), 0, r);
+  if (view === 'recon' && !inReconRange(r)) reconRange = 'all';
+  commit({focus: r.id + ':desc', reveal:true});
+}
+function addRowToMonth(key){
+  const [y,m] = key.split('-').map(Number);
+  const inMonth = S.rows.filter(r => r.y === y && r.m === m);
+  const last = inMonth[inMonth.length-1];
+  const r = {id:newRowId(), y, m, day: last ? last.day : 1, amt:0, desc:'', cat:'misc', notes:'', ballpark:false, rec:false};
+  if (last) S.rows.splice(S.rows.indexOf(last) + 1, 0, r); else S.rows.push(r);
+  S.collapsed[key] = false;
+  commit({focus: r.id + ':desc', reveal:true});
+}
+function deleteRow(item){
+  const tpl = isTpl(item.id);
+  modal({title:'Delete row?', body:'<p>' + esc(item.desc || '(blank row)') + ' · ' + money(item.amt) + (tpl ? ' from the template' : ' · ' + MONTHS[item.m-1] + ' ' + item.y) + '</p>' + (tpl ? '' : '<p>The running balance recalculates from here.</p>'),
+    buttons:[{label:'Cancel', cancel:true}, {label:'Delete', cls:'danger', onClick:() => {
+      if (tpl) S.template.splice(S.template.indexOf(item), 1); else S.rows.splice(S.rows.indexOf(item), 1);
+      commit(); toast('Row deleted');
+    }}]});
+}
+function changeCategory(item){
+  const inList = descEntry(item.desc);
+  modal({title:'Change category', body:'<p><b>' + esc(item.desc || '(blank)') + '</b></p><select id="ccCat">' + S.categories.map(c => '<option value="' + c.id + '"' + (c.id === item.cat ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select>' + (inList ? '<label class="cb"><input type="checkbox" id="ccAll" checked> Apply to every row and template row with this description, and the list</label>' : ''),
+    buttons:[{label:'Cancel', cancel:true}, {label:'Save', cls:'primary', onClick:(box) => {
+      const nc = box.querySelector('#ccCat').value;
+      const all = box.querySelector('#ccAll') && box.querySelector('#ccAll').checked;
+      if (all){ setDescCategory(inList, nc); } else item.cat = nc;
+      commit();
+    }}]});
+}
+function setDescCategory(d, nc){
+  d.cat = nc;
+  let n = 0;
+  S.rows.concat(S.template).forEach(x => { if (eqDesc(x.desc, d.name)){ x.cat = nc; n++; } });
+  return n;
+}
+function rowMenu(btn, item){
+  const tpl = isTpl(item.id);
+  const lock = !tpl && isLocked(item);
+  const items = [
+    {label:(item.ballpark ? '✓ ' : '') + 'Ballpark amount (striped)', disabled:lock, onClick:() => { item.ballpark = !item.ballpark; commit(); }},
+  ];
+  if (!tpl) items.push({label:'Apply this amount to future rows…', disabled:lock, onClick:() => futureModal(item, item.amt, item.amt, true)});
+  items.push({label:'Change category…', disabled:lock, onClick:() => changeCategory(item)});
+  if (!tpl && !item.rec && view !== 'recon') items.push({label:'Mark reconciled now…', onClick:() => markRecNow(item)});
+  items.push('-', {label:'Delete row', danger:true, disabled:lock, onClick:() => deleteRow(item)});
+  openMenu(btn, items);
+}
+function markRecNow(r){
+  modal({title:'Reconcile this row directly?', body:'<p>This locks <b>' + esc(r.desc) + '</b> (' + money(r.amt) + ') as reconciled without going through the Reconcile tab. Your cleared balance changes by ' + money(r.amt) + '.</p>',
+    buttons:[{label:'Cancel', cancel:true}, {label:'Reconcile and lock', cls:'primary', onClick:() => { r.rec = true; r.recDate = new Date().toISOString(); commit(); }}]});
+}
+function lockClick(r){
+  if (unlocked.has(r.id)){ unlocked.delete(r.id); scheduleRender(); toast('Locked again'); return; }
+  modal({title:'Unlock reconciled row?', body:'<p><b>' + esc(r.desc) + '</b> · ' + MONTHS[r.m-1] + ' ' + ordinal(r.day) + ' ' + r.y + ' · ' + money(r.amt) + '</p><p>Changing a reconciled amount changes your cleared balance, so your next reconcile won\'t match the bank unless the bank amount really was different. Use this to fix mistakes.</p>',
+    buttons:[
+      {label:'Unlock to edit', sub:'Stays reconciled. Locks again when you click the lock or reload.', cls:'primary', onClick:() => { unlocked.add(r.id); scheduleRender(); }},
+      {label:'Un-reconcile', sub:'Sends it back to the Reconcile tab to check again.', onClick:() => { r.rec = false; delete r.recDate; commit(); toast('Moved back to Reconcile'); }},
+      {label:'Cancel', cancel:true}
+    ]});
+}
+function sortMonth(key){
+  const [y,m] = key.split('-').map(Number);
+  const idxs = []; S.rows.forEach((r,i) => { if (r.y === y && r.m === m) idxs.push(i); });
+  const rows = idxs.map(i => S.rows[i]);
+  const sorted = rows.map((r,i) => [r,i]).sort((a,b) => ((a[0].day ?? 99) - (b[0].day ?? 99)) || (a[1] - b[1])).map(x => x[0]);
+  idxs.forEach((i,j) => S.rows[i] = sorted[j]);
+  commit(); toast('Sorted ' + MONTHS[m-1] + ' by day');
+}
+function lastMonth(){ if (!S.rows.length) return null; const r = S.rows[S.rows.length-1]; return {y:r.y, m:r.m}; }
+function addNextMonth(){
+  const L = lastMonth();
+  const n = L ? (L.m === 12 ? {y:L.y+1, m:1} : {y:L.y, m:L.m+1}) : {y:CUR.y, m:CUR.m};
+  if (!S.template.length){ modal({title:'Template is empty', body:'<p>Add rows on the Template tab first, or replace the template with an existing month.</p>', buttons:[{label:'OK', cls:'primary'}]}); return; }
+  modal({title:'Add ' + MONTHS[n.m-1] + ' ' + n.y + '?', body:'<p>This copies the ' + S.template.length + ' template rows into a new month at the end of your ledger.</p>',
+    buttons:[{label:'Cancel', cancel:true}, {label:'Add month', cls:'primary', onClick:() => {
+      S.template.forEach(t => S.rows.push({id:newRowId(), y:n.y, m:n.m, day:t.day, amt:t.amt, desc:t.desc, cat:t.cat, notes:t.notes || '', ballpark:!!t.ballpark, rec:false}));
+      S.collapsed[mkey(n.y,n.m)] = false;
+      commit();
+      setTimeout(() => scrollToMonth(mkey(n.y,n.m)), 60);
+      toast('Added ' + MONTHS[n.m-1] + ' ' + n.y);
+    }}]});
+}
+function scrollToMonth(key, smooth=true){
+  const el = document.querySelector('tr.mhead[data-month="' + key + '"]');
+  if (!el) return;
+  const sb = $('.view.on .subbar');
+  const top = el.getBoundingClientRect().top + window.scrollY - $('#topbar').offsetHeight - (sb ? sb.offsetHeight : 0) - 44;
+  window.scrollTo({top, behavior: smooth ? 'smooth' : 'auto'});
+}
+function jumpToRow(id){
+  const r = S.rows.find(x => x.id === id);
+  if (!r) return;
+  S.collapsed[mkey(r.y,r.m)] = false;
+  if (view !== 'main') view = 'main';
+  render();
+  const el = document.querySelector('#ledger tr.row[data-id="' + id + '"]');
+  if (el){
+    const top = el.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2 + 20;
+    window.scrollTo({top: Math.max(0, top), behavior:'smooth'});
+    el.classList.add('flash');
+  }
+}
+
+/* ---------- reconcile ---------- */
+function finalize(){
+  const C = compute(); const N = reconNumbers(C);
+  if (!(N.left != null && Math.abs(N.left) < 0.005 && N.rows.length)) return;
+  modal({title:'Finalize reconcile?', body:'<p>Lock <b>' + N.rows.length + '</b> rows totaling <b>' + money(N.sum) + '</b>. Your cleared balance becomes <b>' + dollars(N.t) + '</b>.</p><p>The Target and checks reset, and these rows leave the Reconcile tab.</p>',
+    buttons:[{label:'Cancel', cancel:true}, {label:'Finalize', cls:'primary', onClick:() => {
+      const now = new Date().toISOString();
+      N.rows.forEach(r => { r.rec = true; r.recDate = now; });
+      S.reconHistory.push({id:'h' + Date.now(), date:now, target:N.t, prevCleared:C.cleared, total:N.sum, rowIds:N.rows.map(r => r.id)});
+      S.recon = {target:null, checked:[]};
+      commit(); toast('Reconciled ' + N.rows.length + ' rows');
+    }}]});
+}
+function undoHistory(hid){
+  const hx = S.reconHistory.find(h => h.id === hid);
+  if (!hx) return;
+  modal({title:'Undo this reconcile?', body:'<p>' + hx.rowIds.length + ' rows go back to unreconciled and return to the Reconcile tab. Your cleared balance goes back to ' + dollars(hx.prevCleared) + '.</p>',
+    buttons:[{label:'Cancel', cancel:true}, {label:'Undo reconcile', cls:'danger', onClick:() => {
+      hx.rowIds.forEach(id => { const r = S.rows.find(x => x.id === id); if (r){ r.rec = false; delete r.recDate; } });
+      S.reconHistory = S.reconHistory.filter(h => h.id !== hid);
+      commit(); toast('Reconcile undone');
+    }}]});
+}
+
+/* ---------- events ---------- */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('input.cell')){ e.preventDefault(); e.target.blur(); }
+});
+document.addEventListener('focusin', e => { if (e.target.matches('td.amt input.cell:not([readonly])')) setTimeout(() => e.target.select(), 0); });
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.k){
+    const [id, f] = t.dataset.k.split(':');
+    const item = findItem(id);
+    if (!item) return;
+    if (!isTpl(id) && isLocked(item)){ scheduleRender(); return; }
+    if (f === 'amt'){
+      const n = parseAmt(t.value);
+      if (n === null){ toast('That amount didn\'t read as a number'); scheduleRender(); return; }
+      onAmountChange(item, n);
+    } else if (f === 'day'){ item.day = parseDay(t.value); commit(); }
+    else if (f === 'desc'){ onDescChange(item, t.value); }
+    else if (f === 'notes'){ item.notes = t.value; commit(); }
+    return;
+  }
+  if (t.id === 'reconTarget'){ const n = parseAmt(t.value); S.recon.target = (t.value.trim() === '' || n === null) ? null : n; commit(); return; }
+  if (t.id === 'descFilter'){ descFilter = t.value; const d = $('.desc-scroll'); render(); const d2 = $('.desc-scroll'); if (d2) d2.scrollTop = 0; return; }
+  if (t.id === 'descSearch') return;
+  if (t.id === 'jumpMonth'){ if (t.value) goMonth(t.value); return; }
+  if (t.id === 'reconRange'){ reconRange = t.value; render(); return; }
+  if (t.dataset.act === 'check'){ const set = new Set(S.recon.checked); t.checked ? set.add(t.dataset.id) : set.delete(t.dataset.id); S.recon.checked = [...set]; commit(); return; }
+  if (t.dataset.act === 'checkMonth'){
+    const [y,m] = t.dataset.month.split('-').map(Number);
+    const set = new Set(S.recon.checked);
+    S.rows.filter(r => !r.rec && r.y === y && r.m === m && inReconRange(r)).forEach(r => t.checked ? set.add(r.id) : set.delete(r.id));
+    S.recon.checked = [...set]; commit(); return;
+  }
+  if (t.id === 'tplFrom' && t.value){
+    const [y,m] = t.value.split('-').map(Number);
+    const src = S.rows.filter(r => r.y === y && r.m === m);
+    const val = t.value;
+    modal({title:'Replace template?', body:'<p>Replace all ' + S.template.length + ' template rows with the ' + src.length + ' rows from ' + mlabel(y,m) + '? Notes aren\'t copied.</p>',
+      buttons:[{label:'Cancel', cancel:true, onClick:() => scheduleRender()}, {label:'Replace', cls:'primary', onClick:() => {
+        S.template = src.map(r => ({id:newTplId(), day:r.day, amt:r.amt, desc:r.desc, cat:r.cat, ballpark:!!r.ballpark, notes:''}));
+        commit(); toast('Template now matches ' + mlabel(y,m));
+      }}]});
+    return;
+  }
+  if (t.dataset.cat){
+    const c = S.categories.find(x => x.id === t.dataset.cat); const f = t.dataset.f;
+    if (f === 'color') c.color = t.value; else if (f === 'name') c.name = t.value.trim() || c.name; else c[f] = t.checked;
+    commit(); return;
+  }
+  if (t.dataset.desc != null && t.dataset.f){
+    const d = descEntry(t.dataset.desc); if (!d) return;
+    if (t.dataset.f === 'cat'){ const n = setDescCategory(d, t.value); commit(); toast('Updated ' + n + ' rows'); }
+    else {
+      const nv = t.value.trim();
+      if (!nv || (descEntry(nv) && descEntry(nv) !== d)){ toast(nv ? 'That description already exists' : 'Name can\'t be blank'); scheduleRender(); return; }
+      let n = 0; S.rows.concat(S.template).forEach(x => { if (eqDesc(x.desc, d.name)){ x.desc = nv; n++; } });
+      d.name = nv; commit(); toast('Renamed on ' + n + ' rows');
+    }
+    return;
+  }
+  if (t.id === 'setCushion'){ const n = Number(t.value); if (isFinite(n) && n >= 0){ S.settings.cushion = n; commit(); } return; }
+  if (t.id === 'setOpening'){
+    const n = parseAmt(t.value);
+    if (n === null){ scheduleRender(); return; }
+    modal({title:'Change opening balance?', body:'<p>Every running balance and your cleared balance shift by ' + money(n - S.settings.openingBalance) + '. Only do this if the starting point was wrong.</p>',
+      buttons:[{label:'Cancel', cancel:true, onClick:() => scheduleRender()}, {label:'Change it', cls:'danger', onClick:() => { S.settings.openingBalance = n; openingUnlocked = false; commit(); toast('Opening balance changed and locked'); }}]});
+  }
+});
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act],.tab');
+  if (!b) return;
+  if (b.classList.contains('tab')){ view = b.dataset.view; openingUnlocked = false; closeMenu(); render(); window.scrollTo({top:0}); if (view === 'main') setTimeout(() => scrollToMonth(mkey(CUR.y,CUR.m), false), 20); return; }
+  const act = b.dataset.act;
+  const id = b.dataset.id;
+  const item = id ? findItem(id) : null;
+  switch (act){
+    case 'toggleMonth':
+      if (e.target.closest('button')) return;
+      S.collapsed[b.dataset.month] = !S.collapsed[b.dataset.month]; persist(); render(); break;
+    case 'note': if (notesOpen.has(id)) notesOpen.delete(id); else notesOpen.add(id); render(); { const ta = document.querySelector('[data-k="' + id + ':notes"]'); ta && !showAllNotes && ta.focus(); } break;
+    case 'menu': e.stopPropagation(); rowMenu(b, item); break;
+    case 'insAbove': insertRow(item, false); break;
+    case 'insBelow': insertRow(item, true); break;
+    case 'lock': lockClick(item); break;
+    case 'sortMonth': sortMonth(b.dataset.month); break;
+    case 'addRowMonth': addRowToMonth(b.dataset.month); break;
+    case 'addMonth': addNextMonth(); break;
+    case 'expandAll': S.collapsed = {}; persist(); render(); break;
+    case 'collapseAll': compute().months.forEach(M => S.collapsed[M.key] = true); persist(); render(); break;
+    case 'collapseRec': compute().months.forEach(M => S.collapsed[M.key] = M.rec === M.rows.length); persist(); render(); break;
+    case 'openingUnlock':
+      modal({title:'Unlock opening balance?', body:'<p>Every running balance and your cleared balance are built on this number. Only change it if the starting point itself was wrong.</p>',
+        buttons:[{label:'Cancel', cancel:true}, {label:'Unlock', cls:'danger', onClick:() => { openingUnlocked = true; render(); const el = $('#setOpening'); el && el.focus(); }}]});
+      break;
+    case 'openingLock': openingUnlocked = false; render(); break;
+    case 'toggleSummary': S.settings.summaryHidden = !S.settings.summaryHidden; persist(); render(); break;
+    case 'toggleNotes': showAllNotes = !showAllNotes; render(); break;
+    case 'goCurrent': goMonth(mkey(CUR.y,CUR.m)); break;
+    case 'jump': if (id) jumpToRow(id); break;
+    case 'finalize': finalize(); break;
+    case 'clearChecks': S.recon.checked = []; commit(); break;
+    case 'histView': histOpen = histOpen === b.dataset.hid ? null : b.dataset.hid; render(); break;
+    case 'histUndo': undoHistory(b.dataset.hid); break;
+    case 'tplAdd': { const t = {id:newTplId(), day:null, amt:0, desc:'', cat:'misc', ballpark:false, notes:''}; S.template.push(t); commit({focus:t.id + ':desc', reveal:true}); break; }
+    case 'tplSort': S.template = S.template.map((t,i) => [t,i]).sort((a,b) => ((a[0].day ?? 99) - (b[0].day ?? 99)) || (a[1]-b[1])).map(x => x[0]); commit(); break;
+    case 'catAdd': { const nm = $('#newCatName').value.trim(); if (!nm) return; S.categories.push({id:'c' + Date.now(), name:nm, color:'#E6E6E6', bold:false, ballpark:false, skipPrompt:false}); commit(); break; }
+    case 'catDel': S.categories = S.categories.filter(c => c.id !== b.dataset.cat); S.descriptions.forEach(d => { if (d.cat === b.dataset.cat) d.cat = 'misc'; }); commit(); break;
+    case 'descAdd': { const nm = $('#newDescName').value.trim(); if (!nm) return; if (descEntry(nm)){ toast('Already in the list'); return; } S.descriptions.push({name:nm, cat:$('#newDescCat').value}); commit(); break; }
+    case 'descTop': $('.desc-scroll').scrollTo({top:0, behavior:'smooth'}); break;
+    case 'descBottom': { const d = $('.desc-scroll'); d.scrollTo({top:d.scrollHeight, behavior:'smooth'}); break; }
+    case 'descDel': S.descriptions = S.descriptions.filter(d => d.name !== b.dataset.desc); commit(); break;
+    case 'load': $('#fileIn').click(); break;
+    case 'blank': S = upgrade({settings:{openingBalance:0, openingLabel:'Opening balance', cushion:500}, rows:[], template:[]}); dirty = true; persist(); render(); break;
+  }
+});
+
+/* drag & drop (ledger and template) */
+document.addEventListener('dragstart', e => {
+  const g = e.target.closest && e.target.closest('[data-drag]');
+  if (!g){ return; }
+  dragId = g.dataset.drag;
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', dragId); } catch(_){}
+  const tr = g.closest('tr'); tr && tr.classList.add('dragging');
+});
+function clearDrop(){ $$('.drop-above,.drop-below,.drop-into').forEach(x => x.classList.remove('drop-above','drop-below','drop-into')); }
+document.addEventListener('dragover', e => {
+  if (!dragId) return;
+  const tr = e.target.closest && e.target.closest('tr.row, tr.mhead');
+  if (!tr) return;
+  const tplDrag = isTpl(dragId);
+  if (tr.classList.contains('mhead') && tplDrag) return;
+  if (tr.classList.contains('row') && isTpl(tr.dataset.id) !== tplDrag) return;
+  e.preventDefault();
+  clearDrop();
+  if (tr.classList.contains('mhead')){ tr.classList.add('drop-into'); return; }
+  const rc = tr.getBoundingClientRect();
+  tr.classList.add(e.clientY < rc.top + rc.height/2 ? 'drop-above' : 'drop-below');
+});
+document.addEventListener('drop', e => {
+  if (!dragId) return;
+  e.preventDefault();
+  const tr = $('.drop-above,.drop-below,.drop-into');
+  const id = dragId; dragId = null;
+  if (!tr){ clearDrop(); render(); return; }
+  const mode = tr.classList.contains('drop-into') ? 'into' : tr.classList.contains('drop-above') ? 'above' : 'below';
+  clearDrop();
+  const coll = isTpl(id) ? S.template : S.rows;
+  const item = coll.find(x => x.id === id);
+  if (!item) return;
+  if (mode === 'into'){
+    const [y,m] = tr.dataset.month.split('-').map(Number);
+    coll.splice(coll.indexOf(item), 1);
+    const inMonth = S.rows.filter(r => r.y === y && r.m === m);
+    const last = inMonth[inMonth.length-1];
+    item.y = y; item.m = m;
+    if (last) S.rows.splice(S.rows.indexOf(last) + 1, 0, item); else S.rows.push(item);
+    const moved = true;
+    commit(); toast('Moved to ' + MONTHS[m-1] + ' ' + y);
+    return;
+  }
+  const target = coll.find(x => x.id === tr.dataset.id);
+  if (!target || target === item){ render(); return; }
+  const fromMonth = isTpl(id) ? null : mkey(item.y, item.m);
+  coll.splice(coll.indexOf(item), 1);
+  coll.splice(coll.indexOf(target) + (mode === 'below' ? 1 : 0), 0, item);
+  if (!isTpl(id)){ item.y = target.y; item.m = target.m; }
+  commit();
+  if (fromMonth && fromMonth !== mkey(item.y, item.m)) toast('Moved to ' + MONTHS[item.m-1] + ' ' + item.y);
+});
+document.addEventListener('dragend', () => { dragId = null; clearDrop(); $$('tr.dragging').forEach(x => x.classList.remove('dragging')); });
+
+/* save / load */
+$('#btnSave').onclick = () => {
+  if (!S) return;
+  const d = new Date();
+  const name = 'bank-reconciler-' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '.json';
+  S.savedAt = d.toISOString();
+  const blob = new Blob([JSON.stringify(S, null, 1)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  dirty = false; lastSaved = d.toISOString(); persist(); renderStatus();
+  toast('Saved ' + name);
+};
+$('#btnLoad').onclick = () => $('#fileIn').click();
+$('#fileIn').onchange = e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    let o;
+    try { o = JSON.parse(rd.result); } catch(err){ toast('That file isn\'t valid JSON'); return; }
+    if (!o || !Array.isArray(o.rows)){ toast('That JSON doesn\'t look like a Bank Reconciler file'); return; }
+    const go = () => {
+      S = upgrade(o); dirty = false; lastSaved = o.savedAt || new Date().toISOString();
+      unlocked.clear(); notesOpen.clear();
+      if (!o.collapseInit){ compute().months.forEach(M => { if (M.rec === M.rows.length) S.collapsed[M.key] = true; }); S.collapseInit = true; }
+      persist(); view = 'main'; firstRender = true; render();
+      toast('Loaded ' + f.name + ' · ' + S.rows.length + ' rows');
+    };
+    if (S && dirty) modal({title:'Replace current data?', body:'<p>You have changes that aren\'t saved to a JSON file yet. Loading <b>' + esc(f.name) + '</b> replaces them.</p>', buttons:[{label:'Cancel', cancel:true}, {label:'Load anyway', cls:'danger', onClick:go}]});
+    else go();
+  };
+  rd.readAsText(f);
+};
+window.addEventListener('beforeunload', e => { if (S && dirty){ persist(); } });
+
+/* boot */
+loadLocal();
+render();
+})();
+</script>
+</body>
+</html>
