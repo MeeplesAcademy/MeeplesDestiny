@@ -680,6 +680,13 @@
 
   /* ---- Compact AP poll (narrow column on CFB main page) ---- */
   .poll-compact table.standings{ font-size:11px; }
+  .poll-week-label{
+    font-size:13px;
+    font-weight:bold;
+    line-height:1;
+    color:var(--text);
+    margin:-8px 0 0;
+  }
   .poll-compact table.standings th,
   .poll-compact table.standings td{ padding:4px 5px; }
   .poll-compact .team-cell{
@@ -2280,6 +2287,7 @@ let CFP_POLL = [];
 
 const AP_POLL_CACHE_KEY = "sportsTracker.apPollCache.v1";
 let apPollWeekNote = ""; // set when we're showing a previous week's AP poll
+let AP_WEEK = null; // week number of the AP poll currently shown
 
 // Only ever accept the Associated Press poll. ESPN's rankings response also
 // carries the AFCA Coaches Poll (and the CFP rankings later in the season),
@@ -2333,6 +2341,67 @@ function loadApPollCache(){
   } catch (e) { return null; }
 }
 
+// College Football Playoff committee rankings (ESPN poll id 21). The core API
+// returns each team only as an id link, so names come from the AP / Coaches
+// data we already have (the CFP Top 25 is almost always the same schools).
+// Any team not in those polls is looked up individually.
+const ESPN_CFP_CORE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football/rankings/21";
+let CFP_WEEK = null;
+let cfpFetchFailed = false;
+
+async function loadCfpFromCore(sitePolls){
+  try {
+    const res = await fetch(ESPN_CFP_CORE_URL);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const d = await res.json();
+    const ranks = d?.ranks;
+    if (!Array.isArray(ranks) || !ranks.length || !ranks.every(r => Number.isInteger(r.current))) throw new Error("No CFP ranks yet");
+
+    const nameById = {};
+    (sitePolls || []).forEach(p => (p.ranks || []).concat(p.others || [], p.droppedOut || []).forEach(r => {
+      if (r.team?.id && r.team.location) nameById[r.team.id] = r.team.location;
+    }));
+    const idOf = r => (r.team?.$ref || "").match(/teams\/(\d+)/)?.[1] || r.team?.id || null;
+
+    const missing = [...new Set(ranks.map(idOf).filter(id => id && !nameById[id]))];
+    await Promise.all(missing.map(async id => {
+      const ref = ranks.find(r => idOf(r) === id)?.team?.$ref;
+      if (!ref) return;
+      try {
+        const t = await (await fetch(ref.replace(/^http:/, "https:"))).json();
+        if (t?.location) nameById[id] = t.location;
+      } catch (e) { /* leave as Unknown */ }
+    }));
+
+    CFP_POLL = ranks.map(r => ({
+      rank: r.current,
+      team: nameById[idOf(r)] || "Unknown",
+      record: r.record?.summary || r.recordSummary || "0-0",
+      trend: r.trend || "NR"
+    })).sort((a, b) => a.rank - b.rank);
+    CFP_WEEK = d.occurrence?.number ?? null;
+    cfpFetchFailed = false;
+  } catch (err){
+    cfpFetchFailed = true;
+    console.warn("CFP rankings fetch failed — keeping last-known CFP data.", err);
+  }
+}
+
+// "Week N" line shown between the Refreshed row and the poll table.
+function pollWeekLabel(which){
+  const week = which === "cfp" ? CFP_WEEK : AP_WEEK;
+  const hasData = which === "cfp" ? CFP_POLL.length : AP_POLL.length;
+  if (!hasData || !week) return "";
+  const name = which === "cfp" ? "CFP Rankings" : "AP Poll";
+  return `<div class="poll-week-label">${name} · Week ${week}</div>`;
+}
+
+function cfpStatusNote(){
+  if (cfpFetchFailed && !CFP_POLL.length) return "Couldn't load the CFP rankings from ESPN right now. Try Refresh.";
+  if (cfpFetchFailed) return "Couldn't refresh the CFP rankings from ESPN — showing the last loaded list.";
+  return CFP_WEEK ? `CFP committee rankings, Week ${CFP_WEEK} (live from ESPN).` : "CFP committee rankings (live from ESPN).";
+}
+
 async function fetchRankings(week){
   const url = week ? `${ESPN_RANKINGS_URL}?seasontype=2&week=${week}` : ESPN_RANKINGS_URL;
   const res = await fetch(url);
@@ -2349,7 +2418,7 @@ async function fetchApPoll(forceRerender){
 
     // CFP committee rankings: same response, separate poll. Handled on its
     // own now, so a missing AP poll no longer blocks CFP from updating.
-    const cfpPoll = polls.find(p => /college football playoff/i.test(p.name || p.shortName || "") || p.type === "cfp");
+    const cfpPoll = polls.find(p => /college football playoff|playoff committee/i.test(p.name || p.shortName || "") || p.type === "cfp" || p.id === "21");
     if (cfpPoll?.ranks?.length){
       CFP_POLL = cfpPoll.ranks.map(r => ({
         rank: r.current,
@@ -2357,6 +2426,12 @@ async function fetchApPoll(forceRerender){
         record: r.recordSummary || "0-0",
         trend: r.trend || "NR"
       }));
+      CFP_WEEK = cfpPoll.occurrence?.number ?? null;
+    } else {
+      // ESPN's main rankings feed never actually includes the CFP; it only
+      // lists it under availableRankings. The committee rankings live on
+      // ESPN's core API instead, so fetch them from there.
+      await loadCfpFromCore(polls);
     }
 
     let ap = findApPoll(polls);
@@ -2383,6 +2458,7 @@ async function fetchApPoll(forceRerender){
 
     if (ap){
       AP_POLL = mapApRanks(ap.ranks);
+      AP_WEEK = apWeek ?? null;
       saveApPollCache(AP_POLL, apWeek);
       apPollWeekNote = usingPreviousWeek
         ? `This week's AP poll isn't on ESPN yet, so this is the Week ${apWeek} AP poll. It switches over automatically once ESPN posts the new one.`
@@ -2392,6 +2468,7 @@ async function fetchApPoll(forceRerender){
       const cached = loadApPollCache();
       if (!cached) throw new Error("No AP poll in ESPN's response and no saved copy");
       AP_POLL = cached.poll;
+      AP_WEEK = cached.week ?? null;
       apPollWeekNote = cached.week
         ? `This week's AP poll isn't on ESPN yet. Showing the last saved AP poll (Week ${cached.week}).`
         : "This week's AP poll isn't on ESPN yet. Showing the last saved AP poll.";
@@ -2400,7 +2477,7 @@ async function fetchApPoll(forceRerender){
   } catch (err){
     // Network or shape failure: still prefer a saved AP poll over preseason.
     const cached = loadApPollCache();
-    if (cached) AP_POLL = cached.poll;
+    if (cached){ AP_POLL = cached.poll; AP_WEEK = cached.week ?? AP_WEEK; }
     apPollFetchState = "failed";
     console.warn("AP poll live fetch failed — showing last-known AP data instead.", err);
   }
@@ -2455,7 +2532,7 @@ function apPollCompactTable(){
 
 function cfpPollCompactTable(){
   if (!CFP_POLL.length){
-    return `<div class="poll-compact"><div class="note" style="margin:0;">Not released yet this season — typically early-to-mid November. Will populate automatically.</div></div>`;
+    return `<div class="poll-compact"><div class="note" style="margin:0;">${cfpFetchFailed ? cfpStatusNote() : "Not released yet this season — typically early-to-mid November. Will populate automatically."}</div></div>`;
   }
   const rowColor = team => team === "Washington" ? "var(--uw-1)" : null;
   return `<div class="poll-compact"><table class="standings">
@@ -2489,7 +2566,7 @@ function cfbMainPollColumn(){
   // CFP has no separate ESPN page yet — it redirects to the AP poll page
   // until the committee's first weekly rankings are released (typically
   // early-to-mid November), so both link to the same place until then.
-  const espnUrl = active === "b1g" ? ESPN_BIGTEN_STANDINGS_PAGE_URL : ESPN_AP_POLL_PAGE_URL;
+  const espnUrl = active === "b1g" ? ESPN_BIGTEN_STANDINGS_PAGE_URL : active === "cfp" ? ESPN_CFP_PAGE_URL : ESPN_AP_POLL_PAGE_URL;
   const espnLabel = "View on ESPN";
   return `
     <div class="col-heading heading-with-btn" style="flex-wrap:wrap; row-gap:6px;">
@@ -2501,6 +2578,7 @@ function cfbMainPollColumn(){
       <button class="refresh-btn refresh-btn-lg" onclick="${refreshAction}">Refresh</button>
       ${refreshRowHTML(lastRefresh, espnUrl, espnLabel)}
     </div>
+    ${active === "b1g" ? "" : pollWeekLabel(active)}
     ${body}`;
 }
 
@@ -2516,14 +2594,15 @@ function cfpPollColumn(){
           return `<tr class="${mine ? "my-team" : ""}"${styleAttr}><td>${r.rank}</td><td>${r.team}</td><td>${r.record}</td><td>${r.trend}</td></tr>`;
         }).join("")}
       </table>`
-    : `<div class="note">Not released yet this season — the CFP committee's first weekly rankings typically come out in early-to-mid November. This populates automatically from the same ESPN feed as the AP poll once released.</div>`;
+    : `<div class="note">${cfpFetchFailed ? cfpStatusNote() : "Not released yet this season — the CFP committee's first weekly rankings typically come out in early-to-mid November. This fills in automatically once ESPN posts them."}</div>`;
   return `
     <div class="col-heading heading-with-btn" style="flex-wrap:wrap; row-gap:6px;">
       <span>College Football Playoff</span>
       <button class="refresh-btn refresh-btn-lg" onclick="fetchApPoll(true)">Refresh</button>
-      ${refreshRowHTML(lastRefresh, ESPN_AP_POLL_PAGE_URL, "View on ESPN")}
+      ${refreshRowHTML(lastRefresh, ESPN_CFP_PAGE_URL, "View on ESPN")}
     </div>
-    ${CFP_POLL.length ? `<div class="note">${apPollStatusNote()}</div>` : ""}
+    ${CFP_POLL.length ? `<div class="note">${cfpStatusNote()}</div>` : ""}
+    ${pollWeekLabel("cfp")}
     ${table}`;
 }
 
@@ -2542,6 +2621,7 @@ function renderCFBStandings(){
           ${refreshRowHTML(apRefresh, ESPN_AP_POLL_PAGE_URL, "View on ESPN")}
         </div>
         <div class="note">${apPollStatusNote()}</div>
+        ${pollWeekLabel("ap")}
         ${apPollTable()}
       </div>
       <div>
@@ -3306,6 +3386,7 @@ function refreshRowHTML(refreshedText, url, label){
 }
 
 const ESPN_AP_POLL_PAGE_URL = "https://www.espn.com/college-football/rankings/_/poll/1";
+const ESPN_CFP_PAGE_URL = "https://www.espn.com/college-football/rankings/_/poll/21";
 const ESPN_BIGTEN_STANDINGS_PAGE_URL = "https://www.espn.com/college-football/standings/_/group/5/view/fbs";
 const ESPN_NFL_STANDINGS_PAGE_URL = "https://www.espn.com/nfl/standings";
 const ESPN_NHL_STANDINGS_PAGE_URL = "https://www.espn.com/nhl/standings";
